@@ -107,3 +107,26 @@ All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hostin
 **Readiness decision truth table:** [Policy test cases](./READINESS_DECISION_POLICY.md#deterministic-acceptance-cross-checks-design-specification) define how partial ZIP evidence, permission failures, lost backup custody, budget overrun, evidence tampering, crash recovery and missing reviewer/owner approval yield `HOLD` or `REJECT`. These are design/test specifications, not production test results.
 
 **Owner handoff / next real blocker:** obtain a redacted proof of *encrypted local backup custody and decrypt-to-hash* plus separate off-device copy, then safe restore/start evidence. Remote GitHub commits cannot certify those tasks. Do not create another orchestration system or close Draft PRs on this documentation alone.
+
+## Verified library crosswalk parity — 2026-10-19
+
+**Scope:** static **cross-file reconciliation**, not Windows/runtime testing or evidence acceptance. The user Library source files were actually read: `Hermes_Unified_Command_Center_2026-10-18_CURRENT.xlsx` (45 rows in `حزم العمل`) and `HERMES_32_TO_45_CROSSWALK_2026-10-18.csv` (32 gate mappings), then compared against this branch's `MASTER_IMPLEMENTATION_MATRIX.csv` (32 engineering gate IDs).
+
+| Static check | Verified result | Interpretation |
+| --- | ---: | --- |
+| Canonical historical package IDs present | **45 unique / 45 rows** | Historical source-of-truth retained; **not** 45 new engineering gates |
+| Engineering gate IDs present | **32 / 32** | All 32 engineering rows have crosswalk entries |
+| Engineering gate IDs absent in crosswalk | **0** | Full *identifier* coverage only |
+| Crosswalk mapping to missing historical package ID | **0** | Every referenced historical package ID exists in the 45 package view |
+| Crosswalk review required | **32 / 32** | **NO automatic state or approval transfer** |
+| Mapping quality: DIRECT / OVERLAP / RELATED / PARTIAL / GAP | **11 / 10 / 6 / 4 / 1** | A valid pointer **is not** semantic equivalence or completed work |
+
+**High-risk semantic differences:**
+- Engineering `P0-04` (**isolated functional restore**) maps to historical package `P0-03` (**backup/restore**), while engineering `P0-05` (**fail-closed negatives**) maps to historical `P0-04`. **Never match these by the raw ID alone**.
+- Engineering `P3-05` (role training and redesigned workflows) is explicitly marked **GAP** in the existing crosswalk and points to `GOV-01` only as a provisional governance association: not a directly implemented package.
+- V7's separate `TASK_REGISTER_2026-10-18` contains **34 supplemental records** with **14 semantic collisions** in overlapping IDs against the canonical 120; use a source namespace such as `TASK_REGISTER_2026-10-18::H-P0-02` and the V7 collision report, not an unqualified `H-P0-02`. The 34, 44 V1 details, 26 checkpoints, 23 research opportunities and 32 gates **must not be added** to the 45 package count.
+- P0-01, P0-03 and P0-04 engineering crosswalk rows contain `PARTIAL_OWNER_REPORTED`, not independent proof. Formal status remains `UNVERIFIED/HOLD`.
+
+**Three work-in-progress lanes, unchanged:** (1) P0/P1 host readiness and protected real recovery, (2) source-verified non-spending commercial research, (3) read-only dated shipment evidence review when needed. Other work remains queued by canonical package and dependent phase, not abandoned. This amendment changes **no** source workbook, runtime code, task states, approvals, merges, or deployment.
+
+**Sources preserved in Library:** `/Hermes/Command_Center_2026-10-18/Hermes_Unified_Command_Center_2026-10-18_CURRENT.xlsx`, `/Hermes/Command_Center_2026-10-18/HERMES_32_TO_45_CROSSWALK_2026-10-18.csv` and `Hermes_Portfolio_Consolidation_V7_README_AR.md`. Historical evidence must stay private/owner-controlled, not copied into this public GitHub repo.
