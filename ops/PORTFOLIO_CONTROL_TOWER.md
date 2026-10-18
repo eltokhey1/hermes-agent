@@ -108,3 +108,47 @@ This is a **source-intake overlay** to the 32 canonical task IDs in `MASTER_IMPL
 - **All tracks:** `$1,000` is an upper bound on available starting capital, **not a spend authorization**. No paid subscriptions, scraping beyond terms, bulk messages, cloud VM deployment, or production code changes.
 
 **One-line decision:** Keep canonical 32 engineering tasks + existing 7-program overlay + nine Draft PRs. Annual Product Hunt adds research candidates only; all local Windows P0 and P1 acceptance gates stay **UNVERIFIED/HOLD**, even where user-reported backup ZIP integrity checks exist. Shared weekly Hermes radar already tracks Product Hunt; do not schedule a duplicate.
+
+## Product Hunt category intelligence — workflow, dictation, voice and vibe coding
+
+**Review date: 2026-10-18. Source: user-provided URLs. Status: RESEARCH_ONLY / no installation.**
+Eight links collapse to **six category surfaces** after deduplication:
+1. [All Product Hunt categories](https://www.producthunt.com/categories) — taxonomy index, not a product shortlist.
+2. [AI Workflow Automation editorial picks](https://www.producthunt.com/categories/ai-workflow-automation?order=recent_launches#content), [all products](https://www.producthunt.com/categories/ai-workflow-automation/all) — same category; `recent_launches` may not actually prove an up-to-the-minute list.
+3. [AI Dictation Apps editorial picks](https://www.producthunt.com/categories/ai-dictation-apps), [all products](https://www.producthunt.com/categories/ai-dictation-apps/all) — same category.
+4. [Voice AI Tools](https://www.producthunt.com/categories/voice-ai-tools) — includes voice agent infrastructure, streaming STT/TTS and transcription; not synonymous with dictation.
+5. [Productivity](https://www.producthunt.com/categories/productivity) — broad mature platform directory.
+6. [Vibe Coding](https://www.producthunt.com/categories/vibe-coding?ref=footer) — IDE copilots, web/app builders and development helpers.
+
+Editorial awards, ratings and review counts represent Product Hunt's editorial/community observations; they **do not** certify production reliability, current commercial availability, GCC demand, accuracy or revenue. Avoid product positions that change with sort, promotion and crawl freshness.
+
+### Category-to-canonical-task mapping (no new engineering task IDs)
+
+| Cluster | Products / primary directory source | Primary Hermes fit | Existing task IDs | Decision and verification gate |
+| --- | --- | --- | --- | --- |
+| Workflow orchestration | n8n, Zapier, Gumloop, Trace; [PH category](https://www.producthunt.com/categories/ai-workflow-automation) | Existing skills/plugins/cron first; human approval, durable states, idempotence | P1-01/03/05, P2-03/05 | Benchmark one synthetic flow against shipped Hermes; no core replacement and no paid node/service |
+| Historical approval UX only | **Relay.app**, [PH product page and shutdown notice](https://www.producthunt.com/p/relay-app) | Approval UX reference, not vendor recommendation | P1-03/05 | **DO NOT ADOPT**: notice says free access ends 2026-08-15, paid 2026-09-14. Archived rankings are stale for vendor selection |
+| Dictation input | Wispr Flow, Typeless, superwhisper, MacWhisper; [PH category](https://www.producthunt.com/categories/ai-dictation-apps) | Windows/phone voice input as **untrusted text** to existing Hermes commands | P1-03/07, P2-03 | Arabic/English trade terminology, consent, local vs cloud privacy, OS support, transcription accuracy measured; no side effect on mere transcript |
+| Conversational voice infrastructure | ElevenLabs, Deepgram, OpenAI Whisper, LiveKit, Vapi; [PH voice category](https://www.producthunt.com/categories/voice-ai-tools) and [LiveKit SDK docs](https://docs.livekit.io/agents/) | Optional realtime STT → LLM → TTS interface only if demand exists; memory/guard external to audio adapter | P0-07, P1-03/07, P2-03/04 | Check provider cost, retention, Arabic/dialect accuracy, latency, interruption handling, separation of transcription from tool authorization |
+| App prototyping & code | Cursor, Lovable, v0, Windsurf, bolt.new, Base44; [PH category](https://www.producthunt.com/categories/vibe-coding) | Sandbox-only commercial MVP UI exploration; Hermes repo development remains reviewed | P1-05/06/07, P3-01/05, P4-03 | Generated code requires tests, dependency/license scan, signed evidence, manual PR review; no direct deploy/push to `main` |
+| Work management & collaboration | Notion, Linear, Slack, Figma; [PH productivity directory](https://www.producthunt.com/categories/productivity) | Prefer current Hermes state/ledger and connected scoped integrations; avoid parallel task master | P2-01/02/03, P3-05 | Least-privilege read-only sync initially, source-of-truth preserved, explicit external-write approval |
+
+### Commercial licensing and service-lifecycle facts: binding vetoes
+
+- **n8n is fair-code / Sustainable Use License, not unrestricted OSI-open-source software**. Per [the maintained n8n license](https://github.com/n8n-io/n8n/blob/master/LICENSE.md) and [n8n support guidance](https://support.n8n.io/article/can-i-use-your-license-for-my-use-case), many internal/custom managed workflows are allowed, while offering external customers an editor/workflow configuration feature, resale/white label or hosting as a platform generally needs commercial licensing. Clarify the exact Hermes SaaS business model **before** proposing embedding or offering n8n to customers. No implied permissive commercial redistribution.
+- **Relay.app announced shutdown** via a founder-listed Product Hunt community notice: free users 2026-08-15 and paid users 2026-09-14. Its historical 2026 Orbit recommendation is *not* valid evidence of October service availability. The approval pattern can be studied without vendor lock-in.
+- **Dictation != agent authority**. Transcripts (even high-confidence speech) are input data, not identity proof, authorization, consent for customer data upload, or a durable approval. Voice synthesis and voice cloning also require identity/consent controls.
+- Provider marketing about multilingual support is not proof of Arabic dialect quality; collect **synthetic** Arabic + English shipping/LC/quotation samples and explicitly measure text correctness and dangerous-command rejection.
+
+### Four *proposed*, not executed, acceptance fixtures
+
+| Fixture concept | Linked canonical tasks | Minimum proposed acceptance (not PASS) |
+| --- | --- | --- |
+| WFA-REFERENCE | P1-01/03/05, P2-03 | Synthetic workflow with timeout, empty response, malformed response and network failure; all **DENY**, zero side effects, meaningful state/evidence; baseline against built-in Hermes before external stack |
+| VOICE-COMMANDS | P1-03/07, P2-03 | At least 30 synthetic utterances with Arabic dialect, English trade terms and ambiguity; 0 externally executing tools without authenticated action-specific approval; log redaction and consent tests |
+| APP-PROTOTYPE | P1-05/06, P3-05, P4-03 | At least 10 deterministic representative code tests + isolated secret scan + dependency/license review; independent review before any PR merge or deploy |
+| KNOWLEDGE-ROUTING | P2-01/02/03 | Query provenance against current Hermes ledger; no duplicate master task store, no cross-project leakage or false PASS status |
+
+**Priority decision:** P0 backup custody/functional restoration and P1 evidence/guard invariants before any voice/code/workflow integration. P2 can later evaluate narrowly-scoped read-only voice/text and connectors. P3 may test **one** bilingual trade-operations workflow or voice intake manually if confirmed GCC buyer pain justifies it. Vibe coding supports prototype speed only; it does not create a new business or override security. P4 remains deferred.
+
+**Operations:** Reuse the existing *single* unified weekly Hermes radar to watch these six categories and product-life-cycle changes, without adding another schedule. Existing 32 engineering tasks, 7 portfolio lanes and nine Draft PRs remain the source of truth. Do not modify `main` or enable cloud spend from research findings.
