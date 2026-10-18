@@ -139,3 +139,28 @@ All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hostin
 **Read-only fork protection and CI fact-check (2026-10-19):** `main` branch read indicated `protected=false`; visible repository Rulesets API returned zero entries. Git commit `251e5f7c0a067239655f3421812ab7492a206065` reported **0 combined legacy statuses** and **0 Check Runs** (API state `pending` is not a successful check), and historical fork Actions runs query returned none. Detailed branch-protection GET was **403 due to connector restrictions**; thus this is a partial control audit, **not a certification that no other controls exist**. P0-09 remains **UNVERIFIED/HOLD**. Propose required PR review, explicit CI checks and default branch ruleset only after the required checks have been proven and rollback/administration paths reviewed; do not apply settings automatically.
 
 **Sources preserved in Library:** `/Hermes/Command_Center_2026-10-18/Hermes_Unified_Command_Center_2026-10-18_CURRENT.xlsx`, `/Hermes/Command_Center_2026-10-18/HERMES_32_TO_45_CROSSWALK_2026-10-18.csv` and `Hermes_Portfolio_Consolidation_V7_README_AR.md`. Historical evidence must stay private/owner-controlled, not copied into this public GitHub repo.
+
+## Static mutation regression — 2026-10-19
+
+**Scope**: The *current exact* `MASTER_IMPLEMENTATION_MATRIX.csv` file at Git blob `643bee3d2a77ac2d76a6c14bdc1302c377d093c1` was read from the connected GitHub repository and parsed as RFC-style quoted CSV into a pure in-memory **structural/dependency verifier**. This did not run Hermes, Python tools from the draft PRs, Windows tests, external effects, cloud tools, or code coverage.
+
+**Result: 20 of 20 expected structural verdicts matched.** There were two allowed/static-preserving scenarios and 18 adversarial changes rejected. The original graph includes **32 rows / 32 unique IDs / 11 columns**. The verifier checked: ID uniqueness, phase identity, expected UNVERIFIED/DESIGN_ONLY states, missing dependencies, cycles and future-phase dependencies, P0 backup→restore→negative-test ordering, P1-09 ancestor coverage of all 17 preceding P0/P1 tasks, and required P1-09 ancestry for later P2–P4 tasks.
+
+Test cases deliberately exercised:
+- Duplicate ID, missing dependency, self-cycle and cross-cycle — reject.
+- Forged P0/P3 `PASS` states and phase reassignment — reject.
+- Fail-closed, canary or cost testing started before isolated restore — reject.
+- Remove `P1-08` incident drill or **both** paths to `P1-04` watchdog from `P1-09` — reject.
+- Let model routing, market prioritization or shipment fusion bypass `P1-09` — reject.
+- Skip backup before restore or allow `P1-01` before aggregate budget — reject.
+- Insert dependency on later phase — reject.
+- **Non-bypass control:** deleting only the direct `P1-04` link from `P1-09` must remain *structurally safe*, because the `P1-09 → P1-08 → P1-04` chain still enforces the watchdog. This is the second allowed scenario, not a false acceptance.
+
+**Limitation:** This is a static integrity test of the control matrix and its documented statuses, **not a runtime fail-closed test, security review of an executing model or permission to deploy**. The mutation fixture definitions are recorded here; the transient in-memory test harness is not a CI workflow or a persisted code artifact. These test verdicts **must not** be recorded as P0/P1 `PASS` in the portfolio.
+
+**Three tightened acceptance requirements, already updated in the CSV:**
+1. `P0-01`: distinguish installed Hermes binary/build identity and active data directory from any Git checkout; independently verify parity or mark runtime provenance `UNKNOWN`. The candidate [read-only Git preflight in PR #7](https://github.com/eltokhey1/hermes-agent/pull/7) **cannot prove an installed Windows runtime is the same checkout**. It must be assessed separately and remain draft.
+2. `P0-03`: verify a **crash-consistent** restricted/encrypted backup covering SQLite including relevant WAL/state and scheduling/config metadata, a recorded scope manifest, decrypt-to-SHA match and protected off-device copy. Do not infer an app-consistent backup merely from ZIP CRCs.
+3. `P1-05`: evidence database **and containing directory** must resist modification, rename and deletion by the execution principal, demonstrated with **separate OS identities** on the actual target; same-account paperwork does not establish an independent verifier. [PR #5 review note](https://github.com/eltokhey1/hermes-agent/pull/5#issuecomment-6255914367) highlights that its hash/receipt validator is evidence-shaped only.
+
+No runnable files were changed, all nine PRs remain Draft for review, and `main` was not modified. `PRODUCTION_READY=NO / HOLD` until independent host proofs.
