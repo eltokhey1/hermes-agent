@@ -31,6 +31,10 @@ def inspect_report(report):
         return invalid('invalid ETA evidence')
     if any(not isinstance(x,dict) or not isinstance(x.get('status'),str) for x in eta):
         return invalid('invalid ETA event report')
+    if eta and 'ETA_SOURCE_UNVERIFIED' not in flags:
+        return invalid('ETA evidence without independent verification flag')
+    if not eta and 'ETA_SOURCE_UNVERIFIED' in flags:
+        return invalid('ETA source flag without evidence')
     if any(x['status'] in ('CONFLICT_REQUIRES_REVIEW','SOURCE_DISAGREEMENT_REQUIRES_REVIEW',
                              'HISTORICAL_EVIDENCE_NOT_LATEST','ETA_CHANGED_REQUIRES_REVIEW')
            for x in eta) and 'ETA_EVIDENCE_AMBIGUOUS' not in flags:
