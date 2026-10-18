@@ -27,10 +27,10 @@ From the repository root:
 
     python -m unittest discover -s .\ops\preflight -p test_read_only_inventory.py -v
 
-Tests create and commit in temporary throwaway Git repositories. The inventory command itself is read-only. Local sandbox validation on Python 3.13/Linux: 6/6 passing. This is **not** an application acceptance test and **not** a Windows test.
+Tests create and commit in temporary throwaway Git repositories. The inventory command itself is read-only. Isolated Linux validation: 9/9 passing (6 baseline cases plus 3 adversarial Git-environment regression cases); Windows execution remains unverified. This is **not** an application acceptance test and **not** a Windows test.
 
 ## Security / limits
 
-The script disables optional Git locks, fsmonitor and recursive submodules, but Git and the host are not sandboxed. Review before running. Do not share other local logs or environment-variable dumps. Only independently verified backups restored in isolation pass the P0 recovery gate.
+The script disables optional Git locks, fsmonitor and recursive submodules, and filters inherited `GIT_*` environment variables before running Git (preventing unexpected `GIT_TRACE` output and repository-override variables). Git and the host are still not sandboxed. Review before running. Do not share other local logs or environment-variable dumps. Only independently verified backups restored in isolation pass the P0 recovery gate.
 
 See ops/OWNER_READINESS_GATES.md in draft PR #4 for the complete acceptance matrix.
