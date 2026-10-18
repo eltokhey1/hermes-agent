@@ -108,3 +108,16 @@ def test_cli_blocks_without_auth_and_refuses_overwrite(make_apk, tmp_path):
     again = subprocess.run([sys.executable, str(SCRIPT), "--apk", str(path), "--authorized", "--output", str(output)], capture_output=True, text=True)
     assert again.returncode == 2
     assert output.read_bytes() == original
+
+
+def test_refuses_manifest_internal_entities(make_apk):
+    payload = b'<!DOCTYPE manifest [<!ENTITY x "expanded">]><manifest>&x;</manifest>'
+    path = make_apk({"AndroidManifest.xml": payload})
+    with pytest.raises(scan.AuditError, match="manifest_dtd_or_entity_forbidden"):
+        scan.analyze_apk(path, authorized=True)
+
+
+def test_dex_invalid_version_is_reported_not_executed(make_apk):
+    path = make_apk({"AndroidManifest.xml": b"<manifest/>", "classes.dex": b"dex\\nABC\\x00"})
+    report = scan.analyze_apk(path, authorized=True)
+    assert report["evidence"]["invalid_dex_headers"] == ["classes.dex"]
