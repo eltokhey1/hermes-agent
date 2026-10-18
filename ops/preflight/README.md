@@ -14,6 +14,12 @@ This stdlib-only Python script produces a metadata-only, sanitized JSON report i
 
 If the script was downloaded separately, specify the absolute script path and --repo pointing at the actual local checkout. Do not pipe installer code from the internet to PowerShell.
 
+## Installed Windows Hermes is not necessarily a Git checkout
+
+The operator-reported Hermes installation is an **installed runtime/data directory** that did **not** contain a `.git` directory when inspected. This preflight intentionally audits a *Git checkout*, not the installed binary and not `HERMES_HOME`. Therefore **do not point `--repo` at the installed Hermes home and treat `NOT_A_GIT_REPOSITORY` as a corrupted installation**. That result only means this tool cannot prove the installed build's source commit.
+
+The required P0-01 identity work has two distinct receipts: (a) read-only installed-binary/version/digest and active-home metadata, with no secret content; (b) independently inspected Git checkout HEAD/dirty state where a checkout actually exists. Compare code provenance explicitly; a SHA-256 digest of the installed executable does **not** establish a Git commit. No auto-fetch, reinstall, forced sync or credential inspection should be performed to bridge this gap. Owner-reported host facts are partial evidence only.
+
 ## Gate interpretation
 
 - A nonzero exit or error_code means **UNKNOWN/BLOCKED**.
