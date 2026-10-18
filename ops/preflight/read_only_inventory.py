@@ -77,6 +77,10 @@ def collect(repo: Path) -> dict:
     if inside != "true":
         raise InventoryError("NOT_A_GIT_REPOSITORY")
     root = Path(_git(repo, "rev-parse", "--show-toplevel"))
+    # Prevent a requested child directory from silently inheriting an unrelated parent Git repo.
+    # Normalize Windows case and resolve symlinks/reparse points before comparison.
+    if os.path.normcase(str(root.resolve())) != os.path.normcase(str(repo)):
+        raise InventoryError("REPOSITORY_ROOT_MISMATCH")
     sha = _git(root, "rev-parse", "--verify", "HEAD")
     if len(sha) != 40 or any(c not in "0123456789abcdefABCDEF" for c in sha):
         raise InventoryError("INVALID_HEAD")
