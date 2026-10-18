@@ -24,6 +24,10 @@
 
 The standalone sandbox passed a narrower infrastructural test, not a comprehensive Docker escape-risk review. Integrity of a ZIP and a restored SQLite file does not prove a runnable Hermes recovery, overall backup scope, or rollback quality. The above observations were supplied in an operator chat; do **not** turn them into formal `PASS` rows until reviewer-admissible evidence is captured.
 
+## Subsequent synthetic helper QA — 2026-10-19
+
+The [GPG helper synthetic QA receipt](./evidence/GPG_HELPER_SYNTHETIC_QA_2026-10-19.md) reports **6/6 pass** on disposable Linux fixtures; this is **tool-level evidence only**, not Windows script execution or real archive encryption. The owner has **not yet supplied** a PASS receipt for the real encrypted archive, off-device protection, or Hermes functional restore. Formal gates remain **HOLD / UNVERIFIED**.
+
 ## One ordered critical path
 
 1. **P0 custody** — confirm installed/local code identity and active profile; securely encrypt the existing verified archive with interactive key entry; verify decrypted SHA; arrange **separate** protected off-device copy; avoid exposing secrets or leaving extra plaintext copies.
