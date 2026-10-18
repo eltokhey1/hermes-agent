@@ -31,7 +31,9 @@ class InventoryError(Exception):
 
 def _git(repo: Path, *arguments: str) -> str:
     command = [*GIT_PREFIX, "-C", str(repo), *arguments]
-    env = dict(os.environ)
+    # Git-specific inherited environment can redirect repository identity or write trace logs.
+    # Preserve normal process variables (PATH/SystemRoot/etc.), but isolate Git overrides.
+    env = {key: value for key, value in os.environ.items() if not key.upper().startswith("GIT_")}
     env["GIT_OPTIONAL_LOCKS"] = "0"
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_CONFIG_NOSYSTEM"] = "1"
