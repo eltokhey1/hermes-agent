@@ -54,8 +54,9 @@ Rules: exact/deterministic software for rules and mathematics; models propose, v
 | #7 | Owner read-only Windows preflight | Preferred candidate for host evidence collection after local authorization |
 | #8 | Cloud deployment security review | Design only; no cloud provisioning |
 | #9 | Portfolio 23 reference/product tracks | Portfolio source; this coordination index belongs here |
+| #10 | Shipment Intelligence optional skill v0.1.1 | Synthetic fixture/tests committed; current branch CI **unverified**; host/product integration NO-GO |
 
-These are **nine draft pull requests**, not nine deployed components. All remain unmerged unless independently checked and explicitly approved. There is additionally a **shipment staging branch** without a confirmed pull request.
+The historical review covered **nine draft PRs** (#1–#9). On 2026-10-19, **draft PR #10** was added for Shipment Intelligence, bringing the current total to **ten open draft PRs**, not ten deployed components. All remain unmerged until independently checked and explicitly approved; the shipment staging branch now has PR #10.
 
 ## Recurring work, prevent duplicated alerts
 
