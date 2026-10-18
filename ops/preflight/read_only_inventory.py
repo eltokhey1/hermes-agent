@@ -92,7 +92,13 @@ def collect(repo: Path) -> dict:
     remote_names = _git(root, "remote")
     markers = ("AGENTS.md", "README.md", "scripts/run_tests.sh", "pyproject.toml")
     marker_presence = {name: (root / name).is_file() for name in markers}
-    install_dir = Path(os.environ.get("LOCALAPPDATA", "")) / "hermes" if sys.platform == "win32" else None
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    # Missing or relative LOCALAPPDATA must not prove an installed runtime.
+    install_dir = (
+        Path(local_app_data) / "hermes"
+        if sys.platform == "win32" and local_app_data and Path(local_app_data).is_absolute()
+        else None
+    )
     result = {
         "schema": SCHEMA,
         "checked_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
