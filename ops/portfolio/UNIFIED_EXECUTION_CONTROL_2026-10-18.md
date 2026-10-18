@@ -5,10 +5,19 @@ This document consolidates prior Hermes, business, and shipping work without mer
 
 ## One source of truth, not another tracker
 
-The master workbook is **Hermes_Command_Center_v2_2026-10-18.xlsx** (owner Library): **120 original task identifiers → 45 work packages → 16 operational streams**, with zero unmapped IDs in the recorded snapshot. Preserve all existing IDs and the traceability sheet. This file is an *execution delta and decision index*, not a replacement spreadsheet. The **23 tracks** in `ops/portfolio/PROJECT_REGISTER.md` mean **20 commercial reference cases + 3 proposed products**, and must not be confused with the 16 operational streams or 45 packages.
+The canonical working workbook is **`/Hermes/Command_Center_2026-10-18/Hermes_Unified_Command_Center_v3_2026-10-18.xlsx`** (owner Library; 22 tabs enumerated on 2026-10-18). Earlier v2 and `Hermes_Portfolio_Control` files are historical/derived references, not competing task registers. The canonical workbook contains: **120 original task identifiers → 45 work packages → 16 operational streams**, with zero unmapped IDs in the recorded snapshot. Preserve all existing IDs and the traceability sheet. This file is an *execution delta and decision index*, not a replacement spreadsheet. The **23 tracks** in `ops/portfolio/PROJECT_REGISTER.md` mean **20 commercial reference cases + 3 proposed products**, and must not be confused with the 16 operational streams or 45 packages.
 
 Stable state vocabulary: `PROPOSED → DOCUMENTED → IMPLEMENTED_OFFLINE → TESTED_ISOLATED → VERIFIED_IN_TARGET → APPROVED → DEPLOYED`. `BLOCKED/UNKNOWN` are explicit, never treated as `VERIFIED`. Project labels P0–P4 refer to prerequisites, **not** a percent-complete bar.
 
+## Evidence reconciliation and work-in-progress cap — 2026-10-18
+
+- **Library workbook checked:** 22 tab headings, 45 unique work-package rows and 120 original ID mapping rows. The owner's Windows checkout and the 23-section `hermes-effect-ledger.md` have not been inspected in this review.
+- **Six ordered Windows gates:** (1) read-only Git/Hermes inventory; (2) restricted backup and *functional isolated restore*; (3) NTFS ACL plus clause 19.7 proving Executor cannot write/delete `acceptance.db` or its parent, and fail-closed/security/budget negatives; (4) minimum durable Effect Ledger and failure budget; (5) crash-window/UNKNOWN reconciliation tests; (6) independent Recovery Challenge. If gate 3 fails, acceptance is `logical_only`, never verified.
+- **WIP <= 3:** (a) P0/P1 safety and evidence; (b) read-only current carrier shipment events; (c) one bounded commercial evidence research stream. Everything else is queued, not deleted.
+- **Draft PR file collision:** PR #4 and PR #6 both add `ops/DESIGN_BACKLOG.md` with different text. Do NOT merge both unchanged. PR #4 owns engineering P0/P1 readiness; PR #9 owns commercial references and the proposed products. Preserve unique MCP/iFixAi/source notes from #6 before any proposed superseding/closure. Neither PR is merged or closed here.
+- **Count reconciliation:** 32 engineering acceptance tasks in PR #4, 26 `NEXT` actions and 23 commercial references/products in PR #9 are subordinate matrices, not 32+26+23 new packages. Historical task numbers can conflict (notably `P0-04`); always match source register + ID + description.
+- **Automation status:** unified weekly radar and Maersk five-booking daily watch active; GOLDEN SEA watch and duplicate specialist radars disabled. Notification delivery settings disabled. No duplicate task created.
+- **Shipment staging:** skill and helper Python script are on an isolated branch. Fixture and test file are not in that GitHub branch yet; 12 offline test passes do not certify live carrier/AIS tracking. Hold merging until fixtures, CI, host validation and approval.
 ## Priority sequence and acceptance evidence
 
 | Wave | Existing package references | Deliverable / evidence required | Current disposition |
