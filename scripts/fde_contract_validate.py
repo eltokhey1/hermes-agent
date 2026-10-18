@@ -7,15 +7,18 @@ It validates a receipt assembled by a human/reviewer; it does not prove claims.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 _SHA256 = re.compile(r"[a-fA-F0-9]{64}\Z")
 _COMMIT = re.compile(r"[a-fA-F0-9]{40}\Z")
+_ARTIFACT_NAME = re.compile(r"[A-Za-z0-9._/-]{1,240}\Z")
+_MAX_ARTIFACT_BYTES = 20 * 1024 * 1024
 _CHECK_STATUSES = {"PASS", "FAIL", "UNKNOWN"}
 _REQUIRED_GATES = {"security", "recovery", "idempotency", "privacy", "quality"}
 
@@ -28,6 +31,16 @@ def _timezoned(value: Any) -> bool:
         return parsed.tzinfo is not None and parsed.utcoffset() is not None
     except ValueError:
         return False
+
+
+def _safe_artifact_path(value: Any) -> bool:
+    """Require portable, relative paths below the evidence root."""
+    return (
+        isinstance(value, str)
+        and bool(_ARTIFACT_NAME.fullmatch(value))
+        and not PurePosixPath(value).is_absolute()
+        and all(part not in {"", ".", ".."} for part in value.split("/"))
+    )
 
 
 def validate_receipt(data: Any) -> list[str]:
@@ -87,6 +100,8 @@ def validate_receipt(data: Any) -> list[str]:
             digest = check.get("artifact_sha256")
             if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
                 errors.append(f"{prefix}.artifact_sha256 must be a SHA-256 hex digest for PASS")
+            if not _safe_artifact_path(check.get("artifact_path")):
+                errors.append(f"{prefix}.artifact_path must be a safe relative POSIX path for PASS")
             if not _timezoned(check.get("observed_at")):
                 errors.append(f"{prefix}.observed_at timezone required for PASS")
         if status != "PASS" and (check.get("exit_code") == 0 and type(check.get("exit_code")) is int):
@@ -103,9 +118,55 @@ def validate_receipt(data: Any) -> list[str]:
     return errors
 
 
+def verify_artifacts(data: dict[str, Any], evidence_root: Path) -> list[str]:
+    """Verify bounded, local SHA-256 digests without running recorded commands.
+
+    The caller must first check validate_receipt(data) == []. This checks the
+    bytes only; provenance and whether a command actually ran remain unproven.
+    """
+    try:
+        if evidence_root.is_symlink() or not evidence_root.is_dir():
+            return ["evidence root must be a real directory (not a symlink)"]
+        root = evidence_root.resolve(strict=True)
+    except (OSError, RuntimeError):
+        return ["evidence root is not accessible"]
+    errors: list[str] = []
+    for check in data["checks"]:
+        if check["status"] != "PASS":
+            continue
+        name = check["artifact_path"]
+        label = f"artifact for {check['gate']}"
+        target = root.joinpath(*PurePosixPath(name).parts)
+        try:
+            node = root
+            for part in PurePosixPath(name).parts:
+                node = node / part
+                if node.is_symlink():
+                    raise ValueError("symlink disallowed")
+            resolved = target.resolve(strict=True)
+            if not resolved.is_relative_to(root) or not target.is_file():
+                raise ValueError("not a regular file within evidence root")
+            if target.stat().st_size > _MAX_ARTIFACT_BYTES:
+                raise ValueError("artifact exceeds 20 MiB cap")
+            digest = hashlib.sha256()
+            total = 0
+            with target.open("rb") as stream:
+                for block in iter(lambda: stream.read(64 * 1024), b""):
+                    total += len(block)
+                    if total > _MAX_ARTIFACT_BYTES:
+                        raise ValueError("artifact exceeds 20 MiB cap")
+                    digest.update(block)
+            if digest.hexdigest().lower() != check["artifact_sha256"].lower():
+                errors.append(f"{label}: SHA-256 mismatch")
+        except (OSError, RuntimeError, ValueError) as exc:
+            errors.append(f"{label}: {exc.__class__.__name__} while reading evidence")
+    return errors
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("receipt", type=Path, help="JSON receipt to validate, without executing commands")
+    parser.add_argument("--evidence-root", type=Path, help="local root for actual offline artifact hash verification")
     args = parser.parse_args(argv)
     try:
         data = json.loads(args.receipt.read_text(encoding="utf-8"))
@@ -113,12 +174,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"INVALID RECEIPT: {exc.__class__.__name__}", file=sys.stderr)
         return 2
     errors = validate_receipt(data)
+    if not errors:
+        if args.evidence_root is None:
+            errors.append("PASS claims require --evidence-root for offline artifact verification")
+        else:
+            errors.extend(verify_artifacts(data, args.evidence_root))
     if errors:
         for msg in errors:
             print(f"FAIL: {msg}")
         print("VERDICT=NOT_READY")
         return 1
-    print("VERDICT=EVIDENCE_SHAPE_VALID; HUMAN_REVIEW_REQUIRED; PRODUCTION_APPROVED=NO")
+    print("VERDICT=ARTIFACT_HASHES_MATCH; HUMAN_REVIEW_REQUIRED; PRODUCTION_APPROVED=NO")
     return 0
 
 
