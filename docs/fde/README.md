@@ -46,3 +46,7 @@ A zero validator exit code would mean **receipt syntax and asserted gates are we
 Hermes already has extensive tests, evaluations, gateway and tool integration code. This patch deliberately does not introduce a second scheduler, approval engine, agent registry, auth layer or persistent-state system. The actual machine's Hermes version, its backup state, secrets, Windows/Docker availability and deployment status are **not observable from the GitHub fork**. Do not assert production readiness based on this repository or these documents.
 
 **Merge condition:** owner reviews this scope and tests on the relevant branch. **Deployment condition:** separately documented operator approval with actual-environment evidence; there is no implicit permission to deploy from this PR.
+
+## Readiness tracking
+
+The [P0/P1 evidence ledger](READINESS_EVIDENCE.md) keeps each unresolved host-side proof marked UNKNOWN until independently verified. This repository does not enable Issues, so the draft PR and ledger are the review trail; this is not a replacement for operator sign-off.
