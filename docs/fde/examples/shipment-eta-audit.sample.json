@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "project_id": "shipment-eta-audit",
+  "scope": "Read-only, offline proof-of-concept for ETA and shipment-document evidence",
+  "base_commit": "251e5f7c0a067239655f3421812ab7492a206065",
+  "environment": "sandbox",
+  "observed_at": "2026-10-18T08:30:00+02:00",
+  "release": {
+    "intent": "review_only",
+    "production_approved": false
+  },
+  "checks": [
+    {"gate": "security", "status": "UNKNOWN", "description": "Actual credentials, endpoints and access scope have not been audited"},
+    {"gate": "recovery", "status": "UNKNOWN", "description": "Actual crash recovery not tested"},
+    {"gate": "idempotency", "status": "UNKNOWN", "description": "No recorded replay and duplicate-handling test"},
+    {"gate": "privacy", "status": "UNKNOWN", "description": "No field masking or exfiltration test observed"},
+    {"gate": "quality", "status": "UNKNOWN", "description": "No real shipment-document acceptance fixtures evaluated"}
+  ]
+}
