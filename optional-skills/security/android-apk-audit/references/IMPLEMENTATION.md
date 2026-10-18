@@ -96,7 +96,7 @@ and separate change approval before executing.
 
 ## Acceptance evidence
 
-- 14 behavioral checks passed on synthetic APKs in an isolated artifact
+- 16 behavioral checks passed on synthetic APKs in an isolated artifact
   environment (the GitHub branch should still be tested by CI).
 - No Windows machine run, real customer APK analysis or live Hermes
   installation has been performed.
