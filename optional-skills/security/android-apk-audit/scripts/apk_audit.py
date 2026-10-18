@@ -87,6 +87,10 @@ def _manifest_info(archive: zipfile.ZipFile, item: zipfile.ZipInfo) -> dict:
     if raw[:4] == b"\x03\x00\x08\x00":
         return {"format": "binary_axml", "permissions": None, "package": None,
                 "note": "Permissions and exported components NOT decoded; use approved aapt2 tooling separately."}
+    # Android binary AXML is not parsed here. Reject entity expansion even for
+    # the synthetic text-manifest path before touching an XML parser.
+    if b"<!DOCTYPE" in raw.upper() or b"<!ENTITY" in raw.upper():
+        raise AuditError("manifest_dtd_or_entity_forbidden")
     try:
         tree = ET.fromstring(raw)
     except ET.ParseError:
@@ -137,7 +141,7 @@ def analyze_apk(apk_path: str | Path, *, authorized: bool = False) -> dict:
                     for name in dex:
                         with archive.open(files[name]) as fp:
                             hdr = fp.read(8)
-                        if not (len(hdr) == 8 and hdr.startswith(b"dex\n") and hdr[-1:] == b"\x00"):
+                        if not (len(hdr) == 8 and hdr.startswith(b"dex\n") and hdr[4:7].isdigit() and hdr[-1:] == b"\x00"):
                             invalid_dex.append(name)
                     evidence = {
                         "zip_entries": len(entries),
