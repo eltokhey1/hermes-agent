@@ -75,3 +75,12 @@ documentation proposal unmerged until the acceptance criteria have evidence.
 - The full v4 code remains an isolated artifact for review. The code in this PR is a narrowly scoped acceptance-contract example; no Hermes integration, bank integration, production deployment, or user-facing network actions have been tested.
 
 - Four separate Python-process CLI smoke tests now pass for safe advisory output, LC mismatch, foreign shipment ETA, and duplicate JSON rejection. These remain sandbox evidence only.
+
+## 2026-10-18: standalone TradeOps v5 integrity hardening (NOT merged)
+- Local offline v5 source: **117/117 tests pass**, comprising the previous 106 synthetic tests and 11 new regression tests.
+- New ETA review status: `CARRIER_IDENTITY_CONFLICT_REQUIRES_REVIEW` when the shipping line changes for the same BL/container with a newer observation. A mere capitalization difference is ignored. Stale evidence remains historic rather than replacing newer evidence.
+- A carrier identity conflict is propagated to `ETA_EVIDENCE_AMBIGUOUS`. A report that hides this conflict is rejected by the fail-closed acceptance gate.
+- Ledger verification now checks legal state transitions and orphan/missing events **in addition to** its hash chain; concurrent transitions are serialized by a SQLite immediate transaction. There is still no external hash anchor, nor authenticated operator proof.
+- Narrow PR acceptance-contract tests updated for the carrier identity alert; 11/11 local tests pass when run from the proposal fixture.
+- A separate, read-only CSV/Excel shipping report exists. An empty Google Sheets draft was created but the subsequent data-upload action was blocked by platform safety checks; no shipment rows were entered. Do not treat the Google Sheet as synchronized.
+- No actual financial documents, production shipping APIs, production MCP clients, or repository integration tests have been run.
