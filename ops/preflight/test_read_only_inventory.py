@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from read_only_inventory import _counts, collect, main, SCHEMA
+from read_only_inventory import _counts, collect, main, SCHEMA, InventoryError
 
 
 def git(repo: Path, *args):
@@ -59,6 +59,33 @@ class TestInventory(unittest.TestCase):
         r = collect(self.repo)
         self.assertTrue(r["working_tree_dirty"])
         self.assertEqual(r["tracked_changes"], 1)
+
+    def test_child_directory_of_parent_repo_is_rejected(self):
+        child = self.repo / "workspace" / "hermes-agent-install"
+        child.mkdir(parents=True)
+        with self.assertRaises(InventoryError) as caught:
+            collect(child)
+        self.assertEqual(caught.exception.code, "REPOSITORY_ROOT_MISMATCH")
+
+        buf = StringIO()
+        with contextlib.redirect_stdout(buf):
+            exit_code = main(["--repo", str(child)])
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(json.loads(buf.getvalue())["error_code"], "REPOSITORY_ROOT_MISMATCH")
+        self.assertNotIn(str(child), buf.getvalue())
+
+    def test_nested_independent_git_repo_is_accepted(self):
+        child = self.repo / "isolated-hermes-checkout"
+        child.mkdir()
+        git(child, "init", "-q", "-b", "main")
+        git(child, "config", "user.email", "test@example.invalid")
+        git(child, "config", "user.name", "Test Fixture")
+        (child / "README.md").write_text("nested repo fixture", encoding="utf-8")
+        git(child, "add", "README.md")
+        git(child, "commit", "-q", "-m", "nested fixture")
+        report = collect(child)
+        self.assertTrue(report["repository_detected"])
+        self.assertFalse(report["working_tree_dirty"])
 
     def test_aggregates_only(self):
         self.assertEqual(_counts(" M private.txt\n?? untracked.txt"),
