@@ -44,3 +44,28 @@ Observe → Verify → Predict → Economics → Risk → Plan → Human Approva
 New ideas go to an INBOX, are deduplicated against a canonical task ID/PR, receive dependencies + measurable evidence, then move through DESIGN_ONLY → IMPLEMENTED → TESTED → VERIFIED. Runtime UNKNOWN means stop and reconcile, **never automatically retry an uncertain external effect**. Product income claims require observed receipts/outcomes, not forecasts.
 
 The full Arabic portfolio handbook and spreadsheet are exported as a separate review package outside the public repo; **do not upload private paths, log contents, keys, customer data, backup archives or Terraform state to GitHub**.
+
+## Product Hunt October 2026 — research-only mapping
+
+**Snapshot date: 2026-10-18; non-authoritative for final monthly positions.** The requested [monthly leaderboard](https://www.producthunt.com/leaderboard/monthly/2026/10) was not directly retrievable in the review environment. Candidates below were cross-checked against individual Product Hunt product pages and [official week-42 leaderboard](https://www.producthunt.com/leaderboard/weekly/2026/42). No votes, reviews, followers, or positions prove revenue, product-market fit, enterprise readiness, or GCC buyer demand.
+
+This is a **source-intake overlay** to the 32 canonical task IDs in `MASTER_IMPLEMENTATION_MATRIX.csv`, **not** a new task queue or dependency change. Do not install any candidate based on Product Hunt publicity.
+
+| Candidate | Existing problem / portfolio track | Existing task IDs | Phase decision | Source |
+|---|---|---|---|---|
+| Pancake | ExportLead / sales GTM infra reference | P3-02, P3-04 | Research-only; no sending | https://www.producthunt.com/products/pancake-6 |
+| ReSO AI | GCC generative-search visibility hypothesis | P3-01, P3-02 | Research-only; validate paid demand | https://www.producthunt.com/products/reso |
+| Formalini | TradeDocs / document data extraction | P3-01, P2-02 | Sanitized-data validation candidate | https://www.producthunt.com/products/formalini |
+| GenPage 3.0 | Landing-page experiment for marketing/Viral Kit | P3-02 | Research-only; no ad spend | https://www.producthunt.com/products/genpage |
+| Articos MCP | Simulated buyer messages | P3-01, P3-02 | Advisory only; never substitute actual interviews | https://www.producthunt.com/products/articos |
+| Navige | Hard budget/kill switch/reference for orchestration | P0-07, P2-04 | Security evaluation later; no agent proxy | https://www.producthunt.com/products/navige |
+| Inferock | Independent call-cost receipts and observability | P1-05, P2-05 | Design reference, not validated integration | https://www.producthunt.com/products/inferock |
+| Harness by Autonomous | Multi-device coding-agent control | P2-03, P1-03 | Security review later; no remote-control deploy | https://www.producthunt.com/products/harness-by-autonomous |
+| IrisGo | Watch-and-learn workflow UX | P2-03, P3-05 | UX benchmark only; preserve existing Hermes core | https://www.producthunt.com/products/irisgo-public-beta |
+| OpenSwarm | Parallel agent operating environment | P4-03, P1-09 | Deferred; no company-OS replacement | https://www.producthunt.com/products/openswarm-3 |
+| Polylane | Proposed PR and incident-risk evidence | P1-05, P4-02 | Optional review only | https://www.producthunt.com/products/polylane |
+| Spira Maxima | Creative/video content signal | P3-01, P3-02 | Later research; no autopublish | https://www.producthunt.com/products/spira-ai |
+
+**Commercial acceptance rule:** Each candidate needs a real buyer-problem hypothesis, validated source/legal right, cost and privacy review, and actual customer evidence (interviews, verified pain points, or payment intent) before it can enter a project-specific pilot. Track forecasts separately from actual revenue and reject purely vote-based scoring. All sensitive customer information stays out of this public repository.
+
+**No-go remains unchanged:** All P0/P1 runtime gates UNVERIFIED, `PRODUCTION_READY=NO`. `main` remains untouched, and this PR remains Draft. Maintain the existing active weekly research radar rather than creating duplicate automations.
