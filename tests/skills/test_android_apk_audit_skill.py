@@ -118,6 +118,6 @@ def test_refuses_manifest_internal_entities(make_apk):
 
 
 def test_dex_invalid_version_is_reported_not_executed(make_apk):
-    path = make_apk({"AndroidManifest.xml": b"<manifest/>", "classes.dex": b"dex\\nABC\\x00"})
+    path = make_apk({"AndroidManifest.xml": b"<manifest/>", "classes.dex": b"dex\nABC\x00"})
     report = scan.analyze_apk(path, authorized=True)
     assert report["evidence"]["invalid_dex_headers"] == ["classes.dex"]
