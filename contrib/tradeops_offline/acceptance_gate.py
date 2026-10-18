@@ -36,7 +36,8 @@ def inspect_report(report):
     if not eta and 'ETA_SOURCE_UNVERIFIED' in flags:
         return invalid('ETA source flag without evidence')
     if any(x['status'] in ('CONFLICT_REQUIRES_REVIEW','SOURCE_DISAGREEMENT_REQUIRES_REVIEW',
-                             'HISTORICAL_EVIDENCE_NOT_LATEST','ETA_CHANGED_REQUIRES_REVIEW')
+                             'HISTORICAL_EVIDENCE_NOT_LATEST','ETA_CHANGED_REQUIRES_REVIEW',
+                             'CARRIER_IDENTITY_CONFLICT_REQUIRES_REVIEW')
            for x in eta) and 'ETA_EVIDENCE_AMBIGUOUS' not in flags:
         return invalid('ETA conflict hidden from flags')
     if not isinstance(report['scope'],str) or not report['scope'].strip():
