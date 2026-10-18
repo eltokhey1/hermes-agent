@@ -45,6 +45,10 @@ The owner-reported Windows ZIP, isolated file restore, SQLite checks and disconn
 - **Strategy & Value:** P0-07, P3-04
 - **Use-Case Portfolio:** P3-01, P3-02
 
+## 2026-10-19 ID collision remediation
+
+The FDE pilot's historical P0/P1 checklist uses **different local meanings** for several identical-looking IDs. Its [`READINESS_EVIDENCE.md`](https://github.com/eltokhey1/hermes-agent/blob/docs/fde-evidence-pilot-20261018/docs/fde/READINESS_EVIDENCE.md) has now been amended on **existing Draft PR #5** to namespace all local IDs as `FDE-LEGACY::P0-xx`/`FDE-LEGACY::P1-xx`, with explicit semantic cross-links to this matrix. Do **not** merge the FDE legacy IDs into this 32-row queue or add them to the owner's 45 work packages. The original gate evidence and production **HOLD** remain unchanged.
+
 ## Existing draft PR consolidation (no duplicate implementation)
 
 | Draft PR | Existing work to reuse | Relationship to matrix |
