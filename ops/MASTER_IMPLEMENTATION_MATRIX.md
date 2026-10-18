@@ -11,6 +11,10 @@
 - **Rows:** 32 (P0: 9, P1: 9, P2: 6, P3: 5, P4: 3).
 - **Baseline observation:** All P0/P1 gates marked UNVERIFIED until independently tested on the target Windows instance. P2–P4 are DESIGN_ONLY. A draft PR or synthetic local test is not proof of working integration.
 
+## Operator checkpoint (2026-10-18)
+
+[CONSOLIDATED_OWNER_CHECKPOINT_2026-10-18.md](./CONSOLIDATED_OWNER_CHECKPOINT_2026-10-18.md) is the single public-safe summary of **owner-reported** Windows P0 progress. It records local ZIP/SQLite/file-level restore and infrastructure sandbox observations, while retaining formal P0/P1 gate status **UNVERIFIED/HOLD** pending encrypted/off-device custody, actual application recovery and independent evidence. The original 32 task IDs remain unchanged; do not create a competing queue or promote the matrix to PASS on chat output alone.
+
 ## Safe critical path
 
 `P0-01 → P0-03 → P0-04 → P0-05/P0-06/P0-07 → P1-01 → P1-02 → P1-05/P1-06/P1-07 → P1-09 → P2 → P3 → P4`
