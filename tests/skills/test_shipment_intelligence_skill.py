@@ -125,3 +125,40 @@ def test_duplicate_entire_import_fails_atomically(tmp_path):
     r2=si.adapt_dcsa(dcsa(code='DISC'),'carrier',SRC)
     with pytest.raises(ValueError):si.ingest(db,[r,r2])
     assert db.execute('SELECT COUNT(*) FROM evidence_events').fetchone()[0]==0
+
+
+@pytest.mark.parametrize('event_id', [None, '', '   '])
+def test_provider_event_identity_is_required(event_id):
+    with pytest.raises(ValueError, match='provider event id'):
+        si.adapt_dcsa(dcsa(event_id=event_id), 'carrier', SRC)
+
+
+def test_ais_event_without_native_id_is_rejected():
+    with pytest.raises(ValueError, match='provider event id'):
+        si.adapt_ais({'imo':9173355, 'event_type':'POSITION',
+            'time_utc':'2026-10-18T09:00:00Z',
+            'lat':32.676, 'lon':14.244, 'source_url':SRC}, 'aisprovider')
+
+
+@pytest.mark.parametrize('latitude,longitude', [
+    (91, 0), (-91, 0), (0, 181), (0, -181),
+    ('not-a-latitude', 10), ('nan', 0), (None, 10),
+])
+def test_invalid_ais_coordinates_are_not_accepted(latitude, longitude):
+    record={'record_id':'bad-position', 'imo':9173355, 'event_type':'POSITION',
+        'time_utc':'2026-10-18T09:00:00Z',
+        'lat':latitude, 'lon':longitude, 'source_url':SRC}
+    with pytest.raises(ValueError, match='AIS'):
+        si.adapt_ais(record, 'aisprovider')
+
+
+def test_ais_zero_numeric_provider_id_is_valid():
+    record={'record_id':0, 'imo':9173355, 'event_type':'POSITION',
+        'time_utc':'2026-10-18T09:00:00Z',
+        'lat':32.676, 'lon':14.244, 'source_url':SRC}
+    assert si.adapt_ais(record,'aisprovider')['event_id']=='aisprovider:0'
+
+
+def test_invalid_provider_name_is_rejected():
+    with pytest.raises(ValueError, match='provider identity'):
+        si.adapt_dcsa(dcsa(), 'carrier source with spaces', SRC)
