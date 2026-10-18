@@ -2,6 +2,12 @@
 
 **Status: REVIEW-ONLY / NOT PRODUCTION READY.** This ledger is a proposal built from the AI implementation mindmap and nine existing Draft PRs. It is **not** an observed Windows status report. No core code, credentials, dependencies, CI, budget, or production settings are changed here.
 
+## Two-level registry reconciliation — 2026-10-18
+
+**Scope correction:** The 32 rows here are the **Hermes engineering acceptance/gate queue**, **not** a replacement for the owner's separate multi-project command-center portfolio. That private canonical workbook contains **45 work packages**, references **120 historical task identifiers**, and groups them into **16 project streams**. A local, add-only reconciliation overlay maps each of these 32 gate IDs to one or more existing portfolio packages; links are *semantic references*, not 1:1 equivalences or permission to close work. One training/change-management gate has no exact package equivalent and remains a documented mapping gap. Do not duplicate the portfolio here or publish private task-level details.
+
+The owner-reported Windows ZIP, isolated file restore, SQLite checks and disconnected Docker probe are summarized in [CONSOLIDATED_OWNER_CHECKPOINT_2026-10-18.md](./CONSOLIDATED_OWNER_CHECKPOINT_2026-10-18.md). These remain **partial operator-reported evidence**, not independently reviewed Windows application acceptance. Archive encryption and off-device custody, actual Hermes functional restore, and mandatory P0/P1 controls remain open. **Release verdict: HOLD.**
+
 ## Single source of truth
 
 - Machine-readable work queue: [MASTER_IMPLEMENTATION_MATRIX.csv](./MASTER_IMPLEMENTATION_MATRIX.csv)
