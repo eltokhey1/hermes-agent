@@ -7,6 +7,7 @@ This stdlib-only Python script produces a metadata-only, sanitized JSON report i
 ## Requirements and command
 
 - Python 3.11+ and Git.
+- `--repo` must point to the **exact Git repository root**. A child folder that inherits a parent Git repository is rejected with `REPOSITORY_ROOT_MISMATCH` (nonzero exit).
 - From the actual Hermes repository root on Windows PowerShell:
 
     python .\ops\preflight\read_only_inventory.py --repo .
