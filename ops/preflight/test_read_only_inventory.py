@@ -86,5 +86,29 @@ class TestInventory(unittest.TestCase):
             self.assertNotIn(str(self.repo), buf.getvalue())
 
 
+    def test_git_trace_env_does_not_create_file(self):
+        trace = Path(self.tmp.name) / "unexpected-git-trace.log"
+        with patch.dict(__import__("os").environ, {"GIT_TRACE": str(trace)}):
+            report = collect(self.repo)
+        self.assertTrue(report["repository_detected"])
+        self.assertFalse(trace.exists(), "inventory must not write Git trace files")
+
+    def test_git_trace2_event_env_does_not_create_file(self):
+        trace = Path(self.tmp.name) / "unexpected-git-trace2.json"
+        with patch.dict(__import__("os").environ, {"GIT_TRACE2_EVENT": str(trace)}):
+            report = collect(self.repo)
+        self.assertTrue(report["repository_detected"])
+        self.assertFalse(trace.exists(), "inventory must not write Git trace2 files")
+
+    def test_git_dir_env_does_not_change_repository_identity(self):
+        unrelated = Path(self.tmp.name) / "unrelated.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(unrelated)], check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        with patch.dict(__import__("os").environ, {"GIT_DIR": str(unrelated)}):
+            report = collect(self.repo)
+        sha = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip()
+        self.assertEqual(report["head_sha"], sha)
+
+
 if __name__ == "__main__":
     unittest.main()
