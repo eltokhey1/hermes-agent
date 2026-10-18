@@ -115,6 +115,8 @@ All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hostin
 | Static check | Verified result | Interpretation |
 | --- | ---: | --- |
 | Canonical historical package IDs present | **45 unique / 45 rows** | Historical source-of-truth retained; **not** 45 new engineering gates |
+| Historical legacy IDs counted across 45 packages | **120 entries / 120 unique** | No duplicated historical ID in the CURRENT package view; each package's declared count matches its IDs |
+| Operational stream names in CURRENT package view | **16** | These are operational streams, not extra package counts |
 | Engineering gate IDs present | **32 / 32** | All 32 engineering rows have crosswalk entries |
 | Engineering gate IDs absent in crosswalk | **0** | Full *identifier* coverage only |
 | Crosswalk mapping to missing historical package ID | **0** | Every referenced historical package ID exists in the 45 package view |
@@ -128,5 +130,8 @@ All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hostin
 - P0-01, P0-03 and P0-04 engineering crosswalk rows contain `PARTIAL_OWNER_REPORTED`, not independent proof. Formal status remains `UNVERIFIED/HOLD`.
 
 **Three work-in-progress lanes, unchanged:** (1) P0/P1 host readiness and protected real recovery, (2) source-verified non-spending commercial research, (3) read-only dated shipment evidence review when needed. Other work remains queued by canonical package and dependent phase, not abandoned. This amendment changes **no** source workbook, runtime code, task states, approvals, merges, or deployment.
+
+
+**Read-only fork protection and CI fact-check (2026-10-19):** `main` branch read indicated `protected=false`; visible repository Rulesets API returned zero entries. Git commit `251e5f7c0a067239655f3421812ab7492a206065` reported **0 combined legacy statuses** and **0 Check Runs** (API state `pending` is not a successful check), and historical fork Actions runs query returned none. Detailed branch-protection GET was **403 due to connector restrictions**; thus this is a partial control audit, **not a certification that no other controls exist**. P0-09 remains **UNVERIFIED/HOLD**. Propose required PR review, explicit CI checks and default branch ruleset only after the required checks have been proven and rollback/administration paths reviewed; do not apply settings automatically.
 
 **Sources preserved in Library:** `/Hermes/Command_Center_2026-10-18/Hermes_Unified_Command_Center_2026-10-18_CURRENT.xlsx`, `/Hermes/Command_Center_2026-10-18/HERMES_32_TO_45_CROSSWALK_2026-10-18.csv` and `Hermes_Portfolio_Consolidation_V7_README_AR.md`. Historical evidence must stay private/owner-controlled, not copied into this public GitHub repo.
