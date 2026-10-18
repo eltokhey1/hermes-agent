@@ -1,7 +1,7 @@
 ---
 name: shipment-intelligence
 description: Reconcile shipment milestones with vessel evidence.
-version: 0.1.0
+version: 0.1.1
 author: eltokhey1, Hermes Agent
 license: MIT
 platforms: [linux, macos, windows]
@@ -69,6 +69,25 @@ The `maersk_ocean_result.json` input must be a structured ocean-tracking result 
 4. Use `terminal` `status CONTAINER` to review the current best **carrier equipment** event. Estimated/planned information stays in a separate `latest_estimates` field.
 5. Link a vessel only if a real shipping document or carrier voyage result identifies the connection. The supplied evidence note is a **manual assertion**, not machine verification. Vessel AIS appears as supplementary context only.
 6. Treat `UNKNOWN`, `STALE`, and `REVIEW_REQUIRED` as non-actionable states. `CURRENT_ACTUAL` depends on a fresh, timezone-grounded carrier equipment event; it is **not** an authorization to arrange customs clearance, deliveries, money transfers or other consequential actions.
+
+## Staging acceptance tests (not yet production validation)
+
+The branch keeps synthetic fixtures at `templates/synthetic_dcsa_events.json`
+and contract tests at `tests/skills/test_shipment_intelligence_skill.py`
+(relative to the repository root). From a development checkout with pytest
+already installed, a reviewer may run:
+
+```text
+python -m pytest -q tests/skills/test_shipment_intelligence_skill.py
+```
+
+Version 0.1.1 fails closed when a DCSA/AIS provider record lacks its native
+event ID and rejects malformed or out-of-range AIS coordinates. Existing
+historical exports without native IDs must be quarantined for source review,
+**not** assigned fake IDs just to pass ingestion. Input `source_url` and
+a manual vessel association note describe provenance claims only; they do
+not independently verify authenticity. There is still **no live carrier API
+integration, unattended access, production permission or Windows acceptance**.
 
 ## Pitfalls
 
