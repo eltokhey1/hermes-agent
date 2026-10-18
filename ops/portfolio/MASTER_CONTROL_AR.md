@@ -33,3 +33,9 @@
 
 ## Review outcome
 This PR remains draft and docs-only; merge and deployment are not authorized. Evidence index must distinguish documented/offline/verified remote/verified host/UNKNOWN.
+
+## تحديث التوفيق مع سجل الاعتماد الهندسي (لقطة 2026-10-18)
+- مصدر القبول الهندسي PR #4 يضم **32 معيارًا تابعًا** لبوابات Hermes: 18 UNVERIFIED و14 DESIGN_ONLY، لا تُجمع فوق الـ45 حزمة على أنها مهام إضافية.
+- قاعدة العمل الجاري WIP ≤ 3: (أ) P0/P1 safety/evidence، (ب) بحث تجاري موثق غير مدفوع، (ج) مراجعة مصدر شحن عند الحاجة. المشاريع الأخرى تصطف ولا تُلغى.
+- أول اختبار Windows يجب أن يكون قراءة فقط، ثم backup+actual isolated functional restore؛ بعده إثبات ACL مستقل يمنع Executor من كتابة أو حذف acceptance.db والمجلد الأب، ثم Effect Ledger/UNKNOWN/Recovery Challenge. P0/P1 غير مغلقين.
+- أي أثر إنجاز سابق أو عدّ اختبارات من حزمة مستقلة هو دليل محصور ببيئة الاختبار، وليس تصريحًا لإعادة تشغيل أو دمج الإنتاج.
