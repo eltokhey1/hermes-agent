@@ -65,3 +65,11 @@ branch. It is preserved separately for security and licensing review.
 Review this design, run repository-specific compatibility tests on an
 isolated branch, and only then open a code-integration PR. Keep this
 documentation proposal unmerged until the acceptance criteria have evidence.
+
+## 2026-10-18: v4 regression findings (standalone package, **not in this PR**)
+- Offline, synthetic-input tests: **102/102 pass** (v4); earlier isolated hardening regression **58/58 pass**. These are unit tests, not security certification.
+- Critical review checks added: LC number from the LC document must match LC payment details; ETA BL identifier and container must be traceable to BL document fields; low-confidence identity evidence blocks ready state.
+- Every externally supplied ETA in this prototype receives `ETA_SOURCE_UNVERIFIED`, including records that self-label `source_type=CARRIER`; an upstream connector must independently authenticate the source before claiming confirmation.
+- Read-only Maersk tracking lookups matched 26 booking/BL records to 59 containers and 26 corresponding rows/counts in the user's Arrival workbook. These are historical source events, **not guaranteed current delivery ETAs**, and were not committed to this public repository.
+- The original Arrival workbook was NOT modified; a separate verification workbook was created in the offline deliverable.
+- The full v4 code remains an isolated artifact for review. The code in this PR is a narrowly scoped acceptance-contract example; no Hermes integration, bank integration, production deployment, or user-facing network actions have been tested.
