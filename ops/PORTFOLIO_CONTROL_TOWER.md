@@ -2,7 +2,7 @@
 
 **REVIEW ONLY — NOT PRODUCTION READY.**
 
-This is a **portfolio overlay**, not a second engineering task queue. The only canonical 32 engineering task IDs remain in [MASTER_IMPLEMENTATION_MATRIX.csv](./MASTER_IMPLEMENTATION_MATRIX.csv); acceptance rules remain in [READINESS_DECISION_POLICY.md](./READINESS_DECISION_POLICY.md). Windows P0/P1 formal gates remain UNVERIFIED/HOLD.
+This is a **portfolio overlay**, not a second task queue. **The authoritative Hermes portfolio consists of 45 work packages across 16 streams, preserving 120 historical identifiers.** The 32 items in [MASTER_IMPLEMENTATION_MATRIX.csv](./MASTER_IMPLEMENTATION_MATRIX.csv) are engineering acceptance tasks/subgates mapped into the same 45-package portfolio, **not 32 additional work packages**. Likewise, V1 detail rows (44), Task Register entries (34), V6 next actions (26) and research entries (23) must not be added to the 45-package count. Supplemental IDs MUST be qualified by source (SOURCE::ID) to avoid 14 known semantic collisions. Acceptance rules remain in [READINESS_DECISION_POLICY.md](./READINESS_DECISION_POLICY.md). Windows P0/P1 formal gates remain UNVERIFIED/HOLD.
 
 ## Seven linked programs
 
