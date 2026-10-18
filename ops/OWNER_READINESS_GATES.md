@@ -67,3 +67,9 @@ No Windows inspection; no restore test; no runtime tests; no deployment; no secr
 - Fork: https://github.com/eltokhey1/hermes-agent
 - Project instructions: https://github.com/eltokhey1/hermes-agent/blob/main/AGENTS.md
 - Original: https://github.com/NousResearch/hermes-agent
+
+## Cloud follow-up — 2026-10-18
+
+- Candidate sanitized local P0 inventory + six isolated unit tests are available separately in [draft PR #7](https://github.com/eltokhey1/hermes-agent/pull/7). These tests are **not** Hermes application or Windows validation.
+- An attempt to open an issue tracking protection of the unprotected fork `main` received GitHub HTTP 410: **Issues are disabled** for this repository. No issue was created; the owner/admin must decide whether to enable Issues or use another tracking system.
+- No GitHub branch-protection settings were changed, and no draft PR was merged.
