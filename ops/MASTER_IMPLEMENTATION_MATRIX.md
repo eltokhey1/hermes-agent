@@ -5,6 +5,7 @@
 ## Single source of truth
 
 - Machine-readable work queue: [MASTER_IMPLEMENTATION_MATRIX.csv](./MASTER_IMPLEMENTATION_MATRIX.csv)
+- Unified portfolio program overlay: [PORTFOLIO_CONTROL_TOWER.md](./PORTFOLIO_CONTROL_TOWER.md) — no duplicate engineering task queue.
 - Gate policy: [READINESS_DECISION_POLICY.md](./READINESS_DECISION_POLICY.md)
 - Existing P0/P1 requirements: [OWNER_READINESS_GATES.md](./OWNER_READINESS_GATES.md)
 - Existing deferred design: [DESIGN_BACKLOG.md](./DESIGN_BACKLOG.md)
