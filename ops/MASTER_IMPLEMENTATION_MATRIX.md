@@ -62,3 +62,34 @@
 ## Immediate handoff
 
 Use Draft PR #7 for **read-only** redacted local inventory when the operator's Windows environment is available. Compare to approved fork SHA, preserve dirty local files, make restricted backup, and demonstrate actual isolated restore before executing application tests or modifying the host. Until then: `PRODUCTION_READY=NO`, `PRODUCTION_APPROVED=NO`.
+
+## Unified execution order / dependency verification — 2026-10-18
+
+**Source-of-truth hierarchy — counts have different meanings (do not add them):**
+
+1. **32 gate-oriented engineering tasks** (P0:9, P1:9, P2:6, P3:5, P4:3) in [`MASTER_IMPLEMENTATION_MATRIX.csv`](./MASTER_IMPLEMENTATION_MATRIX.csv): the canonical **technical acceptance and dependency register** for Hermes Core. These IDs never change during research intake.
+2. **120 historical project task IDs → 45 work packages → 16 operational streams:** mapping reported in the existing [Draft PR #9 commercial/portfolio register](https://github.com/eltokhey1/hermes-agent/pull/9) and owner Library workbook `Hermes_Unified_Portfolio_2026-10-18.xlsx`. This is the **portfolio traceability layer**, not 45 additional P0/P1 gates. Preserve original IDs in private owner records. Verify the latest spreadsheet mapping before promotion; it has not been independently re-audited in this change.
+3. **7 executive programs** in [`PORTFOLIO_CONTROL_TOWER.md`](./PORTFOLIO_CONTROL_TOWER.md) group decision ownership only; no duplicate databases/queues.
+4. **23 research tracks** in [Draft PR #9](https://github.com/eltokhey1/hermes-agent/pull/9) = 20 competitor case studies + 3 original product ideas, **not** active builds. Product Hunt monthly/year-to-date/category signals are source leads attached to P3-02, not tickets.
+5. **9 Draft PRs** are staged artifacts linked from this document, not deployed work. #4 governs scope; #7 local inventory proposal; #5 evidence validator candidate; #9 historical portfolio mapping. Keep all Draft until evidence gates and owner review.
+
+**Dependency audit performed on the CSV (read-only analysis before edit):** 32 rows, 32 unique task IDs, zero references to missing dependencies, zero dependency cycles. Found three inconsistent prerequisites and corrected **only** `Dependencies` for `P0-05`, `P0-06`, `P0-07` from `P0-01` to `P0-01;P0-04`. These are tests that must **not** precede secure backup and *functional isolated restore*. No statuses, due dates, owner names or other tasks were promoted.
+
+**One physical execution path, with allowed non-mutating parallel research:**
+
+- **Gate A:** `P0-01` read-only local identity / worktree / ACL inventory; preserve uncommitted files and user-owned secrets.
+- **Gate B:** `P0-03` protected encrypted archive + separate protected off-device copy; prove ciphertext decrypts back to the expected file SHA. An operator report of ZIP CRC / SHA is useful but not proof of custody.
+- **Gate C:** `P0-04` actual restored application smoke-test in a new offline, synthetic-credential, no-production-network location; test executable, persistence, config, rollback and evidence. **No application tests are allowed on the owner host before B and C pass.**
+- **Gate D:** `P0-05/06/07` four explicit fail-closed conditions → DENY and zero side effects; synthetic-secret redaction with zero matches; hard shared spend gate with $0 default and concurrency safety. Validate the *real guard interface*, not only a stub.
+- **Gate E:** `P0-08/09` reconcile draft changes/upstream and decide reviewed protected-main rules; `P1-01…09` continue only after accepted P0 and independent review. `UNKNOWN` external effects stop for reconciliation; no auto-retry.
+- **Gate F:** P2 safe adapters → P3 market and shipping experiments → P4 advanced cloud/autonomy. This is a permission and acceptance dependency, not a block on safe public-source *research*.
+
+**Current work-in-progress cap: no more than three tracks:**
+1. P0 custody/restore/evidence (**critical path**, blocked on host actions).
+2. Read-only research/business hypothesis validation (**no spend, outreach or customer data**).
+3. Shipment source-evidence review when necessary (**read-only; event time/source/confidence; AIS never proves container discharge**).
+All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hosting, experimental libraries and historical PRs are queued to their existing task IDs and cannot create a fourth active implementation stream.
+
+**Gate invariants:** `PRODUCTION_READY=NO` and `PRODUCTION_APPROVED=NO`. Planning states (`UNVERIFIED/DESIGN_ONLY/PARTIAL_OWNER_REPORTED`) must not be confused with runtime operation states (`PENDING/RUNNING/SUCCEEDED/FAILED/UNKNOWN`). No secret-bearing backups, tokens, private paths or third-party personal data in GitHub evidence.
+
+**Owner handoff / next real blocker:** obtain a redacted proof of *encrypted local backup custody and decrypt-to-hash* plus separate off-device copy, then safe restore/start evidence. Remote GitHub commits cannot certify those tasks. Do not create another orchestration system or close Draft PRs on this documentation alone.
