@@ -9,13 +9,14 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import math
 import re
 import sqlite3
 import sys
 from pathlib import Path
 from urllib.parse import urlsplit
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 MAX_BYTES = 10_000_000
 MAX_EVENTS = 5_000
 RE_CONTAINER = re.compile(r'^[A-Z]{4}\d{7}$')
@@ -72,6 +73,17 @@ def reference(value: object, kind: str) -> str:
         raise ValueError('Invalid tracking reference')
     return v
 
+def provider_event_id(provider: object, raw_id: object) -> str:
+    """Fail closed on missing provider identities (a prefix alone is not an event ID)."""
+    if not isinstance(provider, str) or not provider.strip() or len(provider) > 80 or any(c.isspace() for c in provider):
+        raise ValueError('Invalid provider identity')
+    if raw_id is None or isinstance(raw_id, bool):
+        raise ValueError('Missing provider event id')
+    raw = str(raw_id).strip()
+    if not raw or len(raw) > 120 or any(ord(c) < 32 for c in raw):
+        raise ValueError('Missing/invalid provider event id')
+    return provider + ':' + raw
+
 
 def event(*, eid: object, category: str, subject_type: str, subject_id: object,
           code: object, classifier: object, occurred: object, source_url: object,
@@ -111,8 +123,17 @@ def adapt_ais(record: dict, provider: str) -> dict:
     if typ=='AIS':
         lat=record.get('latitude',record.get('lat'))
         lon=record.get('longitude',record.get('lon'))
-        if lat is not None and lon is not None: loc=f'{lat}, {lon}'
-    return event(eid=provider+':'+str(record.get('record_id') or ''), category=typ,
+        if (lat is None) != (lon is None):
+            raise ValueError('Incomplete AIS position')
+        if lat is not None:
+            try:
+                latitude, longitude = float(lat), float(lon)
+            except (ValueError, TypeError, OverflowError) as exc:
+                raise ValueError('Invalid AIS coordinates') from exc
+            if not (math.isfinite(latitude) and math.isfinite(longitude) and -90 <= latitude <= 90 and -180 <= longitude <= 180):
+                raise ValueError('AIS coordinates out of range')
+            loc=f'{lat}, {lon}'
+    return event(eid=provider_event_id(provider,record.get('record_id')), category=typ,
         subject_type='vessel',subject_id=imo,code=code,classifier='ACT',
         occurred=record.get('time_utc') or record.get('event_time_utc'),
         source_url=record.get('source_url'),source_name=provider,location=loc,
@@ -137,7 +158,7 @@ def adapt_dcsa(record: dict, provider: str, source_url: str) -> dict:
     if isinstance(rloc,dict):
         loc=rloc.get('UNLocationCode') or rloc.get('locationName') or rloc.get('locationCode')
     else: loc=None
-    return event(eid=provider+':'+str(record.get('eventID') or ''),category=cat,
+    return event(eid=provider_event_id(provider,record.get('eventID')),category=cat,
           subject_type=subject_type,subject_id=ident,code=code,
           classifier=record.get('eventClassifierCode'),occurred=record.get('eventDateTime'),
           source_url=source_url,source_name=provider,location=loc,payload=record,
