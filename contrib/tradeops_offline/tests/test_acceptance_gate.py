@@ -31,6 +31,18 @@ class AcceptanceContract(unittest.TestCase):
     def test_hidden_eta_conflict(self):
         r=sample();r['eta_evidence']=[{'status':'CONFLICT_REQUIRES_REVIEW'}]
         self.assertFalse(inspect_report(r)['contract_valid'])
+    def test_carrier_identity_conflict_cannot_be_hidden(self):
+        r=sample()
+        r['flags']=['ETA_SOURCE_UNVERIFIED']
+        r['decision']='BLOCK_FOR_REVIEW'
+        r['eta_evidence']=[{'status':'CARRIER_IDENTITY_CONFLICT_REQUIRES_REVIEW'}]
+        self.assertFalse(inspect_report(r)['contract_valid'])
+        r['flags'].append('ETA_EVIDENCE_AMBIGUOUS')
+        self.assertTrue(inspect_report(r)['contract_valid'])
+    def test_unauthenticated_eta_cannot_appear_ready(self):
+        r=sample()
+        r['eta_evidence']=[{'status':'NEW_EVIDENCE_NOT_CONFIRMED'}]
+        self.assertFalse(inspect_report(r)['contract_valid'])
     def test_missing_required_field(self):
         r=sample();del r['lc_check']
         self.assertFalse(inspect_report(r)['contract_valid'])
