@@ -86,3 +86,17 @@ Done means implementation actually exists in the target environment, tests and n
 - Freshness: each displayed carrier/AIS event has distinct `occurred_at` and `retrieved_at`.
 - Every claimed milestone has at least one stable attributable source and a confidence grade.
 - Economic claims are quotations/scenarios/pilots, never 'guaranteed profit'.
+
+
+## Branch-file collision review (read-only, 2026-10-18)
+
+Ten topic branches were compared against fork `main` using GitHub compare. **One exact path collision is confirmed**: `docs/owner-readiness-20261018` and `docs/hermes-portfolio-p0-p1-design-20261018` independently add **different content** to `ops/DESIGN_BACKLOG.md`. Do not merge those branches sequentially without reconciling the file. Treat the owner-readiness P0/P1 constraints as the control baseline; copy any unique P3 market ideas into the existing portfolio backlog, preserving provenance, not into a second operating system.
+
+Other **semantic overlaps, not verified Git merge conflicts**:
+- PR #4 owner gates vs #5 evidence validator and #7 safe read-only host probe: keep independent roles and re-run isolated tests; none passes the Windows/ACL gate merely by existing.
+- PR #4 owner portfolio control vs #9 commercial 20+3 portfolio: canonical 45-package tracker remains the authority; #9 is a researched-products appendix, not a second task register.
+- Shipment Intelligence staging currently changes only `SKILL.md` and `shipment_intelligence.py` (two files); the corresponding committed fixture and regression tests were **not found in the compared branch diff**. This is not a claim that no tests exist elsewhere.
+
+Branch comparison confirms path changes and ahead-of-main status only, **not** CI success, mergability after updates, or current draft PR state. Do not auto-close or merge any PR. The private canonical workbook and real customer/shipment data must remain outside the public fork.
+
+**Next safe action:** inspect local Windows checkout and exact branch/working-tree identity read-only; then verify a restricted backup and isolated *functional* restore before any test/code installation. Current P0/P1 status remains OPEN / NO-GO.
