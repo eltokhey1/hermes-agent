@@ -116,22 +116,29 @@ class FDEContractTests(unittest.TestCase):
         self.assertTrue(verify_artifacts(self.receipt, self.root))
 
     def test_no_evidence_root_fails_closed(self):
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json") as file:
-            json.dump(self.receipt, file)
-            file.flush()
-            with contextlib.redirect_stdout(io.StringIO()) as stdout:
-                code = main([file.name])
-            self.assertEqual(code, 1)
-            self.assertIn("VERDICT=NOT_READY", stdout.getvalue())
+        receipt_path = self.root / "receipt.json"
+        receipt_path.write_text(json.dumps(self.receipt), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            code = main([str(receipt_path)])
+        self.assertEqual(code, 1)
+        self.assertIn("VERDICT=NOT_READY", stdout.getvalue())
 
     def test_main_local_artifact_validation(self):
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json") as file:
-            json.dump(self.receipt, file)
-            file.flush()
-            with contextlib.redirect_stdout(io.StringIO()) as stdout:
-                code = main([file.name, "--evidence-root", str(self.root)])
-            self.assertEqual(code, 0)
-            self.assertIn("PRODUCTION_APPROVED=NO", stdout.getvalue())
+        receipt_path = self.root / "receipt.json"
+        receipt_path.write_text(json.dumps(self.receipt), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            code = main([str(receipt_path), "--evidence-root", str(self.root)])
+        self.assertEqual(code, 0)
+        self.assertIn("PRODUCTION_APPROVED=NO", stdout.getvalue())
+
+    def test_cli_tampering_fails_closed(self):
+        receipt_path = self.root / "receipt.json"
+        receipt_path.write_text(json.dumps(self.receipt), encoding="utf-8")
+        (self.root / "test-evidence.txt").write_bytes(b"tampered")
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            code = main([str(receipt_path), "--evidence-root", str(self.root)])
+        self.assertEqual(code, 1)
+        self.assertIn("SHA-256 mismatch", stdout.getvalue())
 
     def test_artifact_digest_match_is_not_release_approval(self):
         self.assertEqual(validate_receipt(self.receipt), [])
