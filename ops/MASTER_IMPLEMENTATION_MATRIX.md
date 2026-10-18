@@ -73,7 +73,7 @@ Use Draft PR #7 for **read-only** redacted local inventory when the operator's W
 4. **23 research tracks** in [Draft PR #9](https://github.com/eltokhey1/hermes-agent/pull/9) = 20 competitor case studies + 3 original product ideas, **not** active builds. Product Hunt monthly/year-to-date/category signals are source leads attached to P3-02, not tickets.
 5. **9 Draft PRs** are staged artifacts linked from this document, not deployed work. #4 governs scope; #7 local inventory proposal; #5 evidence validator candidate; #9 historical portfolio mapping. Keep all Draft until evidence gates and owner review.
 
-**Dependency audit performed on the CSV (read-only analysis before edit):** 32 rows, 32 unique task IDs, zero references to missing dependencies, zero dependency cycles. Found three inconsistent prerequisites and corrected **only** `Dependencies` for `P0-05`, `P0-06`, `P0-07` from `P0-01` to `P0-01;P0-04`. These are tests that must **not** precede secure backup and *functional isolated restore*. No statuses, due dates, owner names or other tasks were promoted.
+**Dependency audit (static validation on canonical CSV):** 32 rows, 32 unique task IDs, 11 columns, zero missing dependency references and zero cycles. Corrected **five dependency cells only**: `P0-05/06/07` now depend on `P0-04` (functional isolated restore) in addition to inventory; `P1-01` now requires the P0 secret/restore/fail-closed/canary/hard-spend/branch-decision gates (`P0-02/04/05/06/07/09`); `P2-04` now requires `P1-09` independent go/no-go before model-routing implementation. **18 UNVERIFIED and 14 DESIGN_ONLY statuses remain unchanged**. This checks task-graph coherence, not Hermes software readiness.
 
 **One physical execution path, with allowed non-mutating parallel research:**
 
@@ -91,5 +91,7 @@ Use Draft PR #7 for **read-only** redacted local inventory when the operator's W
 All voice/dictation, workflow automation, vibe-coding, marketplace, cloud hosting, experimental libraries and historical PRs are queued to their existing task IDs and cannot create a fourth active implementation stream.
 
 **Gate invariants:** `PRODUCTION_READY=NO` and `PRODUCTION_APPROVED=NO`. Planning states (`UNVERIFIED/DESIGN_ONLY/PARTIAL_OWNER_REPORTED`) must not be confused with runtime operation states (`PENDING/RUNNING/SUCCEEDED/FAILED/UNKNOWN`). No secret-bearing backups, tokens, private paths or third-party personal data in GitHub evidence.
+
+**P0 legacy-ID collision crosswalk:** [Draft PR #9 — `NEXT_ACTIONS_AR.md`](https://github.com/eltokhey1/hermes-agent/blob/docs/hermes-portfolio-v4-evidence-20261018/ops/portfolio/NEXT_ACTIONS_AR.md) explicitly maps its historical `NEXT-004…NEXT-009` task references to the engineering IDs. For example, `P0-04` denotes denial tests in the older NEXT register, but **restoration** in the authoritative engineering matrix; the actual denial tests are `P0-05`. Always resolve `register + task ID + description` before running host commands. Do not rename or erase historical IDs.
 
 **Owner handoff / next real blocker:** obtain a redacted proof of *encrypted local backup custody and decrypt-to-hash* plus separate off-device copy, then safe restore/start evidence. Remote GitHub commits cannot certify those tasks. Do not create another orchestration system or close Draft PRs on this documentation alone.
