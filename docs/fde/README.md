@@ -17,7 +17,7 @@ The first pilot is **shipment ETA and export-document audit**: given user-approv
 
 ## Delivery contract / gates
 
-The receipt is structured JSON (sample: `examples/shipment-eta-audit.sample.json`). Its required gates are `security`, `recovery`, `idempotency`, `privacy`, and `quality`. Each gate is `PASS`, `FAIL`, or `UNKNOWN`. A PASS must include a reproducible non-sensitive command, an observed exit code 0, timezone-aware observation timestamp, and a SHA-256 digest of the reviewable artifact. A reviewer must independently verify the referenced artifact and confirm the command actually corresponds to that gate. **Never put tokens, passwords, customer PII or sensitive paths into receipts or PR logs.**
+The receipt is structured JSON (sample: `examples/shipment-eta-audit.sample.json`). Its required gates are `security`, `recovery`, `idempotency`, `privacy`, and `quality`. Each gate is `PASS`, `FAIL`, or `UNKNOWN`. A PASS must include a reproducible non-sensitive command, an observed exit code 0, timezone-aware observation timestamp, a safe relative `artifact_path`, and a SHA-256 digest of an actual local artifact (maximum 20 MiB). The utility compares the declared digest with the actual local file under the explicitly supplied evidence root, rejecting missing, oversized and symlink artifacts and traversal paths. A reviewer must still independently verify provenance and confirm the command really corresponds to that gate. **Never put tokens, passwords, customer PII or sensitive paths into receipts or PR logs.**
 
 Offline check (reads a local JSON file only; never executes receipt commands):
 
@@ -25,13 +25,13 @@ Offline check (reads a local JSON file only; never executes receipt commands):
 python scripts/fde_contract_validate.py docs/fde/examples/shipment-eta-audit.sample.json
 ```
 
-The sample intentionally returns nonzero (`VERDICT=NOT_READY`) because all tests remain `UNKNOWN` until executed and reviewed. Unit tests for the validator:
+The sample intentionally returns nonzero (`VERDICT=NOT_READY`) because all tests remain `UNKNOWN` until executed and reviewed. Any receipt claiming PASS must also supply `--evidence-root /path/to/sanitized/evidence`; omitting it fails closed. Unit tests for the validator:
 
 ```bash
 python -m unittest discover -s tests/scripts -p 'test_fde_contract_validate.py' -v
 ```
 
-A zero validator exit code would only mean **receipt syntax and required gate assertions have the expected shape**, not that evidence is authentic, that a security review happened, or that production release is approved. The utility intentionally rejects `production_approved: true` and any release intent other than `review_only`.
+A zero validator exit code would mean **receipt syntax and asserted gates are well-formed and the referenced local file digests match**, not that evidence is authentic, that its command actually ran, that a security review happened, or that production release is approved. The utility intentionally rejects `production_approved: true` and any release intent other than `review_only`.
 
 ## Work order and explicit stop conditions
 
