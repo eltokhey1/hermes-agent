@@ -69,3 +69,42 @@ This is a **source-intake overlay** to the 32 canonical task IDs in `MASTER_IMPL
 **Commercial acceptance rule:** Each candidate needs a real buyer-problem hypothesis, validated source/legal right, cost and privacy review, and actual customer evidence (interviews, verified pain points, or payment intent) before it can enter a project-specific pilot. Track forecasts separately from actual revenue and reject purely vote-based scoring. All sensitive customer information stays out of this public repository.
 
 **No-go remains unchanged:** All P0/P1 runtime gates UNVERIFIED, `PRODUCTION_READY=NO`. `main` remains untouched, and this PR remains Draft. Maintain the existing active weekly research radar rather than creating duplicate automations.
+
+## Product Hunt 2026 year-to-date — additive, deduplicated research
+
+**Source checked: 2026-10-18.** [Product Hunt yearly 2026](https://www.producthunt.com/leaderboard/yearly/2026) is a **year-to-date live listing**, not a finished annual award or verified sales ranking. Lists/crawl snapshots can differ and show promoted placements. Do not assert a fixed annual #rank or treat vote counts as income, verified users, or profitability. Official product pages clarify the promoted feature claims; customer and pricing claims need independent checks.
+
+**Dedup protocol:** The [October 2026 signals](#product-hunt-october-2026--research-only-mapping) already cover 12 product references. The following annual scan adds only *new product names* to the same P0–P4 task IDs; it does not add a separate engineering task matrix or authorize install.
+
+| YTD candidate | Why it matters | Canonical task / program | Scope and test gate | Primary evidence |
+| --- | --- | --- | --- | --- |
+| Lightfield | AI-native CRM reconstructing context from meetings, email and calls | P3-01, P3-02 / Viral Kit CRM, ExportLead | Compare read-only CRM extract and human-reviewed matching; no blanket mailbox scope | https://www.producthunt.com/products/lightfield |
+| Upstream | Email inbox designed for people and agents | P1-03, P2-03 / Shipping email, TradeOps | `Mail.Read` only until separate authorized human approval for writes; no Cookie transfer | https://www.producthunt.com/products/upstream-3 |
+| Kilo Code for VS Code | Parallel coding agents and diff review | P1-05, P1-06, P4-03 / Core | Independent PR review idea only, no agent tool install or autonomous merge | https://www.producthunt.com/products/kilocode |
+| KiloClaw | Managed hosting for OpenClaw | P2-03, P0-07 / Cloud Hermes | Architecture/cost/security comparison only; *not* proof Hermes hosting is solved | https://www.producthunt.com/products/kiloclaw |
+| DataFast | Revenue-attributed web analytics | P3-04 / GCC Revenue | Plan event-to-revenue measurement, but distinguish declared vs actual sales | https://www.producthunt.com/products/datafast |
+| OpenSEO | AI-friendly SEO/GEO research with MCP integrations | P3-02, P2-03 / Commercial Radar, Viral | Compare to October ReSO before any duplicate subscription; assess license and privacy | https://www.producthunt.com/products/openseo |
+| SEORCE | Search/GEO brand discovery analytics | P3-02 / Viral, commercial research | Competes with OpenSEO/ReSO concept: evaluate as one SEO/GEO cluster, **not three independent projects** | https://www.producthunt.com/products/seorce |
+| Livedocs | General data agent | P2-02, P3-03 / Evidence, shipping | Look at provenance/joins of heterogeneous data; never infer cargo events from vessel AIS | https://www.producthunt.com/products/livedocs-2 |
+| Atlas.new | Spatial data/map agent | P3-03 / Maritime intelligence | Optional map UX reference only; not authoritative port or vessel tracking | https://www.producthunt.com/products/atlas-co-2 |
+| Instruct 2.5 | Cross-app task automation | P2-03, P1-03 / Integration | Compare to shipped Hermes skills/cron; require scoped identity and fail-closed denial | https://www.producthunt.com/products/instruct-2 |
+| PostSyncer | Content marketing/publishing assistant | P3-01, P3-02 / Viral Kit | Candidate only, no auto-posting/outbound without authenticated approval | https://www.producthunt.com/products/postsyncer-2 |
+| Cowork (Claude) | Delegate work to an AI coworker | P2-03, P1-05 / Cloud design | Evaluation reference for independent review, context and tool approval; never replace core by default | https://www.producthunt.com/products/claude |
+| Framer AI Agents / Framer 3.0 | AI-managed web design/branching and publishing | P3-05, P4-03 / UI & controlled release | Study branching/approval UX, no one-click production publication | https://www.producthunt.com/products/framer |
+| Fundraisly | AI investor discovery and meeting booking | P3-01, P3-04 / Commercial Radar | Only evaluate if verified buyer demand for fundraising, not current priority for GCC B2B services | https://www.producthunt.com/leaderboard/yearly/2026 |
+
+**Cluster consolidation (prevents roadmap inflation):**
+1. **CRM/email/context:** Lightfield + Upstream + October Pancake → *one* customer-workflow opportunity intake (P3-01/02), and one security boundary (P1-03). Do not implement multiple CRMs in Hermes.
+2. **SEO/GEO/marketing:** OpenSEO + SEORCE + ReSO + October GenPage → *one* buyer-demand hypothesis for a GCC service. No subscription or content publication until proof of payment intent.
+3. **Agent harness / coding / hosting:** Kilo Code + KiloClaw + Cowork + October Harness/IrisGo → reuse Hermes built-in capabilities; defer to P1 evidence and P2 integration benchmarks.
+4. **Trade data & maps:** Livedocs + Atlas.new + Formalini → separate immutable raw carrier records, document extraction and derived AIS/ETA estimates; no inferred container discharge from AIS.
+5. **Revenue measurement:** DataFast → P3-04 **actual-outcome ledger**, and P0-07 hard spend cap. A Product Hunt vote is a discovery metric, not commercial validation.
+
+**Commercial ranked validation experiments — not implementation order:** 
+- **Track 1 — Commerce/Procurement/TradeDocs:** 10–15 qualified Gulf-market interviews, 2 anonymized document/use-case examples, human-reviewed output and an offered paid pilot. Rank subject to evidence; no guaranteed income.
+- **Track 2 — ExportLead & CRM:** 10–15 buyer interviews, permission-scoped sample of the lead/quote lifecycle, human approval for all outbound messages.
+- **Track 3 — GCC GEO service:** 5–10 buyer pain-point calls and a reversible sample visibility audit; do not create new SaaS before validation.
+- **Track 4 — Maritime shipment intelligence:** shadow read-only ETA/cargo provenance pilot only after scope/license and P1 acceptance.
+- **All tracks:** `$1,000` is an upper bound on available starting capital, **not a spend authorization**. No paid subscriptions, scraping beyond terms, bulk messages, cloud VM deployment, or production code changes.
+
+**One-line decision:** Keep canonical 32 engineering tasks + existing 7-program overlay + nine Draft PRs. Annual Product Hunt adds research candidates only; all local Windows P0 and P1 acceptance gates stay **UNVERIFIED/HOLD**, even where user-reported backup ZIP integrity checks exist. Shared weekly Hermes radar already tracks Product Hunt; do not schedule a duplicate.
