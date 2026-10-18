@@ -1,0 +1,90 @@
+"""Hermes P0 inventory tests. Temporary Git repos only; no actual Hermes access."""
+import contextlib
+from io import StringIO
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from read_only_inventory import _counts, collect, main, SCHEMA
+
+
+def git(repo: Path, *args):
+    subprocess.run(["git", "-C", str(repo), *args], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+class TestInventory(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.repo = Path(self.tmp.name) / "repo-private-username"
+        self.repo.mkdir()
+        git(self.repo, "init", "-q", "-b", "main")
+        git(self.repo, "config", "user.email", "test@example.invalid")
+        git(self.repo, "config", "user.name", "Test Fixture")
+        (self.repo / "README.md").write_text("metadata only", encoding="utf-8")
+        git(self.repo, "add", "README.md")
+        git(self.repo, "commit", "-q", "-m", "fixture")
+
+    def test_clean_repo(self):
+        report = collect(self.repo)
+        self.assertEqual(report["schema"], SCHEMA)
+        self.assertTrue(report["branch_is_main"])
+        self.assertFalse(report["working_tree_dirty"])
+        self.assertEqual(report["tracked_changes"], 0)
+        self.assertFalse(report["configured_remote_present"])
+        self.assertEqual(len(report["head_sha"]), 40)
+
+    def test_secret_filename_and_repo_path_never_emitted(self):
+        secret_name = "TOP_SECRET_PASSWORD_12345.txt"
+        (self.repo / secret_name).write_text("do not read me", encoding="utf-8")
+        git(self.repo, "remote", "add", "origin", "https://username:password@example.invalid/org/repo.git")
+        buf = StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = main(["--repo", str(self.repo)])
+        output = buf.getvalue()
+        self.assertEqual(code, 0)
+        for forbidden in [secret_name, str(self.repo), "TOP_SECRET", "password", "example.invalid", "origin"]:
+            self.assertNotIn(forbidden, output)
+        obj = json.loads(output)
+        self.assertTrue(obj["working_tree_dirty"])
+        self.assertEqual(obj["untracked_entries"], 1)
+        self.assertTrue(obj["configured_remote_present"])
+
+    def test_modified_tracked_file(self):
+        (self.repo / "README.md").write_text("changed", encoding="utf-8")
+        r = collect(self.repo)
+        self.assertTrue(r["working_tree_dirty"])
+        self.assertEqual(r["tracked_changes"], 1)
+
+    def test_aggregates_only(self):
+        self.assertEqual(_counts(" M private.txt\n?? untracked.txt"),
+                         {"tracked_changes": 1, "untracked_entries": 1, "working_tree_dirty": True})
+        self.assertEqual(_counts(""),
+                         {"tracked_changes": 0, "untracked_entries": 0, "working_tree_dirty": False})
+
+    def test_non_repo_reports_only_safe_error_code(self):
+        other = Path(self.tmp.name) / "not-git"
+        other.mkdir()
+        buf = StringIO()
+        with contextlib.redirect_stdout(buf):
+            code = main(["--repo", str(other)])
+        self.assertEqual(code, 2)
+        result = json.loads(buf.getvalue())
+        self.assertEqual(result["error_code"], "NOT_A_GIT_REPOSITORY")
+        self.assertNotIn(str(other), buf.getvalue())
+
+    def test_failing_git_does_not_echo_error_details(self):
+        with patch("read_only_inventory._git", side_effect=__import__("read_only_inventory").InventoryError("GIT_COMMAND_FAILED")):
+            buf = StringIO()
+            with contextlib.redirect_stdout(buf):
+                code = main(["--repo", str(self.repo)])
+            self.assertEqual(code, 2)
+            self.assertNotIn(str(self.repo), buf.getvalue())
+
+
+if __name__ == "__main__":
+    unittest.main()
