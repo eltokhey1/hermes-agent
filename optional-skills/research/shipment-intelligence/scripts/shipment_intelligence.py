@@ -264,6 +264,12 @@ def link(con, container: str, imo: str, source: str, note: str):
                     (container,imo,source,note.strip(),utc_now()))
 
 
+def _instant(value: str | None) -> dt.datetime:
+    """Compare UTC instants accurately, including historical mixed precision."""
+    return (dt.datetime.fromisoformat(value.replace('Z', '+00:00')).astimezone(dt.timezone.utc)
+            if value else dt.datetime.min.replace(tzinfo=dt.timezone.utc))
+
+
 def evidence_report(con, container: str, now: str|None=None, stale_hours: int=48) -> dict:
     cid=reference(container,'container')
     now_utc=aware_utc(now) if now else utc_now()
@@ -271,13 +277,16 @@ def evidence_report(con, container: str, now: str|None=None, stale_hours: int=48
     tnow=dt.datetime.fromisoformat(now_utc.replace('Z','+00:00'))
     rows=con.execute('''SELECT event_id,category,code,classifier,occurred_utc,reported_local,
                          observed_utc,source_url,source_name,location FROM evidence_events
-                         WHERE subject_type='container' AND subject_id=? ORDER BY occurred_utc DESC, event_id DESC''',(cid,)).fetchall()
+                         WHERE subject_type='container' AND subject_id=?''',(cid,)).fetchall()
     names=['event_id','category','code','classifier','occurred_utc','reported_local',
            'observed_utc','source_url','source_name','location']
     evs=[dict(zip(names,r)) for r in rows]
+    # Lexical SQLite TEXT order misorders 08:00:00Z vs 08:00:00.500000Z.
+    # Read-time sorting also protects old persisted rows with mixed precision.
+    evs.sort(key=lambda e: (_instant(e['occurred_utc']), e['event_id']), reverse=True)
     actual=[e for e in evs if e['classifier']=='ACT' and e['occurred_utc'] is not None and e['category']=='EQUIPMENT']
-    highest_date=actual[0]['occurred_utc'] if actual else None
-    tied=[e for e in actual if e['occurred_utc']==highest_date]
+    highest_date=_instant(actual[0]['occurred_utc']) if actual else None
+    tied=[e for e in actual if _instant(e['occurred_utc'])==highest_date]
     conflicted=len({(e['code'],e['location']) for e in tied})>1
     latest=None if conflicted else (tied[0] if tied else None)
     if latest:
@@ -292,9 +301,9 @@ def evidence_report(con, container: str, now: str|None=None, stale_hours: int=48
     links=con.execute('SELECT vessel_imo,evidence_source,evidence_note FROM vessel_links WHERE container_id=?',(cid,)).fetchall()
     vessels=[]
     for imo,src,note in links:
-        ais=con.execute('''SELECT code,occurred_utc,reported_local,source_url,location FROM evidence_events
-            WHERE subject_type='vessel' AND subject_id=? AND category='AIS' AND occurred_utc IS NOT NULL
-            ORDER BY occurred_utc DESC LIMIT 1''',(imo,)).fetchone()
+        ais_rows=con.execute('''SELECT code,occurred_utc,reported_local,source_url,location FROM evidence_events
+            WHERE subject_type='vessel' AND subject_id=? AND category='AIS' AND occurred_utc IS NOT NULL''',(imo,)).fetchall()
+        ais=max(ais_rows, key=lambda row: _instant(row[1]), default=None)
         v={'imo':imo,'association_source':src,'association_note':note,'last_ais_position':None,
            'ais_is_current':False}
         if ais:
