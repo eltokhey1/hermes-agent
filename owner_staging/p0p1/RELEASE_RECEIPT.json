@@ -1,0 +1,31 @@
+{
+  "created_utc": "2026-10-20",
+  "scope": "Hermes P0/P1 cloud-local staging only",
+  "tests": {
+    "result": "PASS",
+    "count": 34,
+    "environment": "disposable Linux ChatGPT container"
+  },
+  "classification": "OFFLINE_TESTED_ONLY",
+  "host_windows_tested": false,
+  "github_ci_verified": false,
+  "test_log_sha256": "d41ee647abb0286e0615ec3956ad9a7fbd20e00713ae2e495d705ea7ed3dc8d7",
+  "manifest_sha256": "26a1ff2d5c36f4b65f0b963d0c6ea11fc92d35a2633150604f2be48132aaa1b9",
+  "counts": {
+    "canonical_packages_reference": 45,
+    "canonical_legacy_ids_reference": 120
+  },
+  "gates": {
+    "G0": "NO-GO",
+    "G-CODE": "NO-GO",
+    "G1": "NO-GO",
+    "PRODUCTION": "HOLD"
+  },
+  "spend_usd": 0,
+  "actions": {
+    "github_main_modified": false,
+    "windows_modified": false,
+    "deployment": false
+  },
+  "warning": "Receipt is unauthenticated and is not a code-signing attestation."
+}
