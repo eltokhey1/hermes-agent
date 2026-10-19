@@ -125,3 +125,4 @@ class NegativeSecurityTests(unittest.TestCase):
     def test_sha_must_be_external_and_hex(self):
         z=self.zip_name('sample.txt')
         self.assertRaises(ValueError,stage_archive,z,'auto',self.root/'out')
+
