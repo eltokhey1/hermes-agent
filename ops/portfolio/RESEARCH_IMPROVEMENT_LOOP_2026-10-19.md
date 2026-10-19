@@ -25,3 +25,7 @@ For each candidate record an immutable source link, observed_at versus event_at,
 The offline research-loop prototype tests are synthetic and its result is **OFFLINE_TESTED_DESIGN_ONLY**. They do **not** close Windows P0/P1 or prove any actual external benefit. Real P0 requires read-only Windows inventory, protected backup plus *isolated functional restore*, least-privilege identity and secret-exposure evidence; real P1 requires durable intent, no blind UNKNOWN retry, independently protected acceptance store and reviewed recovery tests.
 
 Draft documentation for review only. No source data from private shipments, customers, accounts, or laptop is included.
+
+## Offline v3 acceptance note — 2026-10-19
+
+An independent local regression check found a cross-source ID collision risk: the initial v2 recorder keyed change detection by `(source_id,id)` but shortlisted and formatted candidates by raw `id`, risking evidence/metric misattribution. Offline v3 adds `qualified_id=SOURCE::ID`, fails closed on ambiguous bare outcome IDs and MCP lookups, and validates malformed identifier types. **69/69 synthetic local tests passed** (58 prior + 11 new). A separate private `CURRENT.xlsx` copy retains all 26 original worksheets; four intentional existing-cell updates and two expanded research ranges are documented in a local receipt. No real API, models, Windows instance, P0/P1 acceptance, or independent business outcome has been tested. **Keep this PR draft, no merge.**
