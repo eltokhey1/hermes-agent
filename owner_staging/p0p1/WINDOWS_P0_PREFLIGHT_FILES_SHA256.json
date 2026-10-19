@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-20",
+  "host": "NOT_CONNECTED",
+  "windows_tests": "NOT_RUN",
+  "script_test_environment": "Linux/static review only",
+  "files": {
+    "README_AR.md": "cda4e0fca664d5a410d72454a1ef5b0b1069883bae962c8f00ae2a011bdadd47",
+    "WINDOWS_P0_READONLY_PREFLIGHT.ps1": "954707ecf4a05fb044493fefd0cbf0955ac0abb0aaf6309d69c2a84203ee72d6"
+  },
+  "gates": {
+    "G0": "NO-GO",
+    "G-CODE": "NO-GO",
+    "G1": "NO-GO"
+  },
+  "production": "HOLD"
+}
