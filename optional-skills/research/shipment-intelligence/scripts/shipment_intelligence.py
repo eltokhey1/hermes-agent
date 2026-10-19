@@ -121,10 +121,15 @@ def adapt_ais(record: dict, provider: str) -> dict:
     loc=record.get('port_name') or record.get('location')
     # Preserve AIS observations without treating them as current ship status.
     if typ=='AIS':
+        # A position without a timestamp and both coordinates is not usable as AIS evidence.
+        if not aware_utc(record.get('time_utc') or record.get('event_time_utc')):
+            raise ValueError('AIS position requires timezone-grounded timestamp')
         lat=record.get('latitude',record.get('lat'))
         lon=record.get('longitude',record.get('lon'))
         if (lat is None) != (lon is None):
             raise ValueError('Incomplete AIS position')
+        if lat is None:
+            raise ValueError('AIS position requires coordinates')
         if lat is not None:
             try:
                 latitude, longitude = float(lat), float(lon)
@@ -154,6 +159,8 @@ def adapt_dcsa(record: dict, provider: str, source_url: str) -> dict:
             raise ValueError('Transport event lacks shipment reference; not a shipment event')
     code=record.get({'SHIPMENT':'shipmentEventTypeCode','TRANSPORT':'transportEventTypeCode',
                      'EQUIPMENT':'equipmentEventTypeCode'}[cat])
+    if not isinstance(code, str) or not code.strip():
+        raise ValueError('Missing DCSA event code')
     rloc=record.get('eventLocation') or {}
     if isinstance(rloc,dict):
         loc=rloc.get('UNLocationCode') or rloc.get('locationName') or rloc.get('locationCode')
