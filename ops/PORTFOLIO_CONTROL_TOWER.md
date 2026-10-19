@@ -107,7 +107,7 @@ This is a **source-intake overlay** to the 32 canonical task IDs in `MASTER_IMPL
 - **Track 4 — Maritime shipment intelligence:** shadow read-only ETA/cargo provenance pilot only after scope/license and P1 acceptance.
 - **All tracks:** `$1,000` is an upper bound on available starting capital, **not a spend authorization**. No paid subscriptions, scraping beyond terms, bulk messages, cloud VM deployment, or production code changes.
 
-**One-line decision:** Keep canonical 32 engineering tasks + existing 7-program overlay + nine Draft PRs. Annual Product Hunt adds research candidates only; all local Windows P0 and P1 acceptance gates stay **UNVERIFIED/HOLD**, even where user-reported backup ZIP integrity checks exist. Shared weekly Hermes radar already tracks Product Hunt; do not schedule a duplicate.
+**One-line decision:** Keep canonical 32 engineering tasks + existing 7-program overlay + the currently open 10 Draft PRs. Annual Product Hunt adds research candidates only; all local Windows P0 and P1 acceptance gates stay **UNVERIFIED/HOLD**, even where user-reported backup ZIP integrity checks exist. Shared weekly Hermes radar already tracks Product Hunt; do not schedule a duplicate.
 
 ## Product Hunt category intelligence — workflow, dictation, voice and vibe coding
 
@@ -151,4 +151,12 @@ Editorial awards, ratings and review counts represent Product Hunt's editorial/c
 
 **Priority decision:** P0 backup custody/functional restoration and P1 evidence/guard invariants before any voice/code/workflow integration. P2 can later evaluate narrowly-scoped read-only voice/text and connectors. P3 may test **one** bilingual trade-operations workflow or voice intake manually if confirmed GCC buyer pain justifies it. Vibe coding supports prototype speed only; it does not create a new business or override security. P4 remains deferred.
 
-**Operations:** Reuse the existing *single* unified weekly Hermes radar to watch these six categories and product-life-cycle changes, without adding another schedule. Existing 32 engineering tasks, 7 portfolio lanes and nine Draft PRs remain the source of truth. Do not modify `main` or enable cloud spend from research findings.
+**Operations:** Reuse the existing *single* unified weekly Hermes radar to watch these six categories and product-life-cycle changes, without adding another schedule. Existing 32 engineering tasks and 7 portfolio lanes remain the authority; 10 Draft PRs are linked proposals, not deployed proof. Do not modify `main` or enable cloud spend from research findings.
+
+## Shipment Intelligence PR #10 — source-gated staging, no new project
+
+As of 2026-10-19, [PR #10](https://github.com/eltokhey1/hermes-agent/pull/10) is a tenth **open Draft PR**, proposing an offline DCSA/AIS/SQLite evidence adapter under **SHP-02 / VES-01**, mapped to existing engineering **P3-03** (with P2-02 provenance and P1-05 acceptance). It is **not** an additional canonical program, not installed on the Windows host and not a live carrier integration.
+
+**Verified control distinction:** the owner Library's prior v0.1.0 reference passed 12/12 synthetic unit tests in an isolated checkout, but malformed input still created a SQLite DB before rejection, arbitrary form-valid source URLs could produce a `CURRENT_ACTUAL` provider claim, and Maersk-style exports received derived local event IDs. The v0.1.1 PR contains these code paths; it was **read-only code reviewed**, not execution-tested here. [PR #10 review note](https://github.com/eltokhey1/hermes-agent/pull/10#issuecomment-6260572178).
+
+**Action:** Keep commercial discovery read-only and independent. Do not infer vessel AIS as shipment release/discharge, rely on unauthenticated source-URL text as verified events, install a Draft skill, or add another shipment project. Follow P0 restored-app tests, P1 independent go/no-go, P2 authorized provenance and P3-03 validation before staging promotion. Product Hunt opportunities continue to be research references only. Current GH changed-file enumeration: 10 Draft PRs, 46 unique files, no filename overlap, **not** proof of mergeability or CI.
