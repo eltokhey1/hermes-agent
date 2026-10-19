@@ -162,3 +162,21 @@ def test_ais_zero_numeric_provider_id_is_valid():
 def test_invalid_provider_name_is_rejected():
     with pytest.raises(ValueError, match='provider identity'):
         si.adapt_dcsa(dcsa(), 'carrier source with spaces', SRC)
+
+
+
+@pytest.mark.parametrize('bad', [
+    {'record_id':'pos-missing','imo':9173355,'event_type':'POSITION',
+     'time_utc':'2026-10-18T09:00:00Z','source_url':SRC},
+    {'record_id':'pos-no-time','imo':9173355,'event_type':'POSITION',
+     'lat':32.676,'lon':14.244,'source_url':SRC},
+])
+def test_position_missing_coordinates_or_timestamp_fails_closed(bad):
+    with pytest.raises(ValueError,match='AIS'):
+        si.adapt_ais(bad,'aisprovider')
+
+
+@pytest.mark.parametrize('code', [None, '', '   '])
+def test_missing_dcsa_equipment_event_code_fails_closed(code):
+    with pytest.raises(ValueError,match='event code'):
+        si.adapt_dcsa(dcsa(code=code),'carrier',SRC)
