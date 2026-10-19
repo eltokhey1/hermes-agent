@@ -179,3 +179,31 @@ def test_position_missing_coordinates_or_timestamp_fails_closed(bad):
 def test_missing_dcsa_equipment_event_code_fails_closed(code):
     with pytest.raises(ValueError,match='event code'):
         si.adapt_dcsa(dcsa(code=code),'carrier',SRC)
+
+def test_fractional_timestamp_milestone_order(tmp_path):
+    """Older whole-second time must not outrank a newer fractional-second ACT event."""
+    db=open_db(tmp_path)
+    earlier=si.adapt_dcsa(dcsa(code='GTIN',when='2026-10-18T08:00:00Z',
+                               event_id='older-whole-second'),'carrier',SRC)
+    later=si.adapt_dcsa(dcsa(code='DISC',when='2026-10-18T08:00:00.500000Z',
+                             event_id='newer-fractional'),'carrier',SRC)
+    si.ingest(db,[earlier,later])
+    report=si.evidence_report(db,'ABCD1234567','2026-10-18T09:00:00Z')
+    assert report['latest_confirmed_equipment_event']['event_id']=='carrier:newer-fractional'
+
+
+def test_fractional_timestamp_ais_order(tmp_path):
+    """AIS latest position is selected by instant, not lexicographic SQLite TEXT."""
+    db=open_db(tmp_path)
+    base={'imo':9173355,'event_type':'POSITION','lat':32.6,
+          'source_url':SRC}
+    earlier=si.adapt_ais({**base,'record_id':'old','time_utc':'2026-10-18T08:00:00Z',
+                          'lon':14.2},'ais')
+    later=si.adapt_ais({**base,'record_id':'new','time_utc':'2026-10-18T08:00:00.500000Z',
+                        'lon':14.3},'ais')
+    si.ingest(db,[earlier,later])
+    si.link(db,'ABCD1234567','9173355',SRC,
+            'Synthetic carrier documentation links the ship')
+    report=si.evidence_report(db,'ABCD1234567','2026-10-18T09:00:00Z')
+    assert report['shipment_state']=='UNKNOWN'
+    assert report['associated_vessels'][0]['last_ais_position']['location']=='32.6, 14.3'
