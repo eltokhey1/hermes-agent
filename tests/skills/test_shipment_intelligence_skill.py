@@ -164,7 +164,6 @@ def test_invalid_provider_name_is_rejected():
         si.adapt_dcsa(dcsa(), 'carrier source with spaces', SRC)
 
 
-
 @pytest.mark.parametrize('bad', [
     {'record_id':'pos-missing','imo':9173355,'event_type':'POSITION',
      'time_utc':'2026-10-18T09:00:00Z','source_url':SRC},
