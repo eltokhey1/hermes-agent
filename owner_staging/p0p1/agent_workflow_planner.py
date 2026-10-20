@@ -10,7 +10,7 @@ import hashlib
 import json
 import math
 import re
-from collections import defaultdict
+from decimal import Decimal
 from typing import Any
 
 MAX_TASKS = 45  # One work item per canonical work package (not a new registry)
@@ -35,7 +35,10 @@ class InvalidPlan(ValueError):
 def _number(value: Any, label: str, low: float, high: float, *, strict_min: bool = False) -> float:
     if type(value) not in (int, float):
         raise InvalidPlan("INVALID_NUMBER:" + label)
-    number = float(value)
+    try:
+        number = float(value)
+    except (OverflowError, ValueError) as exc:
+        raise InvalidPlan("INVALID_NUMBER:" + label) from exc
     if not math.isfinite(number) or (number <= low if strict_min else number < low) or number > high:
         raise InvalidPlan("OUT_OF_RANGE:" + label)
     return number
@@ -66,7 +69,10 @@ def _validate_task(task: Any) -> dict:
     result = {"id": ident, "role": task["role"], "action": task["action"], "dependencies": list(deps),
               "impact": impact, "confidence": confidence, "urgency": urgency, "effort": effort,
               "estimated_cost_usd": cost}
-    result["priority_score"] = round(impact * confidence * urgency / effort, 6)
+    score = impact * confidence * urgency / effort
+    if not math.isfinite(score):
+        raise InvalidPlan("NONFINITE_PRIORITY")
+    result["priority_score"] = round(score, 6)
     return result
 
 
@@ -114,7 +120,7 @@ def plan_tasks(request: dict) -> dict:
     limits = request["limits"]
     if not isinstance(limits, dict) or set(limits) != {"max_usd", "max_steps", "max_tool_calls"}:
         raise InvalidPlan("INVALID_LIMITS_SCHEMA")
-    budget = _number(limits["max_usd"], "max_usd", 0, 1_000_000)
+    budget = Decimal(str(_number(limits["max_usd"], "max_usd", 0, 1_000_000)))
     steps = limits["max_steps"]
     tool_calls = limits["max_tool_calls"]
     if type(steps) is not int or not 0 <= steps <= MAX_STEPS or type(tool_calls) is not int or not 0 <= tool_calls <= MAX_STEPS:
@@ -125,7 +131,7 @@ def plan_tasks(request: dict) -> dict:
         raise InvalidPlan("UNVERIFIED_GATE_STATUS")
     ordered = sorted(tasks.values(), key=lambda t: (-t["priority_score"], t["id"]))
     proposed = []
-    projected_cost = 0.0
+    projected_cost = Decimal("0")
     selected = 0
     for t in ordered:
         if t["id"] in completed:
@@ -138,19 +144,19 @@ def plan_tasks(request: dict) -> dict:
             decision = "DEPENDENCY_PENDING"
         elif tool_calls == 0 or selected >= steps or selected >= tool_calls:
             decision = "STEP_OR_TOOL_LIMIT"
-        elif projected_cost + t["estimated_cost_usd"] > budget + 1e-9:
+        elif projected_cost + Decimal(str(t["estimated_cost_usd"])) > budget:
             decision = "BUDGET_LIMIT"
         else:
             # A proposal, NOT executable authorization; no tool invocation in this module.
             decision = "CANDIDATE_READ_ONLY_NOT_AUTHORIZED"
-            projected_cost += t["estimated_cost_usd"]
+            projected_cost += Decimal(str(t["estimated_cost_usd"]))
             selected += 1
         proposed.append({"id": t["id"], "role": t["role"], "action": t["action"],
                          "priority_score": t["priority_score"], "decision": decision,
                          "dependencies": t["dependencies"], "task_digest": _canonical_digest(t)})
     return {"scope": "OFFLINE_ADVISORY_ONLY", "decisions": proposed,
             "count": len(proposed), "proposed_steps": selected,
-            "projected_cost_usd": round(projected_cost, 6),
+            "projected_cost_usd": float(projected_cost),
             "execution_performed": False, "sandbox_verified": False, "completion_evidence_verified_externally": False,
             "G0": "NO-GO", "G_CODE": "NO-GO", "G1": "NO-GO", "production": "HOLD"}
 
