@@ -39,10 +39,15 @@ def cmd_resume(args: argparse.Namespace) -> int:
     """Disengage the global emergency stop."""
     from agent.estop import disengage, is_engaged, sentinel_path
 
-    removed = disengage()
-    # A failed unlink, a second profile marker or an inaccessible marker
-    # must never be confused with a successfully resumed dispatcher.
-    if is_engaged():
+    try:
+        removed = disengage()
+        # A failed unlink, a second profile marker or an inaccessible marker
+        # must never be confused with a successfully resumed dispatcher.
+        still_paused = is_engaged()
+    except OSError:
+        print("ERROR: ESTOP state cannot be verified; resume NOT verified.")
+        return 2
+    if still_paused:
         print("ERROR: ESTOP may still be engaged; resume NOT verified.")
         return 2
     if removed:
