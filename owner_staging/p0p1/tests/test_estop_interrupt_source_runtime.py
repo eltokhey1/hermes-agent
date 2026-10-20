@@ -79,8 +79,25 @@ class SourceBackedESTOPTests(unittest.TestCase):
         self.assertFalse(self.estop.is_engaged())
 
     def test_stat_errors_fail_safe(self):
-        with patch.object(Path, "exists", side_effect=OSError("synthetic denied")):
+        # Exercise the real stat call, not Path.exists: 3.14 Path.exists
+        # swallows OSError and must never be used for an ESTOP safety gate.
+        self.estop._candidate_sentinel_paths = lambda: [self.profile / "ESTOP"]
+        with patch.object(Path, "stat", side_effect=PermissionError("synthetic denied")):
             self.assertTrue(self.estop.is_engaged())
+
+    def test_path_exists_false_cannot_bypass_marker(self):
+        self.estop.engage()
+        with patch.object(Path, "exists", return_value=False):
+            self.assertTrue(self.estop.is_engaged())
+            self.assertIsNotNone(self.estop.get_state())
+            self.assertIsNotNone(self.estop.paused_reply())
+
+    def test_state_remains_paused_on_stat_access_denial(self):
+        self.estop._candidate_sentinel_paths = lambda: [self.profile / "ESTOP"]
+        with patch.object(Path, "stat", side_effect=PermissionError("synthetic denied")):
+            self.assertTrue(self.estop.is_engaged())
+            self.assertEqual(self.estop.get_state(), {"reason": None, "engaged_at": None})
+            self.assertIn("paused", self.estop.paused_reply())
 
     def test_repeated_pause_logs_once_per_component(self):
         logger = Mock()
