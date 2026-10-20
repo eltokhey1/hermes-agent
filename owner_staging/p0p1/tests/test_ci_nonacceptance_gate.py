@@ -113,9 +113,13 @@ class DiscoveryGateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.tests = self.root / "tests"
         self.tests.mkdir()
+        # Python 3.12 requires discoverable temporary dirs to be importable.
+        (self.tests / "__init__.py").write_text("", encoding="utf-8")
 
     def write_suite(self, count: int):
-        file = self.tests / "test_fixture_count.py"
+        # Unique module names prevent unittest/sys.modules collisions across fixtures.
+        name = "test_fixture_" + self.root.name.replace("-", "_") + ".py"
+        file = self.tests / name
         file.write_text(
             "import unittest\n"
             "class Fixture(unittest.TestCase): pass\n"
