@@ -1,0 +1,12 @@
+[
+  {
+    "eventID": "synthetic-equipment-arrival-001",
+    "eventType": "EQUIPMENT",
+    "equipmentReference": "ABCD1234567",
+    "eventClassifierCode": "ACT",
+    "equipmentEventTypeCode": "GTIN",
+    "eventDateTime": "2026-10-18T08:00:00Z",
+    "eventCreatedDateTime": "2026-10-18T09:00:00Z",
+    "eventLocation": {"UNLocationCode": "LYKHO"}
+  }
+]
