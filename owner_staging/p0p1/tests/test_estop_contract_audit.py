@@ -94,7 +94,19 @@ class SourceIntegrityTests(unittest.TestCase):
         self.assertEqual(git_blob_sha1(content),digest)
     def test_read_with_pin(self):
         p=self.root/'estop.py';sha=git_blob_sha1(p.read_bytes())
-        src,r=_read_source(p,sha);self.assertEqual(src,SOURCE);self.assertTrue(r['pinned'])
+        src,r=_read_source(p,sha)
+        # Exact on-disk bytes are authoritative for Git blob pinning; Windows
+        # write_text may translate LF to CRLF and must not invalidate this check.
+        self.assertEqual(src,p.read_bytes().decode('utf-8'))
+        self.assertTrue(r['pinned'])
+    def test_crlf_blob_pin_preserves_original_bytes(self):
+        p=self.root/'estop.py'
+        raw=SOURCE.replace('\n','\r\n').encode('utf-8')
+        p.write_bytes(raw)
+        src,r=_read_source(p,git_blob_sha1(raw))
+        self.assertEqual(src,raw.decode('utf-8'))
+        self.assertIn('\r\n',src)
+        self.assertTrue(r['pinned'])
     def test_wrong_pin_refused(self):
         with self.assertRaisesRegex(ValueError,'GIT_BLOB_SHA_MISMATCH'):
             _read_source(self.root/'estop.py','f'*40)
