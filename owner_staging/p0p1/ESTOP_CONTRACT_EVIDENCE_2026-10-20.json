@@ -1,0 +1,35 @@
+{
+  "schema": "hermes.p0.estop_contract_audit.v1",
+  "date_utc": "2026-10-20",
+  "source_repository": "eltokhey1/hermes-agent",
+  "source_main_commit": "251e5f7c0a067239655f3421812ab7492a206065",
+  "source_blob_refs": {
+    "agent/estop.py": "b7cc51cc5e542d3cfb6a139e78d7287a9add44ba",
+    "hermes_cli/subcommands/pause.py": "5b05684a3998ab0d1053e1d64d825085d5696b00"
+  },
+  "method": "read_only_connected_github_review_plus_synthetic_ast_unit_tests",
+  "new_offline_tests": {
+    "command": "python -m unittest discover -s /mnt/data/hermes_p0p1_estop_contract/tests -p test_*.py -q",
+    "passed": 26,
+    "failed": 0,
+    "environment": "Linux Python 3.13.5"
+  },
+  "prior_offline_tests_reexecuted": {
+    "archive": "Hermes_P0_Runtime_Safety_Audit_OFFLINE_2026-10-20.zip",
+    "passed": 26,
+    "failed": 0
+  },
+  "combined_offline_tests": 52,
+  "runtime_windows_tests_this_turn": 0,
+  "source_pinned_binary_integrity_tested_against_upstream": false,
+  "estop_scope": "NEW_WORK_ONLY",
+  "hard_cancel_in_flight_verified": false,
+  "tool_dispatch_guard_verified": false,
+  "functional_restore_verified": false,
+  "production": "HOLD",
+  "G0": "NO-GO",
+  "G_CODE": "NO-GO",
+  "G1": "NO-GO",
+  "unit_tests_scope": "synthetic fixtures only, do not claim repository integration",
+  "tracked_canonical": "45 work packages / 120 legacy IDs / 16 streams"
+}
