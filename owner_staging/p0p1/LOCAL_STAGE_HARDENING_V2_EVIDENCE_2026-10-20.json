@@ -1,0 +1,43 @@
+{
+  "schema": "hermes.p0p1.staging_hardening.v2",
+  "date": "2026-10-20",
+  "scope": "OFFLINE_ONLY",
+  "source_ref": "eltokhey1/hermes-agent staging@602e87206a71ae136c3c938d9f58e1e2e14520a3",
+  "regression": {
+    "git_staged_rename_original_count": 2,
+    "git_staged_rename_v2_count": 1,
+    "repo_kind": "synthetic temporary Git repo"
+  },
+  "tests": {
+    "baseline": 110,
+    "new": 30,
+    "total": 140,
+    "failures": 0,
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "command": "python -m unittest discover -s tests -p test_*.py -q",
+    "result": "PASS"
+  },
+  "modified_installed_hermes": false,
+  "windows_host_validation": false,
+  "full_native_backup_verified": false,
+  "functional_restore_verified": false,
+  "estop_inflight_cancel_verified": false,
+  "CI_validated": false,
+  "artifacts": {
+    "local_stage_hardened_v2.py": {
+      "sha256": "ff3d128ac31e2c47b3a9f8dc1605dacd0b5c8aea45b22d576ea1f055f1e7b80d",
+      "bytes": 9100
+    },
+    "tests/test_local_stage_hardened_v2.py": {
+      "sha256": "605f0df2d1273d6450f1b1b1bbe456663deb67e68d1ae7ff4d45b2bda95965c8",
+      "bytes": 7663
+    }
+  },
+  "gates": {
+    "G0": "NO-GO",
+    "G-CODE": "NO-GO",
+    "G1": "NO-GO",
+    "production": "HOLD"
+  }
+}
