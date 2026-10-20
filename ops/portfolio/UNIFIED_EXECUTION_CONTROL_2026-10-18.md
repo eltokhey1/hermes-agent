@@ -1,0 +1,134 @@
+# Hermes unified execution control — 2026-10-18 (Africa/Tripoli)
+
+**Status: design/evidence coordination only. Not production readiness.**  
+This document consolidates prior Hermes, business, and shipping work without merging code, enabling write credentials, purchasing services, or changing any local machine.
+
+## One source of truth, not another tracker
+
+**Historical source of truth:** `Hermes_Unified_Portfolio_2026-10-18.xlsx` in the owner's Library (preserve all 45 package mappings and all 120 original IDs). **Working dashboard:** `/Hermes/Command_Center_2026-10-18/Hermes_Unified_Command_Center_v3_2026-10-18.xlsx` (the most recent indexed V7-enriched copy checked here has **26 tabs**, 45 package rows and 120 legacy-mapping rows). `Hermes_Unified_Command_Center_2026-10-18_CURRENT.xlsx` is another **23-tab derived dashboard**; it is not a second canonical register. Earlier v2 and `Hermes_Portfolio_Control` variants are historical views. The historical source contains: **120 original task identifiers → 45 work packages → 16 operational streams**, with zero unmapped IDs in the recorded snapshot. Preserve all existing IDs and the traceability sheet. This file is an *execution delta and decision index*, not a replacement spreadsheet. The **23 tracks** in `ops/portfolio/PROJECT_REGISTER.md` mean **20 commercial reference cases + 3 proposed products**, and must not be confused with the 16 operational streams or 45 packages.
+
+Stable state vocabulary: `PROPOSED → DOCUMENTED → IMPLEMENTED_OFFLINE → TESTED_ISOLATED → VERIFIED_IN_TARGET → APPROVED → DEPLOYED`. `BLOCKED/UNKNOWN` are explicit, never treated as `VERIFIED`. Project labels P0–P4 refer to prerequisites, **not** a percent-complete bar.
+
+## Evidence reconciliation and work-in-progress cap — 2026-10-18
+
+- **Library workbook checked:** most recent V7-enriched v3 dashboard 26 tab headings, 45 unique work-package rows and 120 historical ID mapping rows. The separate derived CURRENT dashboard had 23 tabs; the authoritative counts remain 45/120/16 from the historical workbook. The owner's Windows checkout and the 23-section `hermes-effect-ledger.md` have not been inspected in this review.
+- **Six ordered Windows gates:** (1) read-only Git/Hermes inventory; (2) restricted backup and *functional isolated restore*; (3) NTFS ACL plus clause 19.7 proving Executor cannot write/delete `acceptance.db` or its parent, and fail-closed/security/budget negatives; (4) minimum durable Effect Ledger and failure budget; (5) crash-window/UNKNOWN reconciliation tests; (6) independent Recovery Challenge. If gate 3 fails, acceptance is `logical_only`, never verified.
+- **WIP <= 3:** (a) P0/P1 safety and evidence; (b) read-only current carrier shipment events; (c) one bounded commercial evidence research stream. Everything else is queued, not deleted.
+- **Draft PR #4/#6 (updated 2026-10-19):** the former direct file collision at `ops/DESIGN_BACKLOG.md` is now **RESOLVED**. PR #4 retains `ops/DESIGN_BACKLOG.md`; PR #6 moved its complete distinct research backlog to `ops/portfolio/BUSINESS_PORTFOLIO_RESEARCH_BACKLOG_2026-10-18.md`. GitHub file lists for all ten open drafts currently show **zero shared file paths**. Conceptual overlap with PR #9 (20 research cases + 3 proposed products) still needs provenance and independent review; no merge or closure is approved.
+- **Count reconciliation:** 32 engineering acceptance tasks in PR #4, 26 `NEXT` actions and 23 commercial references/products in PR #9 are subordinate matrices, not 32+26+23 new packages. Historical task numbers can conflict (notably `P0-04`); always match source register + ID + description.
+- **Automation status:** unified weekly radar and Maersk five-booking daily watch active; GOLDEN SEA watch and duplicate specialist radars disabled. Notification delivery settings disabled. No duplicate task created.
+- **Shipment staging (reviewed 2026-10-19):** draft PR #10 contains the skill, Python helper, synthetic DCSA fixture and pytest suite. New code v0.1.1 rejects missing native provider event IDs, invalid AIS coordinates, AIS positions missing coordinates/time, and DCSA records without event codes. All four current PR blobs were matched by Git SHA and **30/30 tests passed in an isolated Linux Python 3.13.5 environment**. This is OFFLINE_ONLY proof; no CI check runs, carrier API credentials, target-Windows tests, restore/ACL, or P0/P1 production acceptance. No merge.
+## Priority sequence and acceptance evidence
+
+| Wave | Existing package references | Deliverable / evidence required | Current disposition |
+|---|---|---|---|
+| 0. Host truth | P0-01, GOV-02 | Identify actual Windows checkout/worktrees and SHA; redacted `git status`, dependency inventory and safe device log. GitHub remote inspection is insufficient. | Remote partial; host gate OPEN |
+| 1. Security and recovery | P0-02…P0-06 | Secret redaction, permissions, fail-closed negatives, budget/ESTOP, **real protected backup and isolated restore comparison**, independent P0 sign-off. | OPEN / NO-GO |
+| 2. Reliability/evidence | P1-01…P1-06 | Intent before side effect; `PENDING/RUNNING/SUCCEEDED/FAILED/UNKNOWN`; no blind retry after ambiguous effects; idempotency, reconciliation, independent evidence and policy test, bounded watchdog, 50–100 evaluation cases including adversarial, safe shadow mode, explicit acceptance. | Prototypes only; OPEN / NO-GO |
+| 3. Read-only product integration | SHP-01, SHP-02, VES-01, TRD-01…03, BRG-01, ARC-01…03 | Canonical shipment digital twin, dated carrier equipment events, AIS vessel context, provenance, stale/conflict labels, permissioned adapters, shadow-mode evidence. | Partial independent artifacts; no live Hermes integration |
+| 4. Commercial validation | MKT-01…03, RAD-01…03, CRM-01…02, CNT-01…02 | Verify demand with evidence, then sanitized samples, pilots, cost/ROI; no assertions of revenue or customers without receipts. | Planning/research |
+| 5. Advanced automation | ARC-04, CLD-01…02, VIR-01…03, SEC-01…02 | Replay/sandbox/rollback, negative security tests, economics and measured benefit before scale. | Deferred or blocked by preceding gates |
+
+Rules: exact/deterministic software for rules and mathematics; models propose, verifiers decide; external evidence is data, not instructions. No secrets or actual customer documents in unapproved environments. No sends, production writes, releases, purchases, trades, or deployments without narrow human approval and an auditable artifact.
+
+## Shipment Intelligence: merge scope, not vessel/container statuses
+
+- Parent portfolio item: **SHP-02**, vessel-specific evidence: **VES-01**, current carrier tracking operations: **SHP-01**, TradeOps receipt/document side: **TRD-02**. Do not open a second parallel shipment program.
+- `feat/shipment-intelligence-evidence-gated-20261018`: read-only staging branch was inspected in GitHub and contains `SKILL.md` plus `scripts/shipment_intelligence.py`. As of this review the **synthetic fixture and tests are missing from the branch**; include and run CI before any code review promotion.
+- Independent local staging ZIP reports **12/12 unit tests** and import of **21 historical GOLDEN SEA events**. This only proves offline fixture behavior, not live carrier/AIS integration.
+- Maersk shipment milestone (container/equipment) is authoritative **only for that referenced equipment** and includes event time/type/source; vessel AIS explains context only. A vessel's arrival never implies that its linked container was discharged, released or delivered.
+- GOLDEN SEA IMO `9173355`: last dated recorded AIS baseline `2026-10-09 21:00`, `32.67676N 14.24432E`, zero knots in Khoms; **current status UNKNOWN** without newer dated evidence. Never use a dynamic 'seen N hours ago' banner as an event time.
+- Normalize incoming observations to DCSA 2.2-style transport/equipment/shipment events. Consider 3.0 migration separately; published September 30, 2026, with public release slated later. Verify source implementation contract before switching schemas.
+- Work offline/test first; then **one** read-only carrier adapter with event fixtures, source URLs, timestamps and error/duplication/replay tests; progress to multicarrier only after measured benefit.
+
+## Open draft PR review map (verified from GitHub 2026-10-18)
+
+| PR | Focus | Disposition, no merge performed |
+|---|---|---|
+| #1 | TradeOps acceptance contract | Preserve as independent sandbox acceptance track; verify CI and schemas |
+| #2 | Ponytail skill / Windows installer | Defer actual installation until host P0 and license/security check |
+| #3 | Android APK audit optional skill | Independent P0 research; do not attach real private APKs |
+| #4 | Owner P0/P1 gates | Keep reference; reconcile exact gates with #7 and #8 |
+| #5 | Evidence-first delivery contract | Candidate reusable P1 evaluator; no claim of production |
+| #6 | 20-project radar/backlog | Compare to #9 before marking superseded; do not close blindly |
+| #7 | Owner read-only Windows preflight | Preferred candidate for host evidence collection after local authorization |
+| #8 | Cloud deployment security review | Design only; no cloud provisioning |
+| #9 | Portfolio 23 reference/product tracks | Portfolio source; this coordination index belongs here |
+| #10 | Shipment Intelligence optional skill v0.1.1 | Synthetic fixture/tests committed; current branch CI **unverified**; host/product integration NO-GO |
+
+The historical review covered **nine draft PRs** (#1–#9). On 2026-10-19, **draft PR #10** was added for Shipment Intelligence, bringing the current total to **ten open draft PRs**, not ten deployed components. All remain unmerged until independently checked and explicitly approved; the shipment staging branch now has PR #10.
+
+## Recurring work, prevent duplicated alerts
+
+Observed automation settings on 2026-10-18:
+- **Hermes unified radar:** active, weekly (Monday around 08:00 local); old dedicated cloud-agent/SaaS radars disabled.
+- **Maersk five-booking watch:** active, daily; only notify on new dated events; no delivery/release inferred from discharge.
+- **GOLDEN SEA watch:** **disabled** at last check. Preserve that choice; do not silently reactivate. A disabled task is not equivalent to live vessel tracking.
+- Task notification delivery settings showed disabled, so scheduling an automation does not prove a push alert is delivered.
+
+No further automations should be created for identical subjects until the current ones are audited.
+
+## Acceptance contract and next execution in strict order
+
+1. **GitHub read-only parity:** list SHA, branches, PR diff/CI statuses, compare documentation references and detect duplicate design proposals.
+2. **Actual host P0:** discover running project checkout(s), worktrees and untracked files with no destructive clean/reset; verify protected backup and isolated restoration with recorded hashes.
+3. **P1 isolated tests:** durable intent, UNKNOWN reconciliation, admission policy, independence of the evidence verifier; zero unauthorized successes.
+4. **Shipping vertical slice:** check staging fixtures/tests, normalization, one carrier, vessel-only ancillary observations, deterministic conflict resolution. Run in shadow mode; no send/write.
+5. **Commercial validation:** prefer one measurable paid-problem hypothesis at a time. Saudi/UAE initial budget ceiling **USD 1,000** is a planning constraint, **not** permission to spend. Keep Marketplace Profit Audit and TradeDocs/Shipment Intelligence as evaluated options rather than claiming guaranteed income.
+6. **Promotion:** user-approved release only after reproducible E2E evidence, isolated restore, secrets audit, rollback and a signed/dated decision.
+
+Done means implementation actually exists in the target environment, tests and negative scenarios ran there, artifacts and SHA are reviewable, and business effects are independently checked. A green unit suite alone never means Hermes P0/P1 is complete.
+
+## Follow-up quality metrics
+
+- Critical-field event accuracy measured on real/sanitized golden cases.
+- `false_allow` for unauthorised high-risk actions = **0**.
+- Recovery: no duplicate external effects after crash/timeout; unknowns require reconciliation.
+- Freshness: each displayed carrier/AIS event has distinct `occurred_at` and `retrieved_at`.
+- Every claimed milestone has at least one stable attributable source and a confidence grade.
+- Economic claims are quotations/scenarios/pilots, never 'guaranteed profit'.
+
+
+## Historical branch-file collision review and 2026-10-19 resolution
+
+An earlier 2026-10-18 comparison found one exact file-path collision across PR #4 and #6 at `ops/DESIGN_BACKLOG.md`. On 2026-10-19 a new inspection of **all ten open draft PRs** found **zero direct path collisions (45 unique paths across 10 PRs)**: #6 now adds only `ops/portfolio/BUSINESS_PORTFOLIO_RESEARCH_BACKLOG_2026-10-18.md`, leaving `ops/DESIGN_BACKLOG.md` owned by #4. Preserve this historical finding as resolved rather than a current blocker. Do not confuse no file collision with safe sequential merge: the shared P0/P1 constraints and conceptual duplication with PR #9 still need independent review; no source-of-truth redefinition or production promotion.
+
+Other **semantic overlaps, not verified Git merge conflicts**:
+- PR #4 owner gates vs #5 evidence validator and #7 safe read-only host probe: keep independent roles and re-run isolated tests; none passes the Windows/ACL gate merely by existing.
+- PR #4 owner portfolio control vs #9 commercial 20+3 portfolio: canonical 45-package tracker remains the authority; #9 is a researched-products appendix, not a second task register.
+- Shipment Intelligence staging currently changes only `SKILL.md` and `shipment_intelligence.py` (two files); the corresponding committed fixture and regression tests were **not found in the compared branch diff**. This is not a claim that no tests exist elsewhere.
+
+Branch comparison confirms path changes and ahead-of-main status only, **not** CI success, mergability after updates, or current draft PR state. Do not auto-close or merge any PR. The private canonical workbook and real customer/shipment data must remain outside the public fork.
+
+**Next safe action:** inspect local Windows checkout and exact branch/working-tree identity read-only; then verify a restricted backup and isolated *functional* restore before any test/code installation. Current P0/P1 status remains OPEN / NO-GO.
+
+## V7 namespace and shipment integration delta
+
+**V7 folder reference:** `/Hermes/Command_Center_2026-10-18/Hermes_Portfolio_Consolidation_V7_2026-10-18.zip` is a supplementary crosswalk, not a rewritten task registry. It identifies 44 V1 detail rows, 34 Task Register rows, 14 semantic collisions across reused raw task IDs and 94 candidate external mapping links. This evidence is an offline reconciliation, not host acceptance.
+
+**Non-negotiable namespace:** use `legacy-portfolio::ID` for the historical 120 and `TASK_REGISTER_2026-10-18::ID` for the supplemental 34. Never join by raw ID, and never add 34/44/94 as new work packages. Preserve original descriptions and status fields and label proposed crosswalk matches as `CANDIDATE_ONLY` until source evidence validates the mapping.
+
+**Shipping integration belongs to existing packages:** `SHP-01` for carrier-specific read-only tracking, `SHP-02` for DCSA normalization/adapters, `VES-01` for vessel AIS history, and `TRD-02` for supporting trade documents. No new Shipment OS project or permanent Hermes core tool is justified. Promote only after P0/P1 and a traceable carrier-to-equipment acceptance run in isolation.
+
+**Shipment Intelligence staging review issues:** (a) Previously missing fixture and tests are now committed in draft PR #10; (b) malformed/missing provider IDs are now rejected and isolated tests passed; (c) input `source_url` is attribution metadata, not independent proof of document-vessel association; (d) event classifier, occurrence time, retrieval time and data freshness must be kept separate; (e) DCSA equipment identity must be checked, including ISO 6346 check-digit as an independent validation case; (f) a documented vessel call, position or ETA must never set `RELEASED`/`DELIVERED` for an equipment ID. Use synthetic scenarios, non-destructive shadow run, and independent human-approved source credentials before any live provider connector.
+
+**P0/P1 untouched:** observed offline tests do not prove Windows NTFS ACL, isolated recovery, production data parity, credentials, or actual carrier webhook/API connectivity. No branch has permission to mark readiness merely by editing a Markdown status.
+
+## 2026-10-19 execution evidence delta
+
+- **Action:** Opened [draft PR #10](https://github.com/eltokhey1/hermes-agent/pull/10), containing exactly four new paths: optional shipment skill documentation, Python 0.1.1 script, synthetic event fixture, and a pytest contract suite including missing-ID and invalid-coordinate negatives. No change to the main branch.
+- **Audit:** On the PR #10 head SHA `6516971786668f2449551d52c7124108c810c3c1`, both PR-filtered workflow run lookup and commit check-runs returned **zero entries** at review time. That is **NO TEST EVIDENCE**, not test failure or success. Python/container execution was unavailable in this review, so no re-run of this exact SHA is claimed.
+- **Accounting:** Register the work under existing canonical packages `SHP-02` and `VES-01`, with related operational `SHP-01`. No new project/package/child task ID, and no promotion of P0 or P1 readiness.
+- **Next gate:** Isolated `python -m pytest -q tests/skills/test_shipment_intelligence_skill.py` with reproducible SHA and dependency versions; adjudicate any failures, inspect source restrictions and time zones, then verify Windows recovery/ACL acceptance and permitted carrier connector. No shipping status inferred from vessel position.
+
+## 2026-10-19 PR path audit
+
+- GitHub API per-PR changed-file listings #1–#10 (latest heads) total **45 unique paths and no direct path intersection**. Old PR #4/#6 file collision marked **RESOLVED**, without deleting any original evidence or changing `main`.
+- PR #10 remains DRAFT/UNMERGED; 4 paths committed and zero CI check-runs observed on HEAD `6516971786668f2449551d52c7124108c810c3c1`. Test execution and actual-host P0/P1 still unverified.
+
+## 2026-10-19 isolated verification update — PR #10
+
+- **Verified head:** `cf00344522e2d26e25ae1d5bd28e932d626fedf6`; four exact GitHub file Git-blob SHAs independently matched local reconstructed bytes. Isolated Linux Python 3.13.5/pytest 9.0.2: **30 passed / 0 failed**. Regressions first demonstrated missing AIS timestamps/coords and missing DCSA event code, then were fixed. Isolated CLI smoke imported 1 synthetic DCSA and 21 historical GOLDEN SEA AIS/port observations. These are staging demonstrations, not fresh carrier data.
+- **Audit artifact:** owner Library `/Hermes/Command_Center_2026-10-18/Hermes_PR10_Offline_Test_Receipt_2026-10-19.json` SHA256 `13637002ed676955730afeb20972fd31d4bbe221eafe614355d38bb961d9b717`. PR #10 metadata links it. Status `PASS_OFFLINE_ISOLATED_ONLY` and target `P0/P1=NO_GO`.
+- **Latest 10-PR path check:** 10 drafts, 46 unique changed file paths, zero exact same-path collisions; earlier 45-count was an older snapshot. No content/semantic merge safety is implied. Core `main` remains `251e5f7c0a067239655f3421812ab7492a206065` as seen on current review.
+- **Unmet gates:** GitHub CI check-runs absent for current head; independent Windows backup/restore, NTFS ACL isolation, Effect Ledger/UNKNOWN recovery, live carrier permissions and external end-to-end evidence remain required. Keep draft and no production writes.
