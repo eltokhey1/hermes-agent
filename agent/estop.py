@@ -54,10 +54,16 @@ def is_engaged() -> bool:
     saw_stat_error = False
     for path in _candidate_sentinel_paths():
         try:
-            if path.exists():
-                return True
+            # Path.exists() silently suppresses ALL OSError on Python 3.14+.
+            # stat() preserves PermissionError and other operational failures,
+            # so a blocked sentinel check still engages the emergency stop.
+            path.stat()
+        except FileNotFoundError:
+            continue
         except OSError:
             saw_stat_error = True
+        else:
+            return True
     return saw_stat_error
 
 
@@ -95,8 +101,11 @@ def get_state() -> Optional[dict]:
     found = False
     for path in _candidate_sentinel_paths():
         try:
-            if not path.exists():
-                continue
+            # Preserve the distinction between missing and inaccessible
+            # markers even when running with Python 3.14 pathlib semantics.
+            path.stat()
+        except FileNotFoundError:
+            continue
         except OSError:
             return state
         except AttributeError:
