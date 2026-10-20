@@ -38,6 +38,7 @@ jobs:
             tools/environments/docker.py
             tools/terminal_tool_backends.py
             tools/interrupt.py
+            hermes_cli/subcommands/pause.py
           sparse-checkout-cone-mode: false
       - name: Require sufficient test discovery
         shell: bash
@@ -49,8 +50,8 @@ jobs:
           suite = unittest.defaultTestLoader.discover('owner_staging/p0p1/tests', pattern='test_*.py')
           count = suite.countTestCases()
           print('Discovered synthetic tests:', count)
-          if count < 230:
-              raise SystemExit('FAIL: test-discovery regression (minimum 230)')
+          if count < 242:
+              raise SystemExit('FAIL: test-discovery regression (minimum 242)')
           PY
       - name: Run offline standard-library tests only
         shell: bash
@@ -83,7 +84,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 230
+          python3 owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 242
 
   synthetic-windows-tests:
     if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/owner-staging/p0p1-cloud-local-20261020'
@@ -108,6 +109,7 @@ jobs:
             tools/environments/docker.py
             tools/terminal_tool_backends.py
             tools/interrupt.py
+            hermes_cli/subcommands/pause.py
           sparse-checkout-cone-mode: false
       - name: Pin Python 3.13 on Windows CI only
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -128,7 +130,7 @@ jobs:
       - name: Shared fail-closed source and test-count gate (Windows)
         shell: pwsh
         run: |
-          python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 230
+          python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 242
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
