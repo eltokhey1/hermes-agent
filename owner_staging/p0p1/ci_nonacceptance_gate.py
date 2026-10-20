@@ -81,7 +81,11 @@ def discover_tests(test_dir: Path, required_minimum: int) -> int:
         raise ValueError("test floor cannot be lowered below 154")
     if not test_dir.is_dir() or test_dir.is_symlink():
         raise ValueError("test tree missing or linked")
-    suite = unittest.defaultTestLoader.discover(str(test_dir), pattern="test_*.py")
+    # The global defaultTestLoader remembers the previous discovery root.
+    # A fresh loader plus an explicit top-level avoids cross-fixture pollution
+    # on Python 3.12 (Linux) and separate module-cache collisions on Windows.
+    loader = unittest.TestLoader()
+    suite = loader.discover(str(test_dir), pattern="test_*.py", top_level_dir=str(test_dir))
     count = suite.countTestCases()
     if count < required_minimum:
         raise ValueError("test discovery below pinned minimum")
