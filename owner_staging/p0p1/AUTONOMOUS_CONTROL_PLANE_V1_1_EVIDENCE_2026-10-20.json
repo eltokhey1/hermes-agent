@@ -1,0 +1,36 @@
+{
+  "schema": "hermes.p0p1.autonomous_advisory_v1_1",
+  "date": "2026-10-20",
+  "scope": "OFFLINE_UNIT_TESTS_ONLY",
+  "baseline": "Hermes Autonomous Control Plane V1 (36 tests)",
+  "regressions_added": 5,
+  "tests": {
+    "local_41_passed": true,
+    "command": "PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -p test_*.py -q",
+    "count": 41
+  },
+  "bug_repro": {
+    "zero_budget_tiny_cost_original": "INCORRECT_CANDIDATE",
+    "zero_budget_tiny_cost_fixed": "BUDGET_LIMIT",
+    "extreme_small_effort_original": "INFINITY_PRIORITY",
+    "extreme_small_effort_fixed": "INVALID_PLAN"
+  },
+  "original_windows_host_modified": false,
+  "ci_validated": false,
+  "production": "HOLD",
+  "gates": {
+    "G0": "NO-GO",
+    "G_CODE": "NO-GO",
+    "G1": "NO-GO"
+  },
+  "file_hashes": {
+    "agent_workflow_planner.py": {
+      "sha256": "5d2dfdd30fa0c9d01fdda98cd00213d1419c1f450dedc0239a86dc879d9284e2",
+      "bytes": 8767
+    },
+    "tests/test_agent_workflow_planner.py": {
+      "sha256": "d9caabdb9ac2f5e3074a4611c02345b7307bd34762887b896c04f0802c8fffac",
+      "bytes": 8925
+    }
+  }
+}
