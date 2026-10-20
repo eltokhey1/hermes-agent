@@ -133,6 +133,19 @@ jobs:
           python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 250
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: PowerShell 5.1 local AI discovery smoke (Kilo/Ollama, non-acceptance)
+        shell: pwsh
+        run: |
+          $output = & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File owner_staging/p0p1/hermes_local_ai_preflight.ps1 -NoReport
+          if ($LASTEXITCODE -ne 0) { throw 'Local AI discovery preflight failed to render JSON' }
+          $json = $output | Out-String | ConvertFrom-Json
+          if ($json.schema -ne 'hermes.local_ai.preflight.v1') { throw 'Invalid local AI discovery schema' }
+          if ($json.run_mode -ne 'READ_ONLY_TOOL_DISCOVERY') { throw 'Unexpected execution mode' }
+          if ($json.production -ne 'HOLD' -or $json.G0 -ne 'NO-GO') { throw 'Production gate forged' }
+          if ($json.hermes_runtime_changed -ne $false -or $json.hermes_host_acceptance_verified -ne $false) { throw 'Unsupported runtime claims' }
+          if ($json.external_api_key_required_for_local_ollama -ne $false) { throw 'Local Ollama provider should not need cloud API keys' }
+          Write-Output 'LOCAL_AI_DISCOVERY_SMOKE_PASS_NON_ACCEPTANCE'
+
       - name: PowerShell 5.1 host-readiness collector smoke on GitHub-hosted Windows (non-acceptance)
         shell: pwsh
         run: |
