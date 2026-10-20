@@ -1,0 +1,37 @@
+{
+  "schema": "hermes.p0.estop_offline_delta.v1",
+  "date_utc": "2026-10-20",
+  "branch": "owner-staging/p0p1-cloud-local-20261020",
+  "source_main_sha": "251e5f7c0a067239655f3421812ab7492a206065",
+  "source_blob_refs": {
+    "agent/estop.py": "b7cc51cc5e542d3cfb6a139e78d7287a9add44ba",
+    "hermes_cli/subcommands/pause.py": "5b05684a3998ab0d1053e1d64d825085d5696b00"
+  },
+  "library_path": "/Hermes/Command_Center_2026-10-18/Cloud_Local_Handoff_2026-10-20/Hermes_P0_ESTOP_Contract_OFFLINE_2026-10-20.zip",
+  "archive_sha256": "325d9f0b289e8cea2f705fb877c7d9841775790136c2d79b0923f9cf1d857f8d",
+  "tests": {
+    "estop_ast_synthetic": 26,
+    "retested_runtime_safety_synthetic": 26,
+    "total": 52,
+    "failures": 0,
+    "host_windows_tests": 0
+  },
+  "archive_contains": [
+    "estop_contract_audit.py",
+    "tests/test_estop_contract_audit.py",
+    "README_AR.md",
+    "EVIDENCE.json",
+    "MANIFEST.sha256"
+  ],
+  "estop_scope": "NEW_WORK_ONLY",
+  "inflight_cancel_verified": false,
+  "tool_dispatch_verified": false,
+  "full_windows_restore_verified": false,
+  "gates": {
+    "G0": "NO-GO",
+    "G-CODE": "NO-GO",
+    "G1": "NO-GO",
+    "production": "HOLD"
+  },
+  "limitations": "Offline source-contract tests use synthetic fixtures; no Hermes integration or active tooling executed."
+}
