@@ -122,6 +122,26 @@ class PlannerTests(unittest.TestCase):
     def test_cost_cap_prioritization(self):
         v=request([task('a',cost=.5),task('b',cost=.5)]);v['limits']['max_usd']=.5
         r=plan_tasks(v);self.assertEqual([d['decision'] for d in r['decisions']],['CANDIDATE_READ_ONLY_NOT_AUTHORIZED','BUDGET_LIMIT'])
+    def test_zero_budget_rejects_tiny_positive_cost(self):
+        v=request([task(cost=1e-10)])
+        self.assertEqual(plan_tasks(v)['decisions'][0]['decision'],'BUDGET_LIMIT')
+    def test_tiny_cost_not_hidden_by_reporting_roundoff(self):
+        v=request([task(cost=1e-10)]);v['limits']['max_usd']=1e-10
+        r=plan_tasks(v)
+        self.assertEqual(r['decisions'][0]['decision'],'CANDIDATE_READ_ONLY_NOT_AUTHORIZED')
+        self.assertEqual(r['projected_cost_usd'],1e-10)
+    def test_decimal_budget_sum_does_not_false_reject(self):
+        v=request([task('a',cost=.1),task('b',cost=.2)])
+        v['limits']['max_usd']=.3
+        r=plan_tasks(v)
+        self.assertEqual([x['decision'] for x in r['decisions']], ['CANDIDATE_READ_ONLY_NOT_AUTHORIZED']*2)
+        self.assertEqual(r['projected_cost_usd'],.3)
+    def test_extremely_tiny_effort_does_not_generate_infinity(self):
+        v=request();v['tasks'][0]['effort']=1e-320
+        self.assertRaises(InvalidPlan,plan_tasks,v)
+    def test_huge_integer_fails_closed_not_overflow_exception(self):
+        v=request();v['tasks'][0]['impact']=10**1000
+        self.assertRaises(InvalidPlan,plan_tasks,v)
     def test_cli_error_no_secrets_leaked(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'input.json';p.write_text('{"secret":"TOP_SECRET"')
