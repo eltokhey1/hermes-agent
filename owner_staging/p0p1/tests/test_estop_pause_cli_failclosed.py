@@ -135,6 +135,22 @@ class PauseCliFailClosedTests(unittest.TestCase):
         self.assertIn("NOT verified", out)
         self.assertTrue((self.fleet / "ESTOP").is_file())
 
+    def test_unresolvable_fleet_root_engages_estop(self):
+        with patch.object(self.estop, "_canonical_root", side_effect=PermissionError("synthetic root denied")):
+            self.assertTrue(self.estop.is_engaged())
+
+    def test_unresolvable_fleet_root_has_unknown_paused_state(self):
+        with patch.object(self.estop, "_canonical_root", side_effect=PermissionError("synthetic root denied")):
+            self.assertEqual(self.estop.get_state(), {"reason": None, "engaged_at": None})
+            self.assertIn("paused", self.estop.paused_reply())
+
+    def test_resume_fails_when_fleet_root_is_unverifiable(self):
+        with patch.object(self.estop, "_canonical_root", side_effect=PermissionError("synthetic root denied")):
+            rc, out = self.call_resume()
+        self.assertEqual(rc, 2)
+        self.assertIn("NOT verified", out)
+        self.assertNotIn("Hermes resumed", out)
+
     def test_resume_stat_denial_is_nonzero(self):
         self.estop.engage()
         with patch.object(Path, "stat", side_effect=PermissionError("synthetic stat denied")):
