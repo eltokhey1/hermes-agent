@@ -39,8 +39,11 @@ def _candidate_sentinel_paths() -> list:
     primary = sentinel_path()
     try:
         root = _canonical_root() / SENTINEL_NAME
-    except Exception:
-        return [primary]
+    except Exception as exc:
+        # The fleet-root marker is a separate safety scope. When that
+        # directory cannot be located, checking only the profile would
+        # silently turn an UNKNOWN global stop into an unpaused system.
+        raise OSError("ESTOP_FLEET_ROOT_UNVERIFIED") from exc
     try:
         distinct = root.resolve() != primary.resolve()
     except Exception:
@@ -52,7 +55,11 @@ def _candidate_sentinel_paths() -> list:
 def is_engaged() -> bool:
     """True if ANY candidate sentinel exists; fail SAFE (True) on stat errors."""
     saw_stat_error = False
-    for path in _candidate_sentinel_paths():
+    try:
+        candidates = _candidate_sentinel_paths()
+    except OSError:
+        return True  # Fail safe if the fleet-root marker cannot be located.
+    for path in candidates:
         try:
             # Path.exists() silently suppresses ALL OSError on Python 3.14+.
             # stat() preserves PermissionError and other operational failures,
@@ -103,7 +110,11 @@ def get_state() -> Optional[dict]:
         return None
     state = {"reason": None, "engaged_at": None}
     found = False
-    for path in _candidate_sentinel_paths():
+    try:
+        candidates = _candidate_sentinel_paths()
+    except OSError:
+        return state  # Paused but exact reason/marker location is unknown.
+    for path in candidates:
         try:
             # Preserve the distinction between missing and inaccessible
             # markers even when running with Python 3.14 pathlib semantics.
