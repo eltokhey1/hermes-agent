@@ -1,0 +1,26 @@
+{
+  "schema": "hermes.p0p1.offline_consolidation.v1",
+  "date_utc": "2026-10-20",
+  "source_archives_sha256": {
+    "Hermes_Cloud_Local_Handoff_2026-10-20.zip": "060111bc7026e4af7d1e9252c884e09856ccc16c45e28251cd13b060e5e5652b",
+    "Hermes_P0P1_Source_Contract_Audit_OFFLINE_2026-10-20.zip": "1a839e1d152d56e06e6bffc796377b44636b2789667dd9c28101e499141e5807",
+    "Hermes_P0_ESTOP_Contract_OFFLINE_2026-10-20.zip": "325d9f0b289e8cea2f705fb877c7d9841775790136c2d79b0923f9cf1d857f8d"
+  },
+  "validation": "ARCHIVE_SHA_MATCH_AND_LOCAL_UNIT_TESTS",
+  "command": "python -m unittest discover -s tests -p 'test_*.py' -v",
+  "python_tests_discovered": 110,
+  "python_tests_passed": 110,
+  "python_tests_failed": 0,
+  "tests_host_windows": 0,
+  "tests_hermes_integration": 0,
+  "tests_estop_active_termination": 0,
+  "tests_functional_restore": 0,
+  "ci_verified": false,
+  "safety_gates": {
+    "G0": "NO-GO",
+    "G-CODE": "NO-GO",
+    "G1": "NO-GO",
+    "PRODUCTION": "HOLD"
+  },
+  "limitations": "Synthetic/isolated tests only, no actual agent/host approval."
+}
