@@ -142,18 +142,8 @@ jobs:
           if ($json.schema -ne 'hermes.p0.windows.readonly.v1') { throw 'Invalid report schema' }
           if ($json.production -ne 'HOLD' -or $json.G0 -ne 'NO-GO' -or $json.G_CODE -ne 'NO-GO' -or $json.G1 -ne 'NO-GO') { throw 'Gate forged' }
           if ($json.native_full_backup_verified -or $json.functional_restore_verified -or $json.estop_inflight_verified -or $json.hermes_docker_runtime_isolation_verified) { throw 'Unsupported acceptance' }
+          if ($json.independent_acceptance -ne $false) { throw 'Independent acceptance must remain false.' }
           Write-Output 'WINDOWS_READONLY_COLLECTOR_SMOKE_PASS_NON_ACCEPTANCE'
-
-      - name: Run Windows P0 read-only collector on disposable CI runner
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $raw = & powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File owner_staging/p0p1/windows_p0_host_gate.ps1
-          if ($LASTEXITCODE -ne 0) { throw 'Windows P0 collector could not complete.' }
-          $evidence = ($raw | Out-String | ConvertFrom-Json)
-          if ($evidence.schema -ne 'hermes.p0.windows.readonly.v1' -or $evidence.G0 -ne 'NO-GO' -or $evidence.G_CODE -ne 'NO-GO' -or $evidence.G1 -ne 'NO-GO' -or $evidence.production -ne 'HOLD') { throw 'Windows collector emitted unsafe gate state.' }
-          if ($evidence.independent_acceptance -ne $false -or $evidence.native_full_backup_verified -ne $false -or $evidence.functional_restore_verified -ne $false) { throw 'Collector incorrectly asserted host acceptance.' }
-          Write-Output 'P0_COLLECTOR_HOSTED_WINDOWS_SMOKE_NON_ACCEPTANCE_PASS'
 
 
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
