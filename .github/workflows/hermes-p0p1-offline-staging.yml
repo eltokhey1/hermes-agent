@@ -133,4 +133,15 @@ jobs:
           python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 242
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: PowerShell 5.1 host-readiness collector smoke on GitHub-hosted Windows (non-acceptance)
+        shell: pwsh
+        run: |
+          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File owner_staging/p0p1/windows_p0_host_gate.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Windows host-readiness collector failed to render safe JSON' }
+          $json = ($result | Out-String | ConvertFrom-Json)
+          if ($json.schema -ne 'hermes.p0.windows.readonly.v1') { throw 'Invalid report schema' }
+          if ($json.production -ne 'HOLD' -or $json.G0 -ne 'NO-GO' -or $json.G_CODE -ne 'NO-GO' -or $json.G1 -ne 'NO-GO') { throw 'Gate forged' }
+          if ($json.native_full_backup_verified -or $json.functional_restore_verified -or $json.estop_inflight_verified -or $json.hermes_docker_runtime_isolation_verified) { throw 'Unsupported acceptance' }
+          Write-Output 'WINDOWS_READONLY_COLLECTOR_SMOKE_PASS_NON_ACCEPTANCE'
+
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
