@@ -78,4 +78,39 @@ jobs:
           print('STATIC_SOURCE_AUDIT_PASS_NON_ACCEPTANCE; PRODUCTION_HOLD')
           PY
 
+  synthetic-windows-tests:
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/owner-staging/p0p1-cloud-local-20261020'
+    runs-on: windows-latest
+    timeout-minutes: 12
+    env:
+      PYTHONNOUSERSITE: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      HERMES_DISABLE_LAZY_INSTALLS: '1'
+    steps:
+      - name: Checkout staging and reviewed source without token persistence
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            owner_staging/p0p1
+            agent/estop.py
+            tools/environments/docker.py
+            tools/terminal_tool_backends.py
+          sparse-checkout-cone-mode: false
+      - name: Pin Python 3.13 on Windows CI only
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Execute 153 offline tests on hosted Windows
+        shell: pwsh
+        run: |
+          python --version
+          python -m unittest discover -s owner_staging/p0p1/tests -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Parse real Hermes sources on hosted Windows (non-acceptance)
+        shell: pwsh
+        run: |
+          python owner_staging/p0p1/source_contract_audit.py --source-root .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
