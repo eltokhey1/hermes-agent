@@ -50,8 +50,8 @@ jobs:
           suite = unittest.defaultTestLoader.discover('owner_staging/p0p1/tests', pattern='test_*.py')
           count = suite.countTestCases()
           print('Discovered synthetic tests:', count)
-          if count < 245:
-              raise SystemExit('FAIL: test-discovery regression (minimum 245)')
+          if count < 250:
+              raise SystemExit('FAIL: test-discovery regression (minimum 250)')
           PY
       - name: Run offline standard-library tests only
         shell: bash
@@ -84,7 +84,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 245
+          python3 owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 250
 
   synthetic-windows-tests:
     if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/owner-staging/p0p1-cloud-local-20261020'
@@ -130,7 +130,7 @@ jobs:
       - name: Shared fail-closed source and test-count gate (Windows)
         shell: pwsh
         run: |
-          python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 245
+          python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 250
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: PowerShell 5.1 host-readiness collector smoke on GitHub-hosted Windows (non-acceptance)
