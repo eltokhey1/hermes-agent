@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-20",
+  "project": "Hermes Open Builder",
+  "scope": "standalone offline P0 safety audit / not integrated",
+  "verified_in_isolated_lab": {
+    "python_unittest_passed": 26,
+    "python_unittest_failed": 0,
+    "test_system": "Linux Python 3.13.5",
+    "test_data": "synthetic",
+    "hermes_runtime_launched": false,
+    "docker_executed_here": false
+  },
+  "reported_from_user_windows_not_independently_inspected": {
+    "hermes_local_git_head": "7318e666c236aa8fffc3506c705d1c00a4821441",
+    "hermes_local_backend": "local (inferred from prior safe audit's recommended_next_step)",
+    "docker_engine": "29.8.2",
+    "manual_alpine_isolation": "BASIC_ISOLATION_PASS (not Hermes integration)",
+    "development_legacy_backup_sha256": "4e00f7e30b9c5a9b4f62bf27cbf83a259a1beab163c01950c3741ab14fdef369",
+    "critical_partial_backup_sha256": "e2d139900db2b0841ff63e5f6bd2bef3b039732e72f014f27e7dad5ae97da2ec",
+    "critical_partial_files": 1811,
+    "native_full_backup": "UNVERIFIED",
+    "pending_messages": "PermissionError / Windows ACL ACCESS DENIED",
+    "junctions_detected": 6,
+    "gateway_heartbeat": "volatile; excluded from partial backup",
+    "functional_restore": "UNVERIFIED",
+    "estop_active_work_cancel": "UNVERIFIED"
+  },
+  "github_review": {
+    "repo": "eltokhey1/hermes-agent",
+    "main_sha": "251e5f7c0a067239655f3421812ab7492a206065",
+    "staging_branch_before_release": "owner-staging/p0p1-cloud-local-20261020",
+    "staging_sha_before_release": "8ad65f1b2f51c06ccd7730e2cee6ac0da5cdace8",
+    "risk": "Docker default network enabled, persistence writable/default, capabilities added for functional needs; ESTOP only prevents new work; no inference of runtime isolation from Alpine standalone test",
+    "paths_reviewed": ["cli-config.yaml.example", "tools/terminal_tool_backends.py", "tools/environments/docker.py", "agent/estop.py"]
+  },
+  "gates": {"G0": "NO-GO", "G-CODE": "NO-GO", "G1": "NO-GO", "PRODUCTION": "HOLD"},
+  "prohibited_actions_performed": false,
+  "production_changes": false,
+  "work_continues_asynchronously": false
+}
