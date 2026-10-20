@@ -34,6 +34,10 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             owner_staging/p0p1
+            agent/estop.py
+            tools/environments/docker.py
+            tools/terminal_tool_backends.py
+          sparse-checkout-cone-mode: false
       - name: Require sufficient test discovery
         shell: bash
         run: |
@@ -52,5 +56,26 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s owner_staging/p0p1/tests -p 'test_*.py' -v
+
+      - name: Static risk scan of pinned Hermes source (non-acceptance)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 owner_staging/p0p1/source_contract_audit.py --source-root . > "$RUNNER_TEMP/hermes-source-audit.json"
+          python3 - "$RUNNER_TEMP/hermes-source-audit.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding='utf-8') as handle:
+              result = json.load(handle)
+          names = ('estop', 'docker', 'terminal_backends')
+          states = {name: result['sources'][name]['status'] for name in names}
+          print('Hermes static source parse statuses:', states)
+          assert all(v == 'PARSED' for v in states.values()), 'Source unavailable or unparseable'
+          assert result['review_signals']['estop_new_work_only_documented'] is True, 'ESTOP behavior review changed'
+          assert result['review_signals']['docker_default_network'] is True, 'Docker network default review changed'
+          assert 'ESTOP_STATED_NEW_WORK_ONLY_NOT_KILL_SWITCH' in result['risk_flags']
+          assert 'DOCKER_NETWORK_DEFAULT_NOT_PROVEN_OFF' in result['risk_flags']
+          assert result['assessment'] == 'HOLD' and result['production'] == 'HOLD'
+          print('STATIC_SOURCE_AUDIT_PASS_NON_ACCEPTANCE; PRODUCTION_HOLD')
+          PY
 
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
