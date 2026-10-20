@@ -16,7 +16,14 @@ def cmd_pause(args: argparse.Namespace) -> int:
 
     reason = getattr(args, "reason", None)
     already = is_engaged()
-    path = engage(reason=reason)
+    try:
+        path = engage(reason=reason)
+        # Even an alternate implementation of engage() must not report
+        # success without an observable marker.
+        path.stat()
+    except OSError:
+        print("ERROR: Cannot confirm ESTOP marker creation; new-work pause is NOT verified.")
+        return 2
     state = get_state() or {}
     verb = "Still paused" if already else "Hermes paused"
     detail = f" — reason: {state['reason']}" if state.get("reason") else ""
@@ -30,9 +37,15 @@ def cmd_pause(args: argparse.Namespace) -> int:
 
 def cmd_resume(args: argparse.Namespace) -> int:
     """Disengage the global emergency stop."""
-    from agent.estop import disengage, sentinel_path
+    from agent.estop import disengage, is_engaged, sentinel_path
 
-    if disengage():
+    removed = disengage()
+    # A failed unlink, a second profile marker or an inaccessible marker
+    # must never be confused with a successfully resumed dispatcher.
+    if is_engaged():
+        print("ERROR: ESTOP may still be engaged; resume NOT verified.")
+        return 2
+    if removed:
         print("▶️  Hermes resumed — dispatch picks up on the next tick.")
     else:
         print(f"Hermes is not paused (no sentinel at {sentinel_path()}).")
