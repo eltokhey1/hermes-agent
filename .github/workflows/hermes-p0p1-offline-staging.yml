@@ -48,8 +48,8 @@ jobs:
           suite = unittest.defaultTestLoader.discover('owner_staging/p0p1/tests', pattern='test_*.py')
           count = suite.countTestCases()
           print('Discovered synthetic tests:', count)
-          if count < 153:
-              raise SystemExit('FAIL: test-discovery regression (minimum 153)')
+          if count < 154:
+              raise SystemExit('FAIL: test-discovery regression (minimum 154)')
           PY
       - name: Run offline standard-library tests only
         shell: bash
@@ -78,6 +78,12 @@ jobs:
           print('STATIC_SOURCE_AUDIT_PASS_NON_ACCEPTANCE; PRODUCTION_HOLD')
           PY
 
+      - name: Shared fail-closed source and test-count gate (Linux)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 154
+
   synthetic-windows-tests:
     if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/owner-staging/p0p1-cloud-local-20261020'
     runs-on: windows-latest
@@ -101,7 +107,7 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.13'
-      - name: Execute 153 offline tests on hosted Windows
+      - name: Execute offline tests on hosted Windows
         shell: pwsh
         run: |
           python --version
@@ -111,6 +117,12 @@ jobs:
         shell: pwsh
         run: |
           python owner_staging/p0p1/source_contract_audit.py --source-root .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Shared fail-closed source and test-count gate (Windows)
+        shell: pwsh
+        run: |
+          python owner_staging/p0p1/ci_nonacceptance_gate.py --source-root . --min-tests 154
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # G0/G-CODE/G1 remain NO-GO and PRODUCTION remains HOLD even when this workflow succeeds.
