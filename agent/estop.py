@@ -75,8 +75,12 @@ def engage(reason: Optional[str] = None) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     except OSError:
-        with suppress(OSError):  # Best effort: an empty/partial sentinel still pauses (fail safe).
-            path.touch(exist_ok=True)
+        # A marker-only fallback is sufficient to stop NEW work, but a
+        # failure to write BOTH forms must not be reported as success.
+        path.touch(exist_ok=True)
+    # Verify that the marker is observable. Unlike exists(), stat() does
+    # not silently convert PermissionError into False on Python 3.14.
+    path.stat()
     return path
 
 
