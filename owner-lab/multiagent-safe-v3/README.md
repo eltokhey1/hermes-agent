@@ -44,3 +44,12 @@ Repository policy: root `AGENTS.md` favors external skills/plugins over new core
 ## October 21 follow-up integrity patch (isolated only)
 
 Persistent specs are revalidated against their originally recorded digest on retrieval, approval, reservation and preview completion. Duplicate request lookup no longer trusts a corrupt stored task. Event ledger verification rejects missing or duplicate creation entries. `tests/test_persistent_integrity.py` contains six negative regression tests; focused and full synthetic tests: **60 passed**. See `REGRESSION_FIXES.md` and `PORTFOLIO_SYNC_AR.md` for the evidence and current single-source-of-truth mapping. No runtime integration is implied.
+
+## State/Event reconciliation hardening (2026-10-21)
+
+A second negative-test pass found that the former `verify_ledger` accepted a valid hash chain even if the stored task state was forged, a terminal event removed, or a syntactically valid but unauthorized transition appended. This is now **detected and denied** in the offline lab.
+
+- The verifier replays per-task event transitions and compares the resulting state, contract digest, and stored result against SQLite; it rejects unknown event types, orphan/duplicate transitions, sequence gaps, corrupted contract hashes and missing terminal events.
+- Critical local transition methods now check the same reconciliation invariant *inside the SQLite transaction* before changing state. This stops a forged READY state from skipping PREPARED in the synthetic lab.
+- New regression file: `tests/test_state_ledger_integrity.py` (9 cases). Total isolated suite **69/69 PASS**, Python 3.13.5, `python -W error -m unittest discover -s tests -q`; `compileall` PASS. See `LEDGER_RECONCILIATION_RECEIPT.json`.
+- This deliberately replays all events on each operation (prototype only), so scalability and multi-process locking must be benchmarked before integration. Because the ledger and tasks share the same SQLite database, this is **not protection against a malicious DB writer who rewrites everything**. External immutable anchoring, Windows ACLs, authenticated human identity, real Hermes process recovery and CI are still unverified. **PRODUCTION=HOLD**.

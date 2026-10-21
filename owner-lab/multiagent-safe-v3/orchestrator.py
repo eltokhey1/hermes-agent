@@ -135,6 +135,7 @@ class HermesReference:
         now, task_id = utcnow(), uuid.uuid4().hex
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             current = db.execute("SELECT task_id,spec,spec_hash FROM tasks WHERE idempotency_key=?", (idempotency_key,)).fetchone()
             if current:
                 self._stored_spec(current)
@@ -148,6 +149,7 @@ class HermesReference:
 
     def task(self, task_id: str) -> dict:
         with self._conn() as db:
+            self._require_integrity(db)
             row = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
         if not row:
             raise GateError("Task not found")
@@ -160,6 +162,7 @@ class HermesReference:
     def prepare(self, task_id: str) -> str:
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "PENDING":
                 raise GateError("Task missing or not PENDING")
@@ -172,6 +175,7 @@ class HermesReference:
     def approve(self, task_id: str, token: str) -> str:
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "WAITING_APPROVAL":
                 raise GateError("Task is not awaiting approval")
@@ -196,6 +200,7 @@ class HermesReference:
         """Durably transition to RUNNING, without making any external effect."""
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "READY":
                 raise GateError("Task cannot reserve from current state")
@@ -221,6 +226,7 @@ class HermesReference:
         """No tool execution; finalize the deterministic inert preview only."""
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "RUNNING":
                 raise GateError("Task is not RUNNING")
@@ -244,6 +250,7 @@ class HermesReference:
         """Mark work stranded in RUNNING as UNKNOWN; never blindly replay it."""
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
+            self._require_integrity(db)
             stuck = db.execute("SELECT task_id FROM tasks WHERE state='RUNNING' ORDER BY task_id").fetchall()
             for row in stuck:
                 db.execute("UPDATE tasks SET state='UNKNOWN',updated_at=? WHERE task_id=?",
@@ -261,24 +268,93 @@ class HermesReference:
                 "ledger_head_unanchored": last["event_hash"] if last else "GENESIS",
                 "model_api_cost_usd": 0, "external_effects_enabled": False}
 
+    @classmethod
+    def _require_integrity(cls, db: sqlite3.Connection) -> None:
+        if not cls._verify_ledger(db):
+            raise GateError("Durable task state and ledger are inconsistent")
+
     def verify_ledger(self) -> bool:
+        """Reconcile hash chain AND recorded transitions with durable task records.
+
+        A database-local hash chain is not an independent anchor. A writer who
+        controls every SQLite table can still rewrite history; host ACL and an
+        independently protected anchor are mandatory for real actions.
+        """
         with self._conn() as db:
-            rows = db.execute("SELECT * FROM events ORDER BY seq").fetchall()
-            task_ids = {r["task_id"] for r in db.execute("SELECT task_id FROM tasks")}
-        prior = "GENESIS"
-        submitted = set()
+            return self._verify_ledger(db)
+
+    @classmethod
+    def _verify_ledger(cls, db: sqlite3.Connection) -> bool:
+        records = db.execute("SELECT * FROM tasks").fetchall()
+        events = db.execute("SELECT * FROM events ORDER BY seq").fetchall()
+        state = {}
         try:
-            for row in rows:
-                if row["event_type"] == "SUBMITTED":
-                    if row["task_id"] in submitted:
-                        return False
-                    submitted.add(row["task_id"])
-                body = {"task_id": row["task_id"], "event_type": row["event_type"],
-                        "payload": json.loads(row["payload"]), "previous_hash": row["previous_hash"],
+            tasks = {}
+            for row in records:
+                spec = cls._stored_spec(row)
+                tasks[row["task_id"]] = (row, spec, ACTION_POLICY[spec["action"]])
+            prior, last_seq = "GENESIS", 0
+            for row in events:
+                task_id = row["task_id"]
+                if task_id not in tasks or row["seq"] != last_seq + 1:
+                    return False
+                payload = json.loads(row["payload"])
+                if not isinstance(payload, dict):
+                    return False
+                body = {"task_id": task_id, "event_type": row["event_type"],
+                        "payload": payload, "previous_hash": row["previous_hash"],
                         "timestamp": row["timestamp"]}
                 if row["previous_hash"] != prior or row["event_hash"] != digest(body):
                     return False
-                prior = row["event_hash"]
-        except (ValueError, TypeError, KeyError):
+                prior, last_seq = row["event_hash"], row["seq"]
+                record, spec, risk = tasks[task_id]
+                current, kind = state.get(task_id), row["event_type"]
+                if kind == "SUBMITTED" and current is None:
+                    if payload != {"policy_risk": risk, "spec_hash": record["spec_hash"]}:
+                        return False
+                    next_state = "PENDING"
+                elif kind == "PREPARED" and current == "PENDING":
+                    next_state = "WAITING_APPROVAL" if risk == "high" else "READY"
+                    if payload != {"state": next_state}:
+                        return False
+                elif kind == "APPROVAL_DECISION" and current == "WAITING_APPROVAL":
+                    decision = payload.get("decision")
+                    if decision not in ("approve", "reject"):
+                        return False
+                    if not isinstance(payload.get("approver"), str):
+                        return False
+                    if not isinstance(payload.get("nonce_hash"), str) or len(payload["nonce_hash"]) != 64:
+                        return False
+                    next_state = "READY" if decision == "approve" else "REJECTED"
+                elif kind == "STARTED" and current == "READY":
+                    if payload != {"action": spec["action"]}:
+                        return False
+                    next_state = "RUNNING"
+                elif kind == "SUCCEEDED" and current == "RUNNING":
+                    if not record["result"]:
+                        return False
+                    result = json.loads(record["result"])
+                    if not isinstance(result, dict) or result.get("external_effects") is not False:
+                        return False
+                    if result.get("action") != spec["action"]:
+                        return False
+                    if payload != {"result_hash": digest(result)}:
+                        return False
+                    next_state = "SUCCEEDED"
+                elif kind == "RECOVERY_UNKNOWN" and current == "RUNNING":
+                    if payload != {"retry": "DENIED"}:
+                        return False
+                    next_state = "UNKNOWN"
+                else:
+                    return False
+                state[task_id] = next_state
+            if state.keys() != tasks.keys():
+                return False
+            for task_id, (record, _, _) in tasks.items():
+                if state[task_id] != record["state"]:
+                    return False
+                if (record["state"] == "SUCCEEDED") != (record["result"] is not None):
+                    return False
+            return True
+        except (ValueError, TypeError, KeyError, GateError):
             return False
-        return submitted == task_ids

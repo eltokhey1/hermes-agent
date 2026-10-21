@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-21",
+  "scope": "owner-lab/multiagent-safe-v3",
+  "base_head": "0084e16f33951eced5af98faa3985697bc3ee2ef",
+  "environment": "isolated Python 3.13.5 Linux",
+  "command": "python -W error -m unittest discover -s tests -q",
+  "passed": 69,
+  "failed": 0,
+  "warnings": "treated as errors; none",
+  "compileall": "PASS",
+  "regressions_added": 9,
+  "old_negative_failures_observed": 8,
+  "orchestrator_sha256": "58f5732df840eedcec6d31ad21780ab9cd181820806adad306f8422734061672",
+  "test_state_ledger_integrity_sha256": "75ea95847a2fbc3c923091e698433cb1aba1697a1283d6c71c642bdd2c",
+  "github_ci": "UNVERIFIED",
+  "windows_p0_p1": "UNVERIFIED",
+  "authenticated_human_approval": "NOT_IMPLEMENTED",
+  "independent_event_anchor": "NOT_IMPLEMENTED",
+  "main_merged": false,
+  "production": "HOLD"
+}
