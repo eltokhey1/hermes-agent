@@ -40,3 +40,7 @@ Expected at publication: **54 passing tests** (independent synthetic Python 3.13
 - **Physical AI** remains simulation-only research and needs its own independent safety case before future hardware work.
 
 Repository policy: root `AGENTS.md` favors external skills/plugins over new core tools. This project is an **owner-lab prototype** under existing canonical portfolio packages (45 total), not a new root-level feature or framework dependency.
+
+## October 21 follow-up integrity patch (isolated only)
+
+Persistent specs are revalidated against their originally recorded digest on retrieval, approval, reservation and preview completion. Duplicate request lookup no longer trusts a corrupt stored task. Event ledger verification rejects missing or duplicate creation entries. `tests/test_persistent_integrity.py` contains six negative regression tests; focused and full synthetic tests: **60 passed**. See `REGRESSION_FIXES.md` and `PORTFOLIO_SYNC_AR.md` for the evidence and current single-source-of-truth mapping. No runtime integration is implied.

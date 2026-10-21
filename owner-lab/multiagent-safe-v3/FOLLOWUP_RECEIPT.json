@@ -1,0 +1,13 @@
+{
+  "subject": "Hermes owner-lab v3 persistent integrity repair",
+  "executed": "2026-10-21",
+  "environment": "isolated Python 3.13.5 Linux",
+  "unit_tests_passed": 60,
+  "unit_tests_failed": 0,
+  "compileall": "PASS",
+  "github_ci": "QUEUED_AT_OBSERVATION",
+  "windows_p0_p1": "UNVERIFIED",
+  "production": "HOLD",
+  "sha256_orchestrator": "d7bd87b52eab52b0045cdb55830dc8b222ae9138c977784e83ca64c5c6a25b12",
+  "sha256_test_persistent_integrity": "545090b796ee0690f309d8dae703abfb09d06b7e78500ce4457376a6e2eb2cd2"
+}

@@ -110,6 +110,24 @@ class HermesReference:
             raise GateError("External effects denied")
         return ACTION_POLICY[action]
 
+    @classmethod
+    def _stored_spec(cls, row) -> dict:
+        """Fail closed if persistent task data differs from its original digest.
+
+        Does not defend against an attacker who can rewrite both the DB and
+        all hashes; a separately protected anchor and ACL remain mandatory.
+        """
+        try:
+            spec = json.loads(row["spec"])
+            cls._validate_spec(spec)
+            if digest(spec) != row["spec_hash"]:
+                raise GateError("Persisted task spec integrity mismatch")
+            return spec
+        except (ValueError, TypeError, KeyError) as exc:
+            if isinstance(exc, GateError):
+                raise
+            raise GateError("Invalid persisted task spec") from exc
+
     def submit(self, spec: dict, *, idempotency_key: str) -> str:
         risk = self._validate_spec(spec)
         if not isinstance(idempotency_key, str) or not 1 <= len(idempotency_key) <= 128:
@@ -117,8 +135,9 @@ class HermesReference:
         now, task_id = utcnow(), uuid.uuid4().hex
         with self._conn() as db:
             db.execute("BEGIN IMMEDIATE")
-            current = db.execute("SELECT task_id,spec_hash FROM tasks WHERE idempotency_key=?", (idempotency_key,)).fetchone()
+            current = db.execute("SELECT task_id,spec,spec_hash FROM tasks WHERE idempotency_key=?", (idempotency_key,)).fetchone()
             if current:
+                self._stored_spec(current)
                 if current["spec_hash"] != digest(spec):
                     raise GateError("Idempotency key collision with changed task")
                 return current["task_id"]
@@ -134,7 +153,7 @@ class HermesReference:
             raise GateError("Task not found")
         data = dict(row)
         data.pop("approval_assertion", None)  # don't disclose the signed bearer assertion
-        data["spec"] = json.loads(data["spec"])
+        data["spec"] = self._stored_spec(data)
         data["result"] = json.loads(data["result"]) if data["result"] else None
         return data
 
@@ -144,7 +163,7 @@ class HermesReference:
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "PENDING":
                 raise GateError("Task missing or not PENDING")
-            risk = self._validate_spec(json.loads(item["spec"]))
+            risk = self._validate_spec(self._stored_spec(item))
             state = "WAITING_APPROVAL" if risk == "high" else "READY"
             db.execute("UPDATE tasks SET state=?,updated_at=? WHERE task_id=?", (state, utcnow(), task_id))
             self._event(db, task_id, "PREPARED", {"state": state})
@@ -156,6 +175,7 @@ class HermesReference:
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "WAITING_APPROVAL":
                 raise GateError("Task is not awaiting approval")
+            self._stored_spec(item)
             try:
                 claims = self.verifier.verify(token, task_id=task_id, spec_hash=item["spec_hash"])
             except ApprovalDenied as exc:
@@ -179,7 +199,7 @@ class HermesReference:
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "READY":
                 raise GateError("Task cannot reserve from current state")
-            spec = json.loads(item["spec"])
+            spec = self._stored_spec(item)
             risk = self._validate_spec(spec)
             if risk == "high":
                 try:
@@ -204,7 +224,7 @@ class HermesReference:
             item = db.execute("SELECT * FROM tasks WHERE task_id=?", (task_id,)).fetchone()
             if not item or item["state"] != "RUNNING":
                 raise GateError("Task is not RUNNING")
-            spec = json.loads(item["spec"])
+            spec = self._stored_spec(item)
             self._validate_spec(spec)
             result = {"action": spec["action"], "preview": spec["input"], "external_effects": False,
                       "accepted_by": "deterministic-demo-only"}
@@ -244,9 +264,15 @@ class HermesReference:
     def verify_ledger(self) -> bool:
         with self._conn() as db:
             rows = db.execute("SELECT * FROM events ORDER BY seq").fetchall()
+            task_ids = {r["task_id"] for r in db.execute("SELECT task_id FROM tasks")}
         prior = "GENESIS"
+        submitted = set()
         try:
             for row in rows:
+                if row["event_type"] == "SUBMITTED":
+                    if row["task_id"] in submitted:
+                        return False
+                    submitted.add(row["task_id"])
                 body = {"task_id": row["task_id"], "event_type": row["event_type"],
                         "payload": json.loads(row["payload"]), "previous_hash": row["previous_hash"],
                         "timestamp": row["timestamp"]}
@@ -255,4 +281,4 @@ class HermesReference:
                 prior = row["event_hash"]
         except (ValueError, TypeError, KeyError):
             return False
-        return True
+        return submitted == task_ids
