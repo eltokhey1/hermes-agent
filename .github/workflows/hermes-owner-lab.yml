@@ -42,6 +42,20 @@ jobs:
         working-directory: owner-lab/multiagent-safe-v3
         shell: bash
         run: python -W error -m unittest discover -s tests -v
+      - name: Validate Windows owner preflight output (hosted runner only)
+        if: runner.os == 'Windows'
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: pwsh
+        run: |
+          $json = & .\WINDOWS_READONLY_PREFLIGHT.ps1 | Out-String
+          $receipt = $json | ConvertFrom-Json
+          if ($receipt.schema_version -ne 2) { throw 'Invalid owner inventory schema' }
+          if ($receipt.collection_mode -ne 'READ_ONLY_NO_INSTALL_NO_CREDENTIAL_ACCESS') { throw 'Unexpected collection mode' }
+          if ($receipt.production_ready -ne $false) { throw 'A probe cannot declare production ready' }
+          if ($receipt.acceptance.protected_backup_and_isolated_restore -ne 'NOT_TESTED') { throw 'Incorrect backup acceptance claim' }
+          if ($receipt.acceptance.real_p1_crash_recovery -ne 'NOT_TESTED') { throw 'Incorrect P1 acceptance claim' }
+          if ($receipt.local_loopback.process_identity_verified -ne $false) { throw 'Port probe cannot assert process identity' }
+          Write-Output 'HOSTED_WINDOWS_INVENTORY_CONTRACT=PASS; OWNER_WINDOWS_P0=UNVERIFIED'
       - name: Explicit acceptance boundary
         shell: bash
         run: |
