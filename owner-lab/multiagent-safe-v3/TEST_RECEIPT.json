@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-21",
+  "scope": "independent offline lab, not installed or integrated",
+  "python": "3.13",
+  "test_framework": "unittest",
+  "tests_passed": 54,
+  "tests_failed": 0,
+  "source_files_sha256": {
+    ".gitignore": "fd0b9434263d390ed1cccd9d36218b99f93d0351645514c155eafa28d1d5c363",
+    "README.md": "d88ebdaeed32ec7b5f3b7e6144f01cef4a1a2d91a8622088bd53ae9a22138879",
+    "WINDOWS_READONLY_PREFLIGHT.ps1": "63bb9a41afd9cd1c0caeb4b56cf8eaeefa26accbeb3060a518cdcc9e07541ea2",
+    "approvals.py": "aaf6ce723b988e2102621dffbd8a3a58a04156472f8e1eb7b79157c65fcf5cef",
+    "local_router.py": "0aaed0e285e47bfe2945a1ab9ffa56234a49a1c4e55c322fd01eca57873d5870",
+    "orchestrator.py": "a5d8e449231a06cc34ea4283f965656e6a828eb96ce431a66c0190a0def06aed",
+    "patterns.py": "6114b4836571d120e188ca1b485ae50eacca9be58bac58ca906a58923379aecc",
+    "physical_sim.py": "71680f035206be5c7dfd9fa555ec32c456a76a796990604c765b56f76ab61bb7",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/test_local_router.py": "c88172afe90aead855d016c117cff085b1c63a256268f69b50349bc0bb122057",
+    "tests/test_patterns_and_physical.py": "2618fd7668eb85d3efc9881dac5ad9d7f7b76b04a488fada0bf545b9a209d03a",
+    "tests/test_secure_orchestrator.py": "70e62fefe48fffbef7b48f54b0177975878139a1677e14939ef68aaa2d97bbdf"
+  },
+  "windows_p0_p1": "UNKNOWN",
+  "production": "HOLD"
+}
