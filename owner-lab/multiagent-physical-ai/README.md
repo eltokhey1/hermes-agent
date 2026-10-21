@@ -35,3 +35,13 @@ References:
 - https://devblogs.microsoft.com/agent-framework/microsoft-agent-framework-version-1-0/
 - https://github.com/langchain-ai/langgraph-supervisor-py
 - https://github.com/langchain-ai/langgraph-swarm-py
+
+## Offline v3 lab follow-up — 2026-10-21
+
+The owner-directed standalone reference was upgraded to **Hermes_MultiAgent_Safe_Lab_v3_2026-10-21.zip**, stored as a ChatGPT conversation artifact (not checked into this public repository). SHA-256: `26429cab4dafada07e11e295a5d5c29c56dd1bf787a73325a8149e5a43beda1a`.
+
+Changes evaluated: deterministic action/risk classification; separate HMAC lab issuer/verifier interfaces with task/spec binding, nonce and TTL; signature/expiry/replay denial; SQLite idempotency under concurrent submits; interrupted RUNNING → UNKNOWN without replay; redacted status snapshot; no-paid-cloud planning to local Ollama/Kilo/OpenCode; simulation-only robotics.
+
+**Validation:** 54/54 isolated Python 3.13 `unittest` cases passed, including re-test after extracting the ZIP, with warnings-as-errors for SQLite ResourceWarning. The GitHub branch **does not contain these lab source files**, and GitHub Actions/Windows tests have **not** executed on this branch.
+
+**Safety qualifications:** HMAC lab signing **does not authenticate a human** and its verifier secret is not safe if given to untrusted code in the same process. Before any real action use separate authenticated approval issuance/isolation, P0/P1 negative tests, Windows backup+restore, protected audit anchor and shadow-mode evaluation. Status remains **DRAFT / PRODUCTION HOLD**. This is evidence for the existing P0/P1/P2 packages, not a new canonical work package.
