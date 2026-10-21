@@ -261,6 +261,7 @@ class HermesReference:
     def status_summary(self) -> dict:
         """Redacted operational snapshot; event root is unanchored in this lab."""
         with self._conn() as db:
+            self._require_integrity(db)
             by_state = db.execute("SELECT state,COUNT(*) AS n FROM tasks GROUP BY state").fetchall()
             last = db.execute("SELECT seq,event_hash FROM events ORDER BY seq DESC LIMIT 1").fetchone()
         return {"tasks_by_state": {row["state"]: row["n"] for row in by_state},
