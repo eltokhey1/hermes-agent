@@ -269,9 +269,8 @@ class HermesReference:
                 "ledger_head_unanchored": last["event_hash"] if last else "GENESIS",
                 "model_api_cost_usd": 0, "external_effects_enabled": False}
 
-    @classmethod
-    def _require_integrity(cls, db: sqlite3.Connection) -> None:
-        if not cls._verify_ledger(db):
+    def _require_integrity(self, db: sqlite3.Connection) -> None:
+        if not self._verify_ledger(db):
             raise GateError("Durable task state and ledger are inconsistent")
 
     def verify_ledger(self) -> bool:
@@ -284,15 +283,14 @@ class HermesReference:
         with self._conn() as db:
             return self._verify_ledger(db)
 
-    @classmethod
-    def _verify_ledger(cls, db: sqlite3.Connection) -> bool:
+    def _verify_ledger(self, db: sqlite3.Connection) -> bool:
         records = db.execute("SELECT * FROM tasks").fetchall()
         events = db.execute("SELECT * FROM events ORDER BY seq").fetchall()
         state = {}
         try:
             tasks = {}
             for row in records:
-                spec = cls._stored_spec(row)
+                spec = self._stored_spec(row)
                 tasks[row["task_id"]] = (row, spec, ACTION_POLICY[spec["action"]])
             # Reconcile approval receipts with transition events as well as tasks.
             # A ledger hash chain alone cannot detect edits to another SQLite table.
@@ -338,7 +336,7 @@ class HermesReference:
                         return False
                     if not isinstance(payload.get("nonce_hash"), str) or len(payload["nonce_hash"]) != 64:
                         return False
-                    approval_events[task_id] = (decision, payload["nonce_hash"])
+                    approval_events[task_id] = (decision, payload["nonce_hash"], payload["approver"])
                     next_state = "READY" if decision == "approve" else "REJECTED"
                 elif kind == "STARTED" and current == "READY":
                     if payload != {"action": spec["action"]}:
@@ -379,11 +377,21 @@ class HermesReference:
                     if record["approval_assertion"] is not None:
                         return False
                 else:
-                    decision, nonce_hash = event
+                    decision, nonce_hash, approver = event
                     if receipt["decision"] != decision or digest(receipt["nonce"]) != nonce_hash:
                         return False
                     if decision == "approve":
                         if not isinstance(record["approval_assertion"], str) or not record["approval_assertion"]:
+                            return False
+                        try:
+                            historical = self.verifier.inspect_historical(
+                                record["approval_assertion"], task_id=task_id, spec_hash=record["spec_hash"]
+                            )
+                        except ApprovalDenied:
+                            return False
+                        if (historical["decision"] != decision or
+                                historical["nonce"] != receipt["nonce"] or
+                                historical["approver"] != approver):
                             return False
                     elif record["approval_assertion"] is not None:
                         return False
