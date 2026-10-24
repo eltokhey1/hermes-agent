@@ -95,6 +95,26 @@ class OfflineSnapshotTests(unittest.TestCase):
         with self.assertRaises(BackupError):
             validate_snapshot(self.root)
 
+    def test_wal_companion_appearing_during_hash_is_denied(self):
+        # Reproduction: before this guard a late WAL left the database
+        # digest and in-memory integrity unchanged, yielding a false PASS.
+        wal = Path(str(self.file) + "-wal")
+        original_hash = snapshot_module._sha256
+        created = False
+
+        def add_late_sidecar(path):
+            nonlocal created
+            if not created:
+                created = True
+                wal.write_bytes(b"late-sidecar-sentinel")
+            return original_hash(path)
+
+        with patch.object(snapshot_module, "_sha256", side_effect=add_late_sidecar):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_HAS_COMPANION", caught.exception.code)
+        self.assertEqual(b"late-sidecar-sentinel", wal.read_bytes())
+
     def test_wal_companion_denied_without_modification(self):
         wal = Path(str(self.file) + "-wal")
         wal.write_bytes(b"sentinel")

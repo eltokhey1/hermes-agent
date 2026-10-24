@@ -45,6 +45,17 @@ def _same_snapshot_identity(snapshot: Path, initial: os.stat_result) -> bool:
         return False
 
 
+def _reject_companions(snapshot: Path) -> None:
+    """Reject WAL/SHM/journal sidecars, including dangling symlinks/junctions."""
+    for ext in ("-wal", "-shm", "-journal"):
+        companion = Path(str(snapshot) + ext)
+        junction = getattr(companion, "is_junction", None)
+        # A late sidecar invalidates the offline-snapshot assumption.
+        if (companion.exists() or companion.is_symlink() or
+                (junction is not None and junction())):
+            raise BackupError("SNAPSHOT_HAS_COMPANION")
+
+
 def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> dict:
     """Validate a stable offline snapshot, never an active Hermes state.db."""
     # A redirected parent can bypass the final-file symlink check and silently
@@ -71,11 +82,7 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
     if not len(HEADER) <= size <= MAX_BYTES:
         raise BackupError("SNAPSHOT_SIZE_OUT_OF_BOUNDS")
     # A separate WAL/journal might contain uncheckpointed committed changes.
-    for ext in ("-wal", "-shm", "-journal"):
-        companion = Path(str(snapshot) + ext)
-        # Reject dangling symlinks too: exists() alone misses them.
-        if companion.exists() or companion.is_symlink():
-            raise BackupError("SNAPSHOT_HAS_COMPANION")
+    _reject_companions(snapshot)
     with snapshot.open("rb") as source:
         if source.read(len(HEADER)) != HEADER:
             raise BackupError("SNAPSHOT_NOT_SQLITE")
@@ -114,6 +121,9 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
             _sha256(snapshot) != before or
             not _same_snapshot_identity(snapshot, stat)):
         raise BackupError("SNAPSHOT_CHANGED_DURING_CHECK")
+    # The initial sidecar check is not sufficient: another process may
+    # create a WAL/journal while hashing or restoring the snapshot.
+    _reject_companions(snapshot)
     return {
         "schema": SCHEMA,
         "mode": "READ_ONLY_MEMORY_RESTORE",

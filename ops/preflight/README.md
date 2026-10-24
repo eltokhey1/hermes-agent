@@ -49,7 +49,7 @@ The script disables optional Git locks, fsmonitor and recursive submodules, and 
 See ops/OWNER_READINESS_GATES.md in draft PR #4 for the complete acceptance matrix.
 ## Read-only SQLite backup preflight (2026-10-24)
 
-Added `verify_sqlite_snapshot.py`, an offline **preflight only** for an operator-created stable SQLite backup (not the active Hermes database). It opens the snapshot in SQLite immutable mode, reconstructs it *in memory*, runs `PRAGMA integrity_check` and `PRAGMA foreign_key_check`, confirms tables exist, and checks the source SHA-256 has not changed. It prints only sanitized counts, digest and gate labels, not row contents or paths. It refuses a source with separate WAL/journal sidecars or a snapshot over 512 MiB; it never overwrites the live database or writes a restored copy to disk.
+Added `verify_sqlite_snapshot.py`, an offline **preflight only** for an operator-created stable SQLite backup (not the active Hermes database). It opens the snapshot in SQLite immutable mode, reconstructs it *in memory*, runs `PRAGMA integrity_check` and `PRAGMA foreign_key_check`, confirms tables exist, and checks the source SHA-256 has not changed. It prints only sanitized counts, digest and gate labels, not row contents or paths. It refuses a source with separate WAL/journal sidecars (checking both before and after validation, including sidecars appearing during the scan) or a snapshot over 512 MiB; it never overwrites the live database or writes a restored copy to disk.
 
 From the **actual checkout** with an independently prepared offline backup, Windows PowerShell usage:
 
