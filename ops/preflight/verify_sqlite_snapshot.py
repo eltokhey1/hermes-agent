@@ -31,6 +31,16 @@ def _sha256(path: Path) -> str:
 
 def validate_snapshot(snapshot: Path) -> dict:
     """Validate a stable offline snapshot, never an active Hermes state.db."""
+    # A redirected parent can bypass the final-file symlink check and silently
+    # turn an "offline backup" argument into a path to a live Hermes database.
+    # Reject symlinks and Windows junctions in the entire supplied parent chain.
+    for parent in snapshot.parents:
+        try:
+            junction = getattr(parent, "is_junction", None)
+            if parent.is_symlink() or (junction is not None and junction()):
+                raise BackupError("SNAPSHOT_PARENT_REDIRECTED")
+        except OSError as exc:
+            raise BackupError("SNAPSHOT_PARENT_UNVERIFIABLE") from exc
     if snapshot.is_symlink() or not snapshot.is_file():
         raise BackupError("SNAPSHOT_NOT_REGULAR_FILE")
     size = snapshot.stat().st_size

@@ -128,5 +128,28 @@ class OfflineSnapshotTests(unittest.TestCase):
         self.assertEqual(corrupt, self.file.read_bytes())
 
 
+    def test_symlinked_parent_directory_denied(self):
+        # A directory alias can silently redirect an apparent offline snapshot.
+        alias = self.root / "offline-backup-alias"
+        try:
+            alias.symlink_to(self.root, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("Symlink creation not permitted on this runner")
+        with self.assertRaises(BackupError) as caught:
+            validate_snapshot(alias / self.file.name)
+        self.assertEqual("SNAPSHOT_PARENT_REDIRECTED", caught.exception.code)
+
+    def test_windows_junction_parent_denied_simulated(self):
+        # Path.is_junction is available on supported newer Python/Windows.
+        from unittest.mock import patch
+        original = getattr(Path, "is_junction", lambda path: False)
+        def is_junction(path):
+            return path == self.root or original(path)
+        with patch.object(Path, "is_junction", is_junction, create=True):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_PARENT_REDIRECTED", caught.exception.code)
+
+
 if __name__ == "__main__":
     unittest.main()
