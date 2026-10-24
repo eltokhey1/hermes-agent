@@ -29,7 +29,7 @@ def _sha256(path: Path) -> str:
     return value.hexdigest()
 
 
-def validate_snapshot(snapshot: Path) -> dict:
+def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> dict:
     """Validate a stable offline snapshot, never an active Hermes state.db."""
     # A redirected parent can bypass the final-file symlink check and silently
     # turn an "offline backup" argument into a path to a live Hermes database.
@@ -61,7 +61,15 @@ def validate_snapshot(snapshot: Path) -> dict:
     with snapshot.open("rb") as source:
         if source.read(len(HEADER)) != HEADER:
             raise BackupError("SNAPSHOT_NOT_SQLITE")
+    if expected_sha256 is not None:
+        if (not isinstance(expected_sha256, str) or len(expected_sha256) != 64 or
+                any(c not in "0123456789abcdefABCDEF" for c in expected_sha256)):
+            raise BackupError("INVALID_EXPECTED_SHA256")
+        expected_sha256 = expected_sha256.lower()
     before = _sha256(snapshot)
+    # Reject a structurally healthy SQLite file that is not the recorded backup.
+    if expected_sha256 is not None and before != expected_sha256:
+        raise BackupError("SNAPSHOT_SHA256_MISMATCH")
     uri = "file:" + quote(snapshot.resolve().as_posix(), safe="/:") + "?immutable=1"
     try:
         with closing(sqlite3.connect(uri, uri=True, timeout=3)) as source:
@@ -88,6 +96,7 @@ def validate_snapshot(snapshot: Path) -> dict:
         "schema": SCHEMA,
         "mode": "READ_ONLY_MEMORY_RESTORE",
         "snapshot_sha256": before,
+        "external_digest_match": True if expected_sha256 is not None else None,
         "snapshot_bytes": size,
         "restored_page_count": pages,
         "restored_table_count": tables,
@@ -102,9 +111,10 @@ def validate_snapshot(snapshot: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Inspect an operator-created offline SQLite backup")
     parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--expected-sha256", help="Independent 64-digit SHA-256 of offline backup")
     args = parser.parse_args(argv)
     try:
-        report, code = validate_snapshot(args.snapshot), 0
+        report, code = validate_snapshot(args.snapshot, expected_sha256=args.expected_sha256), 0
     except BackupError as exc:
         report, code = {"schema": SCHEMA, "status": "NO_GO", "error_code": exc.code,
                         "production_ready": False}, 2
