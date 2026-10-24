@@ -144,7 +144,8 @@ class HermesReference:
                 return current["task_id"]
             db.execute("INSERT INTO tasks VALUES(?,?,?,?,?,?,?,?,?)",
                        (task_id, idempotency_key, canonical(spec), digest(spec), "PENDING", None, None, now, now))
-            self._event(db, task_id, "SUBMITTED", {"policy_risk": risk, "spec_hash": digest(spec)})
+            self._event(db, task_id, "SUBMITTED", {"policy_risk": risk, "spec_hash": digest(spec),
+                                                  "idempotency_key_hash": digest(idempotency_key)})
         return task_id
 
     def task(self, task_id: str) -> dict:
@@ -343,7 +344,8 @@ class HermesReference:
                 record, spec, risk = tasks[task_id]
                 current, kind = state.get(task_id), row["event_type"]
                 if kind == "SUBMITTED" and current is None:
-                    if payload != {"policy_risk": risk, "spec_hash": record["spec_hash"]}:
+                    if payload != {"policy_risk": risk, "spec_hash": record["spec_hash"],
+                                   "idempotency_key_hash": digest(record["idempotency_key"])}:
                         return False
                     next_state = "PENDING"
                 elif kind == "PREPARED" and current == "PENDING":

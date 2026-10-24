@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 from approvals import ApprovalVerifier
-from orchestrator import HermesReference, canonical, digest
+from orchestrator import GateError, HermesReference, canonical, digest
 from test_secure_orchestrator import Clock, spec
 
 
@@ -88,6 +88,48 @@ class IndependentAnchorTests(unittest.TestCase):
             with self.subTest(seq=seq, head=head):
                 self.assertFalse(self.h.verify_external_anchor(expected_seq=seq,
                                                                 expected_hash=head))
+
+    def test_idempotency_key_is_anchored_without_exposing_raw_value(self):
+        task = self.h.submit(spec(), idempotency_key="private-once-only-key")
+        seq, head = self.receipt()
+        with closing(sqlite3.connect(self.path)) as db:
+            payload = json.loads(db.execute(
+                "SELECT payload FROM events WHERE task_id=? AND event_type='SUBMITTED'",
+                (task,)
+            ).fetchone()[0])
+        self.assertEqual(digest("private-once-only-key"), payload["idempotency_key_hash"])
+        self.assertNotIn("private-once-only-key", canonical(payload))
+        self.assertTrue(self.h.verify_ledger())
+        self.assertTrue(self.h.verify_external_anchor(expected_seq=seq, expected_hash=head))
+
+    def test_idempotency_key_rewrite_cannot_reenable_duplicate_submission(self):
+        task = self.h.submit(spec(), idempotency_key="must-not-replay")
+        seq, head = self.receipt()
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.execute("UPDATE tasks SET idempotency_key=? WHERE task_id=?",
+                       ("forged-unused-key", task))
+        # Before the fix, both checks accepted the unmodified event chain
+        # and submit() accepted a duplicate under the original key.
+        self.assertFalse(self.h.verify_ledger())
+        self.assertFalse(self.h.verify_external_anchor(expected_seq=seq, expected_hash=head))
+        with self.assertRaises(GateError):
+            self.h.submit(spec(), idempotency_key="must-not-replay")
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(1, db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0])
+
+    def test_rehashed_legacy_unbound_submission_is_denied(self):
+        task = self.h.submit(spec(), idempotency_key="legacy")
+        with closing(sqlite3.connect(self.path)) as db, db:
+            db.row_factory = sqlite3.Row
+            event = db.execute("SELECT * FROM events WHERE task_id=?", (task,)).fetchone()
+            payload = json.loads(event["payload"])
+            del payload["idempotency_key_hash"]
+            body = {"task_id": task, "event_type": event["event_type"],
+                    "payload": payload, "previous_hash": event["previous_hash"],
+                    "timestamp": event["timestamp"]}
+            db.execute("UPDATE events SET payload=?,event_hash=? WHERE seq=?",
+                       (canonical(payload), digest(body), event["seq"]))
+        self.assertFalse(self.h.verify_ledger())
 
 
 if __name__ == "__main__":
