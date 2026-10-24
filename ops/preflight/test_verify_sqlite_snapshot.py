@@ -63,6 +63,18 @@ class OfflineSnapshotTests(unittest.TestCase):
         self.assertEqual("SNAPSHOT_HAS_COMPANION", e.exception.code)
         self.assertEqual(b"sentinel", wal.read_bytes())
 
+    def test_dangling_wal_symlink_denied(self):
+        wal = Path(str(self.file) + "-wal")
+        try:
+            wal.symlink_to(self.root / "absent.wal")
+        except (OSError, NotImplementedError):
+            self.skipTest("Symlink creation not permitted on this runner")
+        self.assertFalse(wal.exists())
+        self.assertTrue(wal.is_symlink())
+        with self.assertRaises(BackupError) as e:
+            validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_HAS_COMPANION", e.exception.code)
+
     def test_rollback_journal_denied(self):
         journal = Path(str(self.file) + "-journal")
         journal.write_bytes(b"sentinel")
