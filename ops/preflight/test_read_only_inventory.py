@@ -114,14 +114,14 @@ class TestInventory(unittest.TestCase):
 
 
     def test_windows_localappdata_missing_is_unknown(self):
-        with patch("read_only_inventory.sys.platform", "win32"), patch.dict(
+        with patch("read_only_inventory._is_windows", return_value=True), patch.dict(
             "read_only_inventory.os.environ", {"LOCALAPPDATA": ""}
         ):
             result = collect(self.repo)
         self.assertIsNone(result["hermes_windows_install_directory_present"])
 
     def test_windows_localappdata_relative_is_unknown(self):
-        with patch("read_only_inventory.sys.platform", "win32"), patch.dict(
+        with patch("read_only_inventory._is_windows", return_value=True), patch.dict(
             "read_only_inventory.os.environ", {"LOCALAPPDATA": "relative-folder"}
         ):
             result = collect(self.repo)
@@ -130,7 +130,7 @@ class TestInventory(unittest.TestCase):
     def test_windows_localappdata_absolute_detects_directory(self):
         local_app = Path(self.tmp.name) / "LocalAppData"
         (local_app / "hermes").mkdir(parents=True)
-        with patch("read_only_inventory.sys.platform", "win32"), patch.dict(
+        with patch("read_only_inventory._is_windows", return_value=True), patch.dict(
             "read_only_inventory.os.environ", {"LOCALAPPDATA": str(local_app)}
         ):
             result = collect(self.repo)
