@@ -135,6 +135,25 @@ class OfflineSnapshotTests(unittest.TestCase):
             validate_snapshot(self.file)
         self.assertEqual("SNAPSHOT_HAS_COMPANION", e.exception.code)
 
+    def test_inaccessible_wal_metadata_is_not_treated_as_absent(self):
+        # Python 3.14 pathlib exists/is_symlink may return False on ACL denial.
+        # Simulate that behavior independently of the hosted Python version.
+        wal = Path(str(self.file) + "-wal")
+        original_lstat = Path.lstat
+
+        def denied_wal_lstat(path):
+            if path == wal:
+                raise PermissionError("synthetic metadata access denied")
+            return original_lstat(path)
+
+        with (patch.object(Path, "exists", return_value=False),
+              patch.object(Path, "is_symlink", return_value=False),
+              patch.object(Path, "is_junction", return_value=False, create=True),
+              patch.object(Path, "lstat", denied_wal_lstat)):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_COMPANION_UNVERIFIABLE", caught.exception.code)
+
     def test_rollback_journal_denied(self):
         journal = Path(str(self.file) + "-journal")
         journal.write_bytes(b"sentinel")
