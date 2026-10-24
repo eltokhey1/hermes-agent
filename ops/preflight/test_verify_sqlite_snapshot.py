@@ -81,6 +81,30 @@ class OfflineSnapshotTests(unittest.TestCase):
         with self.assertRaises(BackupError):
             validate_snapshot(self.file)
 
+    def test_valid_foreign_keys_pass(self):
+        with contextlib.closing(sqlite3.connect(self.file)) as db:
+            with db:
+                db.execute("PRAGMA foreign_keys=ON")
+                db.execute("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+                db.execute("CREATE TABLE child(parent_id INTEGER REFERENCES parent(id))")
+                db.execute("INSERT INTO parent(id) VALUES(1)")
+                db.execute("INSERT INTO child(parent_id) VALUES(1)")
+        result = validate_snapshot(self.file)
+        self.assertEqual("PASS", result["foreign_key_integrity"])
+
+    def test_orphan_foreign_key_is_denied_even_if_sqlite_integrity_is_ok(self):
+        # SQLite's integrity_check can report 'ok' for an orphan foreign key.
+        with contextlib.closing(sqlite3.connect(self.file)) as db:
+            with db:
+                db.execute("PRAGMA foreign_keys=OFF")
+                db.execute("CREATE TABLE parent(id INTEGER PRIMARY KEY)")
+                db.execute("CREATE TABLE child(parent_id INTEGER REFERENCES parent(id))")
+                db.execute("INSERT INTO child(parent_id) VALUES(999)")
+            self.assertEqual("ok", db.execute("PRAGMA integrity_check").fetchone()[0])
+        with self.assertRaises(BackupError) as exc:
+            validate_snapshot(self.file)
+        self.assertEqual("SQLITE_FOREIGN_KEY_FAILED", exc.exception.code)
+
     def test_schema_missing_denied(self):
         blank = self.root / "blank.db"
         with contextlib.closing(sqlite3.connect(blank)) as conn:
