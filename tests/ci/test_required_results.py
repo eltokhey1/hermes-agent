@@ -97,3 +97,35 @@ def test_cli_stdin_exit_codes_and_output(tmp_path, release, results, code, repor
     assert f"{key}={value}" in child.stdout
     for name, result in results.items():
         assert f"{name}: {result}" in child.stdout
+
+
+@pytest.mark.parametrize("results,expected_rc", [
+    ({"tests": "success"}, 0),
+    ({"detect": "success", "tests": "failure", "history-check": "skipped"}, 1),
+])
+def test_cli_cp1252_console_preserves_verdict_without_unicode_crash(tmp_path, results, expected_rc):
+    """The required CI gate must emit a verdict on non-UTF8 Windows consoles."""
+    output = tmp_path / "strict-gate-output.txt"
+    needs = {name: {"result": result} for name, result in results.items()}
+    child = subprocess.run(
+        [sys.executable, str(SCRIPT), "--release"],
+        input=json.dumps(needs),
+        capture_output=True,
+        text=True,
+        encoding="cp1252",
+        timeout=30,
+        env={**os.environ, "GITHUB_OUTPUT": str(output), "PYTHONIOENCODING": "cp1252:strict"},
+        check=False,
+    )
+    assert child.returncode == expected_rc, child.stderr
+    assert "UnicodeEncodeError" not in child.stderr
+    assert output.exists()
+    compact = json.loads(output.read_text(encoding="utf-8").strip().split("=", 1)[1])
+    assert compact == results
+    if expected_rc:
+        assert "[FAIL] tests: failure" in child.stdout
+        assert "[SKIP] history-check: skipped" in child.stdout
+        assert "::error::1 job(s) failed: tests" in child.stdout
+    else:
+        assert "[PASS] tests: success" in child.stdout
+        assert "All checks passed" in child.stdout

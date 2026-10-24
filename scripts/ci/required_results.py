@@ -85,7 +85,9 @@ def render_report(needs: dict[str, dict[str, Any]] | None, verdict: dict[str, An
     lines: list[str] = []
     for name in sorted(needs or {}):
         result = (needs[name] or {}).get("result", "unknown")
-        icon = {"success": "✅", "skipped": "⏭️"}.get(result, "❌")
+        # ASCII markers are safe on Windows cp1252/non-UTF8 CI consoles.
+        # Unicode emoji here can crash this *required* gate before its verdict.
+        icon = {"success": "[PASS]", "skipped": "[SKIP]"}.get(result, "[FAIL]")
         lines.append(f"{icon} {name}: {result}")
     if verdict["failed"]:
         failed = verdict["failed"]
