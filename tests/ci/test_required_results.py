@@ -58,6 +58,27 @@ def test_selected_update_consumers_must_succeed(lane, jobs, result):
     assert evaluate_gate(needs)["ok"]
 
 
+
+@pytest.mark.parametrize("release", [False, True])
+def test_skipped_classifier_is_never_accepted(release):
+    # The change classifier is required to select the test matrix. A skipped
+    # classifier must not be silently treated as an allowed PR skip.
+    needs = {"detect": {"result": "skipped"}, "tests": {"result": "success"}}
+    assert evaluate_gate(needs, release=release) == {
+        "ok": False, "failed": ["detect"], "allowed_skips": [],
+    }
+
+
+def test_entirely_skipped_pr_cannot_report_green():
+    # Regression: the old PR gate returned ok=True for this input.
+    needs = {name: {"result": "skipped"} for name in ("detect", "tests", "lint")}
+    verdict = evaluate_gate(needs, release=False)
+    assert verdict == {
+        "ok": False, "failed": ["detect"],
+        "allowed_skips": ["lint", "tests"],
+    }
+
+
 def test_release_exclusion_policy():
     assert required_results.EXCLUDED_JOBS == {
         "history-check", "lockfile-diff", "prompt-surface-diff", "supply-chain", "e2e-desktop",
