@@ -47,3 +47,14 @@ Three additional test methods were added for missing, relative and absolute `LOC
 The script disables optional Git locks, fsmonitor and recursive submodules, and filters inherited `GIT_*` environment variables before running Git (preventing unexpected `GIT_TRACE` output and repository-override variables). Git and the host are still not sandboxed. Review before running. Do not share other local logs or environment-variable dumps. Only independently verified backups restored in isolation pass the P0 recovery gate.
 
 See ops/OWNER_READINESS_GATES.md in draft PR #4 for the complete acceptance matrix.
+## Read-only SQLite backup preflight (2026-10-24)
+
+Added `verify_sqlite_snapshot.py`, an offline **preflight only** for an operator-created stable SQLite backup (not the active Hermes database). It opens the snapshot in SQLite immutable mode, reconstructs it *in memory*, runs `PRAGMA integrity_check`, confirms tables exist, and checks the source SHA-256 has not changed. It prints only sanitized counts, digest and gate labels, not row contents or paths. It refuses a source with separate WAL/journal sidecars or a snapshot over 512 MiB; it never overwrites the live database or writes a restored copy to disk.
+
+From the **actual checkout** with an independently prepared offline backup, Windows PowerShell usage:
+
+```powershell
+python .\ops\preflight\verify_sqlite_snapshot.py --snapshot 'C:\PATH\TO\OFFLINE\BACKUP\state.db'
+```
+
+**Never pass a live, actively changing `state.db` as the snapshot.** This validates SQLite file consistency only. It does **not** demonstrate protected/off-device backup, full Hermes application startup, ACL, secrets isolation, ESTOP, authenticated approvals, independent audit anchor or P0/P1 acceptance. Synthetic CI runs on GitHub-hosted Windows/Ubuntu with throwaway fixtures, and must not be treated as owner-machine evidence. `PRODUCTION=HOLD`.
