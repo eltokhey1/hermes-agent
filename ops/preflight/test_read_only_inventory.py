@@ -150,6 +150,16 @@ class TestInventory(unittest.TestCase):
         self.assertTrue(report["repository_detected"])
         self.assertFalse(trace.exists(), "inventory must not write Git trace2 files")
 
+    def test_unicode_line_separator_filename_is_one_untracked_entry(self):
+        # core.quotePath=false allows U+2028 inside a porcelain-v1 filename.
+        # str.splitlines() mistakes that character for an extra status record.
+        git(self.repo, "config", "core.quotePath", "false")
+        (self.repo / "private\u2028name.txt").write_text("fixture", encoding="utf-8")
+        report = collect(self.repo)
+        self.assertTrue(report["working_tree_dirty"])
+        self.assertEqual(report["untracked_entries"], 1)
+        self.assertEqual(report["tracked_changes"], 0)
+
     def test_git_dir_env_does_not_change_repository_identity(self):
         unrelated = Path(self.tmp.name) / "unrelated.git"
         subprocess.run(["git", "init", "-q", "--bare", str(unrelated)], check=True,

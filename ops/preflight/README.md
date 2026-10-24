@@ -34,13 +34,13 @@ From the repository root:
 
     python -m unittest discover -s .\ops\preflight -p test_read_only_inventory.py -v
 
-Tests create and commit in temporary throwaway Git repositories. The inventory command itself is read-only. Historical isolated Linux validation: 9/9 passing on an earlier snapshot. Current source now has 14 test methods, with no independently reported full test run for the updated head; Windows execution remains unverified. This is **not** an application acceptance test and **not** a Windows test.
+Tests create and commit in temporary throwaway Git repositories. The inventory command itself is read-only. The source contains 15 inventory tests, including a regression for a Unicode line-separator filename when `core.quotePath=false`. The current commit's GitHub-hosted synthetic CI result must be checked separately; hosted Windows is **not** the owner's Windows machine or application acceptance.
 
 ## LOCALAPPDATA identity guard — 2026-10-19
 
 On Windows, `hermes_windows_install_directory_present` is now `null` if `LOCALAPPDATA` is missing or relative. This prevents accidental detection of an unrelated relative `hermes` directory. A true value only proves that the directory exists, **not** that it contains a working Hermes installation or that the installed binary matches GitHub.
 
-Three additional test methods were added for missing, relative and absolute `LOCALAPPDATA` cases. The source currently contains **14** test methods. The older `9/9` Linux result refers to an earlier source snapshot; this exact updated GitHub head has **not** been independently executed on Windows or CI and must not be reported as 14 passing tests.
+Three additional test methods cover missing, relative and absolute `LOCALAPPDATA` cases. The inventory suite now has **15** test methods. The earlier `9/9` Linux result is historical; only GitHub-hosted test results for the **exact** commit SHA count as synthetic CI evidence, never as owner-machine acceptance.
 
 ## Security / limits
 

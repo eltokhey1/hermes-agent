@@ -55,7 +55,8 @@ def _git(repo: Path, *arguments: str) -> str:
 
 def _counts(status_text: str) -> dict[str, int | bool]:
     """Aggregate porcelain v1 statuses without leaking filenames."""
-    lines = status_text.splitlines() if status_text else []
+    # Git porcelain v1 uses LF records; splitlines() also splits Unicode U+2028 in paths.
+    lines = status_text.split("\n") if status_text else []
     unknown = sum(line.startswith("??") for line in lines)
     tracked = len(lines) - unknown
     return {"tracked_changes": tracked, "untracked_entries": unknown,
