@@ -283,6 +283,28 @@ class HermesReference:
         with self._conn() as db:
             return self._verify_ledger(db)
 
+    def verify_external_anchor(self, *, expected_seq: int, expected_hash: str) -> bool:
+        """Check a separately preserved audit receipt; never authorize execution.
+
+        Caller must supply a TRUSTED independently retained receipt. A digest
+        copied from this same SQLite file provides no tamper protection.
+        """
+        if (type(expected_seq) is not int or expected_seq < 0 or
+                not isinstance(expected_hash, str) or
+                not ((expected_seq == 0 and expected_hash == "GENESIS") or
+                     (expected_seq > 0 and len(expected_hash) == 64 and
+                      all(c in "0123456789abcdef" for c in expected_hash)))):
+            return False
+        with self._conn() as db:
+            if not self._verify_ledger(db):
+                return False
+            last = db.execute(
+                "SELECT seq,event_hash FROM events ORDER BY seq DESC LIMIT 1"
+            ).fetchone()
+            seq = last["seq"] if last else 0
+            head = last["event_hash"] if last else "GENESIS"
+            return seq == expected_seq and head == expected_hash
+
     def _verify_ledger(self, db: sqlite3.Connection) -> bool:
         records = db.execute("SELECT * FROM tasks").fetchall()
         events = db.execute("SELECT * FROM events ORDER BY seq").fetchall()
