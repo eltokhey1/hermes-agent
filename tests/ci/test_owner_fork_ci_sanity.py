@@ -48,6 +48,18 @@ class ForkCiSanity(unittest.TestCase):
         self.assertIn("tests", result["failed"])
         self.assertIn("tests-os", result["failed"])
 
+    def test_successful_classifier_with_empty_outputs_cannot_pass(self):
+        # Regression: detect succeeded but emitted only empty lane values;
+        # previously the skipped consumers were incorrectly marked optional.
+        result = self.gate.evaluate_gate({
+            "detect": {"result": "success", "outputs": {
+                "python": "", "frontend": "", "event_name": "pull_request"}},
+            "tests": {"result": "skipped"},
+            "tests-os": {"result": "skipped"},
+        })
+        self.assertIs(result["ok"], False)
+        self.assertIn("detect:outputs-unusable", result["failed"])
+
     def test_required_gate_fails_closed_for_missing_needs(self):
         self.assertIs(self.gate.evaluate_gate({})["ok"], False)
         self.assertIs(self.gate.evaluate_gate(None)["ok"], False)
