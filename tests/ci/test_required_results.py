@@ -79,6 +79,36 @@ def test_entirely_skipped_pr_cannot_report_green():
     }
 
 
+@pytest.mark.parametrize("release", [False, True])
+@pytest.mark.parametrize("outputs", [
+    {},
+    {"python": "", "frontend": "", "event_name": "pull_request"},
+    {"event_name": "pull_request"},
+])
+def test_classifier_success_without_usable_lane_outputs_fails_closed(release, outputs):
+    # A classifier job may succeed but publish no valid booleans. Downstream
+    # jobs then skip and the former aggregate gate falsely returned green.
+    needs = {
+        "detect": {"result": "success", "outputs": outputs},
+        "tests": {"result": "skipped"},
+        "tests-os": {"result": "skipped"},
+    }
+    verdict = evaluate_gate(needs, release=release)
+    assert verdict["ok"] is False
+    assert "detect:outputs-unusable" in verdict["failed"]
+
+
+def test_all_false_classifier_outputs_are_valid_for_unrelated_changes():
+    # A no-op classification is distinct from broken or absent outputs.
+    needs = {
+        "detect": {"result": "success", "outputs": {"python": "false", "frontend": "false"}},
+        "tests": {"result": "skipped"},
+    }
+    verdict = evaluate_gate(needs)
+    assert verdict["ok"] is True
+    assert verdict["allowed_skips"] == ["tests"]
+
+
 def test_release_exclusion_policy():
     assert required_results.EXCLUDED_JOBS == {
         "history-check", "lockfile-diff", "prompt-surface-diff", "supply-chain", "e2e-desktop",
@@ -102,7 +132,8 @@ def test_empty_needs_fails_closed(needs, release):
 ])
 def test_cli_stdin_exit_codes_and_output(tmp_path, release, results, code, report):
     output = tmp_path / "github-output.txt"
-    needs = {name: {"result": result, "outputs": {"detail": "kept"}}
+    needs = {name: {"result": result, "outputs": {"detail": "kept",
+             **({"python": "false"} if name == "detect" else {})}}
              for name, result in results.items()}
     child = subprocess.run(
         [sys.executable, str(SCRIPT), *(["--release"] if release else [])],
@@ -127,7 +158,9 @@ def test_cli_stdin_exit_codes_and_output(tmp_path, release, results, code, repor
 def test_cli_cp1252_console_preserves_verdict_without_unicode_crash(tmp_path, results, expected_rc):
     """The required CI gate must emit a verdict on non-UTF8 Windows consoles."""
     output = tmp_path / "strict-gate-output.txt"
-    needs = {name: {"result": result} for name, result in results.items()}
+    needs = {name: {"result": result,
+             **({"outputs": {"python": "false"}} if name == "detect" else {})}
+             for name, result in results.items()}
     child = subprocess.run(
         [sys.executable, str(SCRIPT), "--release"],
         input=json.dumps(needs),
