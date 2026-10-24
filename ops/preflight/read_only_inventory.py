@@ -93,8 +93,9 @@ def collect(repo: Path) -> dict:
     # No branch names, filenames, paths, remote URLs, or environment variables
     # appear in the JSON; these could encode personal data / secrets.
     branch = _git(root, "rev-parse", "--abbrev-ref", "HEAD")
+    # A dirty submodule must not make the checkout appear clean.
     status = _git(root, "status", "--porcelain=v1", "--untracked-files=normal",
-                  "--ignore-submodules=all")
+                  "--ignore-submodules=none")
     remote_names = _git(root, "remote")
     markers = ("AGENTS.md", "README.md", "scripts/run_tests.sh", "pyproject.toml")
     marker_presence = {name: (root / name).is_file() for name in markers}

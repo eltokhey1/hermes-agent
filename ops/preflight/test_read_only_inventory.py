@@ -160,6 +160,27 @@ class TestInventory(unittest.TestCase):
         self.assertEqual(report["untracked_entries"], 1)
         self.assertEqual(report["tracked_changes"], 0)
 
+    def test_dirty_submodule_is_not_reported_clean(self):
+        # All fixture repositories are local; no network or production checkout.
+        child = Path(self.tmp.name) / "local-submodule"
+        child.mkdir()
+        git(child, "init", "-q", "-b", "main")
+        git(child, "config", "user.email", "test@example.invalid")
+        git(child, "config", "user.name", "Test Fixture")
+        (child / "tracked.txt").write_text("initial", encoding="utf-8")
+        git(child, "add", "tracked.txt")
+        git(child, "commit", "-q", "-m", "fixture")
+
+        git(self.repo, "-c", "protocol.file.allow=always", "submodule",
+            "add", "-q", str(child), "deps/local")
+        git(self.repo, "commit", "-q", "-m", "add local submodule")
+        (self.repo / "deps" / "local" / "tracked.txt").write_text(
+            "modified", encoding="utf-8"
+        )
+        report = collect(self.repo)
+        self.assertTrue(report["working_tree_dirty"])
+        self.assertEqual(1, report["tracked_changes"])
+
     def test_git_dir_env_does_not_change_repository_identity(self):
         unrelated = Path(self.tmp.name) / "unrelated.git"
         subprocess.run(["git", "init", "-q", "--bare", str(unrelated)], check=True,

@@ -40,7 +40,7 @@ Tests create and commit in temporary throwaway Git repositories. The inventory c
 
 On Windows, `hermes_windows_install_directory_present` is now `null` if `LOCALAPPDATA` is missing or relative. This prevents accidental detection of an unrelated relative `hermes` directory. A true value only proves that the directory exists, **not** that it contains a working Hermes installation or that the installed binary matches GitHub.
 
-Three additional test methods cover missing, relative and absolute `LOCALAPPDATA` cases. The inventory suite now has **15** test methods. The earlier `9/9` Linux result is historical; only GitHub-hosted test results for the **exact** commit SHA count as synthetic CI evidence, never as owner-machine acceptance.
+Three additional test methods cover missing, relative and absolute `LOCALAPPDATA` cases. The inventory suite now has **16** test methods. Dirty local submodules are counted as tracked changes rather than silently ignored; the inventory never fetches submodules. The earlier `9/9` Linux result is historical; only GitHub-hosted test results for the **exact** commit SHA count as synthetic CI evidence, never as owner-machine acceptance.
 
 ## Security / limits
 
