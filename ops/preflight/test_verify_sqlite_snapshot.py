@@ -16,9 +16,10 @@ class OfflineSnapshotTests(unittest.TestCase):
         self.addCleanup(t.cleanup)
         self.root = Path(t.name)
         self.file = self.root / "TOP_SECRET_BACKUP.db"
-        with sqlite3.connect(self.file) as db:
-            db.execute("CREATE TABLE sample(id INTEGER PRIMARY KEY, secret TEXT)")
-            db.execute("INSERT INTO sample(secret) VALUES(?)", ("PRIVATE_FIXTURE_VALUE",))
+        with contextlib.closing(sqlite3.connect(self.file)) as db:
+            with db:
+                db.execute("CREATE TABLE sample(id INTEGER PRIMARY KEY, secret TEXT)")
+                db.execute("INSERT INTO sample(secret) VALUES(?)", ("PRIVATE_FIXTURE_VALUE",))
 
     def test_roundtrip_is_memory_only(self):
         original = self.file.read_bytes()
@@ -70,7 +71,7 @@ class OfflineSnapshotTests(unittest.TestCase):
 
     def test_schema_missing_denied(self):
         blank = self.root / "blank.db"
-        with sqlite3.connect(blank) as conn:
+        with contextlib.closing(sqlite3.connect(blank)) as conn:
             conn.execute("PRAGMA user_version=1")
         with self.assertRaises(BackupError) as e:
             validate_snapshot(blank)
