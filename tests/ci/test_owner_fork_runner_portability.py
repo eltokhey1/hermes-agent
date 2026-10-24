@@ -55,5 +55,22 @@ class ForkRunnerInventoryTests(unittest.TestCase):
         self.assertIn("uses: ./.github/workflows/tests.yml", source)
 
 
+    def test_strict_gate_is_hosted_without_weakening_aggregation(self):
+        # A required result gate must not depend on an unavailable third-party
+        # runner, while still evaluating every selected job and strict release.
+        source = (ROOT / ".github/workflows/ci.yaml").read_text(encoding="utf-8")
+        gate = source.split("\n  all-checks-pass:", 1)[1].split("\n  ci-timings:", 1)[0]
+        self.assertIn("runs-on: ubuntu-latest", gate)
+        self.assertNotIn("runs-on: blacksmith-", gate)
+        self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", gate)
+        self.assertIn("persist-credentials: false", gate)
+        self.assertNotIn("useblacksmith/checkout@", gate)
+        self.assertIn("if: always()", gate)
+        self.assertIn("needs:", gate)
+        self.assertIn("scripts/ci/required_results.py", gate)
+        self.assertIn("RELEASE: ${{ inputs.release }}", gate)
+        self.assertIn("NEEDS: ${{ toJSON(needs) }}", gate)
+
+
 if __name__ == "__main__":
     unittest.main()
