@@ -43,7 +43,13 @@ def validate_snapshot(snapshot: Path) -> dict:
             raise BackupError("SNAPSHOT_PARENT_UNVERIFIABLE") from exc
     if snapshot.is_symlink() or not snapshot.is_file():
         raise BackupError("SNAPSHOT_NOT_REGULAR_FILE")
-    size = snapshot.stat().st_size
+    stat = snapshot.stat()
+    # A hard link is a regular file, not a symlink. Without this guard an
+    # apparent offline copy can be another name for the live state.db inode.
+    # This is only a preflight check; it cannot certify an off-device backup.
+    if stat.st_nlink != 1:
+        raise BackupError("SNAPSHOT_HARDLINKED")
+    size = stat.st_size
     if not len(HEADER) <= size <= MAX_BYTES:
         raise BackupError("SNAPSHOT_SIZE_OUT_OF_BOUNDS")
     # A separate WAL/journal might contain uncheckpointed committed changes.

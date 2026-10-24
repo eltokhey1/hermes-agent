@@ -2,6 +2,7 @@
 import contextlib
 from io import StringIO
 import json
+import os
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -138,6 +139,27 @@ class OfflineSnapshotTests(unittest.TestCase):
         with self.assertRaises(BackupError) as caught:
             validate_snapshot(alias / self.file.name)
         self.assertEqual("SNAPSHOT_PARENT_REDIRECTED", caught.exception.code)
+
+    def test_hardlink_alias_to_active_fixture_denied(self):
+        # Hard links evade is_symlink(), but do not represent separate backups.
+        alias = self.root / "offline-copy.db"
+        try:
+            os.link(self.file, alias)
+        except (OSError, NotImplementedError):
+            self.skipTest("Hardlink creation not permitted on this runner")
+        self.assertFalse(alias.is_symlink())
+        self.assertGreater(alias.stat().st_nlink, 1)
+        original = self.file.read_bytes()
+        with self.assertRaises(BackupError) as caught:
+            validate_snapshot(alias)
+        self.assertEqual("SNAPSHOT_HARDLINKED", caught.exception.code)
+        self.assertEqual(original, self.file.read_bytes())
+
+    def test_separate_copy_not_mistaken_for_hardlink(self):
+        copy = self.root / "independent-copy.db"
+        copy.write_bytes(self.file.read_bytes())
+        self.assertEqual(1, copy.stat().st_nlink)
+        self.assertEqual("PASS", validate_snapshot(copy)["sqlite_integrity"])
 
     def test_windows_junction_parent_denied_simulated(self):
         # Path.is_junction is available on supported newer Python/Windows.
