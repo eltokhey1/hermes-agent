@@ -44,7 +44,9 @@ class HistoricalApprovalIntegrityTests(unittest.TestCase):
 
     def test_modified_signature_is_denied_before_reservation(self):
         task, token = self.approved()
-        self.overwrite_token(task, token[:-1] + ("A" if token[-1] != "A" else "B"))
+        body64, signature64 = token.split(".")
+        damaged = ("A" if signature64[0] != "A" else "B") + signature64[1:]
+        self.overwrite_token(task, body64 + "." + damaged)
         self.assertFalse(self.h.verify_ledger())
         with self.assertRaises(GateError):
             self.h.reserve(task)
