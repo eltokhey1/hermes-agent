@@ -59,6 +59,10 @@ def validate_snapshot(snapshot: Path) -> dict:
                 ).fetchone()[0]
                 if tables < 1:
                     raise BackupError("SQLITE_SCHEMA_EMPTY")
+                # SQLite integrity_check alone does not detect broken FOREIGN KEY
+                # relationships. Check the restored snapshot independently.
+                if restored.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                    raise BackupError("SQLITE_FOREIGN_KEY_FAILED")
                 pages = restored.execute("PRAGMA page_count").fetchone()[0]
     except sqlite3.Error as exc:
         raise BackupError("SQLITE_MEMORY_RESTORE_FAILED") from exc
@@ -72,6 +76,7 @@ def validate_snapshot(snapshot: Path) -> dict:
         "restored_page_count": pages,
         "restored_table_count": tables,
         "sqlite_integrity": "PASS",
+        "foreign_key_integrity": "PASS",
         "hermes_functional_restore": "NOT_TESTED",
         "owner_windows_p0": "UNVERIFIED",
         "production_ready": False,
