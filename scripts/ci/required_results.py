@@ -54,11 +54,20 @@ def evaluate_gate(
     failed: list[str] = []
     allowed_skips: list[str] = []
     entries = needs or {}
-    lanes = (entries.get("detect") or {}).get("outputs") or {}
+    raw_lanes = (entries.get("detect") or {}).get("outputs")
+    lanes = raw_lanes if isinstance(raw_lanes, dict) else {}
     required = {job for job, keys in _UPDATE_CONSUMER_LANES.items()
                 if any(lanes.get(key) in ("true", True) for key in keys)}
     if not entries:
         failed.append("<no-needs>")
+    # A successful classifier with missing/empty/invalid boolean outputs is
+    # not a valid classification. Otherwise all consumers can skip and a PR
+    # falsely passes even though the classifier never selected a test lane.
+    # All-"false" is legitimate for changes that require no optional lanes.
+    if (entries.get("detect") or {}).get("result") == "success":
+        if not any(value in ("true", "false", True, False)
+                   for value in lanes.values()):
+            failed.append("detect:outputs-unusable")
     failed.extend(required - entries.keys())
     for name, info in entries.items():
         result = (info or {}).get("result")
