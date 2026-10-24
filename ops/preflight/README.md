@@ -57,6 +57,8 @@ From the **actual checkout** with an independently prepared offline backup, Wind
 python .\ops\preflight\verify_sqlite_snapshot.py --snapshot 'C:\PATH\TO\OFFLINE\BACKUP\state.db'
 ```
 
+For stronger identity verification, supply a SHA-256 digest from an **independently protected backup manifest**, using `--expected-sha256 <64-hex-digits>` (not a digest freshly calculated from the same untrusted copy). A mismatch or malformed value returns a sanitized NO_GO code. Without this flag `external_digest_match` is `null`; an internally computed digest alone cannot prove the backup is the expected copy. Matching this digest does not prove origin, external protection, encryption, or a full Hermes functional restore.
+
 **Never pass a live, actively changing `state.db` as the snapshot.** This validates SQLite file consistency only. It does **not** demonstrate protected/off-device backup, full Hermes application startup, ACL, secrets isolation, ESTOP, authenticated approvals, independent audit anchor or P0/P1 acceptance. Synthetic CI runs on GitHub-hosted Windows/Ubuntu with throwaway fixtures, and must not be treated as owner-machine evidence. `PRODUCTION=HOLD`.
 
 The preflight also rejects snapshots whose **parent directories** are symlinks or Windows junctions, to avoid silently following an alias into a live Hermes database. A normal snapshot path with a redirected parent must be copied to an independently prepared, stable, non-redirected location by the owner before preflight. This is a fail-closed path guard, **not** proof that the backup is offline or protected.
