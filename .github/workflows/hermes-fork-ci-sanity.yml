@@ -10,6 +10,8 @@ on:
       - 'tests/ci/test_owner_fork_ci_sanity.py'
       - 'scripts/ci/classify_changes.py'
       - 'scripts/ci/required_results.py'
+      - 'scripts/ci/audit_runner_portability.py'
+      - 'tests/ci/test_owner_fork_runner_portability.py'
   workflow_dispatch:
 
 permissions:
@@ -39,6 +41,10 @@ jobs:
         run: python -m py_compile scripts/ci/classify_changes.py scripts/ci/required_results.py
       - name: Verify classification and fail-closed gating
         run: python -m unittest discover -s tests/ci -p test_owner_fork_ci_sanity.py -v
+      - name: Inventory nonstandard runner dependencies (read-only)
+        run: python scripts/ci/audit_runner_portability.py
+      - name: Check inventory correctly refuses to certify CI
+        run: python -m unittest discover -s tests/ci -p test_owner_fork_runner_portability.py -v
       - name: Explicitly preserve main acceptance boundaries
         run: |
           echo "SUPPLEMENTAL_CHECK_ONLY=TRUE"
