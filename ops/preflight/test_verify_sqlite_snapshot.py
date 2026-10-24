@@ -8,6 +8,8 @@ import sqlite3
 import tempfile
 import unittest
 
+from unittest.mock import patch
+import verify_sqlite_snapshot as snapshot_module
 from verify_sqlite_snapshot import BackupError, MAX_BYTES, main, validate_snapshot
 
 
@@ -208,6 +210,54 @@ class OfflineSnapshotTests(unittest.TestCase):
             with self.assertRaises(BackupError) as caught:
                 validate_snapshot(self.file)
         self.assertEqual("SNAPSHOT_PARENT_REDIRECTED", caught.exception.code)
+
+
+    def test_replacement_before_first_hash_denied(self):
+        # Original validator silently accepted a different, same-size valid DB
+        # swapped after its initial stat() but before the first SHA-256.
+        replacement = self.root / "replacement.db"
+        with contextlib.closing(sqlite3.connect(replacement)) as db:
+            with db:
+                db.execute("CREATE TABLE sample(id INTEGER PRIMARY KEY, secret TEXT)")
+                db.execute("INSERT INTO sample(secret) VALUES(?)", ("ANOTHER_FIXTURE_VALUE",))
+        self.assertEqual(self.file.stat().st_size, replacement.stat().st_size)
+        original_identity = (self.file.stat().st_dev, self.file.stat().st_ino)
+        original_hash = snapshot_module._sha256
+        swapped = False
+
+        def replace_then_hash(path):
+            nonlocal swapped
+            if not swapped:
+                swapped = True
+                os.replace(replacement, self.file)
+            return original_hash(path)
+
+        with patch.object(snapshot_module, "_sha256", side_effect=replace_then_hash):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
+        self.assertNotEqual(original_identity, (self.file.stat().st_dev, self.file.stat().st_ino))
+
+    def test_hardlink_created_after_precheck_denied(self):
+        # A new hard link after st_nlink==1 precheck must not pass silently.
+        alias = self.root / "late-hardlink.db"
+        original_hash = snapshot_module._sha256
+        linked = False
+
+        def link_then_hash(path):
+            nonlocal linked
+            if not linked:
+                linked = True
+                try:
+                    os.link(self.file, alias)
+                except (OSError, NotImplementedError):
+                    self.skipTest("Hardlink creation not permitted on this runner")
+            return original_hash(path)
+
+        with patch.object(snapshot_module, "_sha256", side_effect=link_then_hash):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
 
 
 if __name__ == "__main__":

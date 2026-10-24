@@ -6,6 +6,7 @@ import argparse
 from contextlib import closing
 import hashlib
 import json
+import os
 from pathlib import Path
 import sqlite3
 from urllib.parse import quote
@@ -29,6 +30,21 @@ def _sha256(path: Path) -> str:
     return value.hexdigest()
 
 
+def _same_snapshot_identity(snapshot: Path, initial: os.stat_result) -> bool:
+    """Fail closed on detected file replacement, symlink swap, or rewrite.
+
+    This is a consistency preflight, not a race-free file-handle pin.
+    """
+    try:
+        current = snapshot.stat()
+        return (not snapshot.is_symlink() and current.st_nlink == 1 and
+                initial.st_ino != 0 and current.st_ino != 0 and
+                (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) ==
+                (initial.st_dev, initial.st_ino, initial.st_size, initial.st_mtime_ns))
+    except OSError:
+        return False
+
+
 def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> dict:
     """Validate a stable offline snapshot, never an active Hermes state.db."""
     # A redirected parent can bypass the final-file symlink check and silently
@@ -49,6 +65,8 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
     # This is only a preflight check; it cannot certify an off-device backup.
     if stat.st_nlink != 1:
         raise BackupError("SNAPSHOT_HARDLINKED")
+    if stat.st_ino == 0:
+        raise BackupError("SNAPSHOT_IDENTITY_UNAVAILABLE")
     size = stat.st_size
     if not len(HEADER) <= size <= MAX_BYTES:
         raise BackupError("SNAPSHOT_SIZE_OUT_OF_BOUNDS")
@@ -67,6 +85,8 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
             raise BackupError("INVALID_EXPECTED_SHA256")
         expected_sha256 = expected_sha256.lower()
     before = _sha256(snapshot)
+    if not _same_snapshot_identity(snapshot, stat):
+        raise BackupError("SNAPSHOT_CHANGED_DURING_CHECK")
     # Reject a structurally healthy SQLite file that is not the recorded backup.
     if expected_sha256 is not None and before != expected_sha256:
         raise BackupError("SNAPSHOT_SHA256_MISMATCH")
@@ -90,7 +110,9 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
                 pages = restored.execute("PRAGMA page_count").fetchone()[0]
     except sqlite3.Error as exc:
         raise BackupError("SQLITE_MEMORY_RESTORE_FAILED") from exc
-    if _sha256(snapshot) != before or snapshot.stat().st_size != size:
+    if (not _same_snapshot_identity(snapshot, stat) or
+            _sha256(snapshot) != before or
+            not _same_snapshot_identity(snapshot, stat)):
         raise BackupError("SNAPSHOT_CHANGED_DURING_CHECK")
     return {
         "schema": SCHEMA,
