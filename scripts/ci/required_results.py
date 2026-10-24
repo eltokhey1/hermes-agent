@@ -64,7 +64,11 @@ def evaluate_gate(
         result = (info or {}).get("result")
         if result == "success":
             continue
-        if result == "skipped" and name not in required and (not release or name in EXCLUDED_JOBS):
+        # The classifier determines which downstream jobs are mandatory. It must
+        # never be treated as an optional PR skip: otherwise an entirely skipped
+        # PR can be reported as green without classifying any changes.
+        if (result == "skipped" and name != "detect" and name not in required and
+                (not release or name in EXCLUDED_JOBS)):
             allowed_skips.append(name)
             continue
         failed.append(name)
