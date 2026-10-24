@@ -62,6 +62,11 @@ def _counts(status_text: str) -> dict[str, int | bool]:
             "working_tree_dirty": bool(lines)}
 
 
+def _is_windows() -> bool:
+    """Isolated platform predicate so tests need not monkeypatch global sys.platform."""
+    return sys.platform == "win32"
+
+
 def collect(repo: Path) -> dict:
     if shutil.which("git") is None:
         raise InventoryError("GIT_NOT_AVAILABLE")
@@ -96,7 +101,7 @@ def collect(repo: Path) -> dict:
     # Missing or relative LOCALAPPDATA must not prove an installed runtime.
     install_dir = (
         Path(local_app_data) / "hermes"
-        if sys.platform == "win32" and local_app_data and Path(local_app_data).is_absolute()
+        if _is_windows() and local_app_data and Path(local_app_data).is_absolute()
         else None
     )
     result = {
