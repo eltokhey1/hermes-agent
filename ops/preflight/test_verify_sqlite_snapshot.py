@@ -218,6 +218,54 @@ class OfflineSnapshotTests(unittest.TestCase):
             validate_snapshot(alias / self.file.name)
         self.assertEqual("SNAPSHOT_PARENT_REDIRECTED", caught.exception.code)
 
+    def test_parent_redirected_after_first_hash_is_denied_simulated(self):
+        # A late parent symlink can preserve the same file inode and digest.
+        # Final-file is_symlink() alone cannot detect this redirection.
+        original_hash = snapshot_module._sha256
+        original_is_symlink = Path.is_symlink
+        first_hash_done = False
+
+        def hash_then_redirect(path):
+            nonlocal first_hash_done
+            value = original_hash(path)
+            first_hash_done = True
+            return value
+
+        def redirected_parent(path):
+            return (first_hash_done and path == self.root) or original_is_symlink(path)
+
+        with (patch.object(Path, "is_symlink", redirected_parent),
+              patch.object(snapshot_module, "_sha256", side_effect=hash_then_redirect)):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
+
+    def test_parent_replaced_with_symlink_to_same_inode_denied(self):
+        offline = self.root / "offline"
+        offline.mkdir()
+        backup = offline / "backup.db"
+        backup.write_bytes(self.file.read_bytes())
+        moved = self.root / "moved"
+        original_hash = snapshot_module._sha256
+        switched = False
+
+        def replace_parent_then_hash(path):
+            nonlocal switched
+            if not switched:
+                switched = True
+                offline.rename(moved)
+                try:
+                    offline.symlink_to(moved, target_is_directory=True)
+                except (OSError, NotImplementedError):
+                    self.skipTest("Directory symlink creation not permitted")
+            return original_hash(path)
+
+        with patch.object(snapshot_module, "_sha256", side_effect=replace_parent_then_hash):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(backup)
+        self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
+
+
     def test_hardlink_alias_to_active_fixture_denied(self):
         # Hard links evade is_symlink(), but do not represent separate backups.
         alias = self.root / "offline-copy.db"

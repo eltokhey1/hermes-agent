@@ -30,18 +30,33 @@ def _sha256(path: Path) -> str:
     return value.hexdigest()
 
 
+def _check_parent_redirects(snapshot: Path) -> None:
+    """Reject redirected or inaccessible ancestors, including late path swaps."""
+    for parent in snapshot.parents:
+        try:
+            # lstat raises on inaccessible parents even when pathlib predicates
+            # silently return False (notably Python 3.14 on Windows).
+            parent.lstat()
+            junction = getattr(parent, "is_junction", None)
+            if parent.is_symlink() or (junction is not None and junction()):
+                raise BackupError("SNAPSHOT_PARENT_REDIRECTED")
+        except OSError as exc:
+            raise BackupError("SNAPSHOT_PARENT_UNVERIFIABLE") from exc
+
+
 def _same_snapshot_identity(snapshot: Path, initial: os.stat_result) -> bool:
-    """Fail closed on detected file replacement, symlink swap, or rewrite.
+    """Fail closed on file replacement or parent redirection during inspection.
 
     This is a consistency preflight, not a race-free file-handle pin.
     """
     try:
+        _check_parent_redirects(snapshot)
         current = snapshot.stat()
         return (not snapshot.is_symlink() and current.st_nlink == 1 and
                 initial.st_ino != 0 and current.st_ino != 0 and
                 (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) ==
                 (initial.st_dev, initial.st_ino, initial.st_size, initial.st_mtime_ns))
-    except OSError:
+    except (OSError, BackupError):
         return False
 
 
@@ -66,13 +81,7 @@ def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> 
     # A redirected parent can bypass the final-file symlink check and silently
     # turn an "offline backup" argument into a path to a live Hermes database.
     # Reject symlinks and Windows junctions in the entire supplied parent chain.
-    for parent in snapshot.parents:
-        try:
-            junction = getattr(parent, "is_junction", None)
-            if parent.is_symlink() or (junction is not None and junction()):
-                raise BackupError("SNAPSHOT_PARENT_REDIRECTED")
-        except OSError as exc:
-            raise BackupError("SNAPSHOT_PARENT_UNVERIFIABLE") from exc
+    _check_parent_redirects(snapshot)
     if snapshot.is_symlink() or not snapshot.is_file():
         raise BackupError("SNAPSHOT_NOT_REGULAR_FILE")
     stat = snapshot.stat()
