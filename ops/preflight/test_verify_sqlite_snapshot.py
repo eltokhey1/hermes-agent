@@ -42,6 +42,43 @@ class OfflineSnapshotTests(unittest.TestCase):
             self.assertNotIn(private, buf.getvalue())
         self.assertEqual("PASS", json.loads(buf.getvalue())["sqlite_integrity"])
 
+
+    def test_independent_digest_match_is_explicit(self):
+        import hashlib
+        digest = hashlib.sha256(self.file.read_bytes()).hexdigest()
+        result = validate_snapshot(self.file, expected_sha256=digest.upper())
+        self.assertTrue(result["external_digest_match"])
+        self.assertFalse(result["production_ready"])
+
+    def test_independent_digest_mismatch_denied(self):
+        with self.assertRaises(BackupError) as exc:
+            validate_snapshot(self.file, expected_sha256="0" * 64)
+        self.assertEqual("SNAPSHOT_SHA256_MISMATCH", exc.exception.code)
+
+    def test_malformed_independent_digest_denied(self):
+        for invalid in ("", "not a sha", "z" * 64, "a" * 63, "a" * 65, 3):
+            with self.subTest(invalid=invalid), self.assertRaises(BackupError) as exc:
+                validate_snapshot(self.file, expected_sha256=invalid)
+            self.assertEqual("INVALID_EXPECTED_SHA256", exc.exception.code)
+
+    def test_cli_independent_digest_receipt(self):
+        import hashlib
+        digest = hashlib.sha256(self.file.read_bytes()).hexdigest()
+        for received, code, expected in [
+            (digest, 0, None),
+            ("f" * 64 if digest != "f" * 64 else "0" * 64, 2, "SNAPSHOT_SHA256_MISMATCH")
+        ]:
+            output = StringIO()
+            with contextlib.redirect_stdout(output):
+                actual = main(["--snapshot", str(self.file), "--expected-sha256", received])
+            self.assertEqual(code, actual)
+            body = json.loads(output.getvalue())
+            if expected is None:
+                self.assertTrue(body["external_digest_match"])
+            else:
+                self.assertEqual(expected, body["error_code"])
+            self.assertNotIn("TOP_SECRET_BACKUP", output.getvalue())
+
     def test_bad_header_denied(self):
         self.file.write_bytes(b"BAD_HEADER" * 20)
         with self.assertRaises(BackupError) as e:
