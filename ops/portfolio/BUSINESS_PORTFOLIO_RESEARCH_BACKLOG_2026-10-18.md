@@ -2,6 +2,10 @@
 
 **Recorded 2026-10-18. No changes to executable Hermes code. Design-only proposal, pending P0/P1 approval.**
 
+## Curated agent skills and plugins (2026-10-24)
+
+See [30 Claude Code plugin/skill candidates with verified repository links and P0/P1 safety triage](./CLAUDE_CODE_30_SKILLS_PLUGIN_CANDIDATES_2026-10-24.md). This is a source/research register only: no installation, new canonical work packages, paid tools, runtime activation, or production readiness claim.
+
 ## Governance and phase rules
 
 - P0: verify actual local Windows state, non-destructive inventory, encrypted backup and a tested isolated restore, secret redaction, fail-closed policy tests, and a hard $0 cap.
