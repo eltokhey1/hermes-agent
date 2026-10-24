@@ -38,7 +38,9 @@ def validate_snapshot(snapshot: Path) -> dict:
         raise BackupError("SNAPSHOT_SIZE_OUT_OF_BOUNDS")
     # A separate WAL/journal might contain uncheckpointed committed changes.
     for ext in ("-wal", "-shm", "-journal"):
-        if Path(str(snapshot) + ext).exists():
+        companion = Path(str(snapshot) + ext)
+        # Reject dangling symlinks too: exists() alone misses them.
+        if companion.exists() or companion.is_symlink():
             raise BackupError("SNAPSHOT_HAS_COMPANION")
     with snapshot.open("rb") as source:
         if source.read(len(HEADER)) != HEADER:
