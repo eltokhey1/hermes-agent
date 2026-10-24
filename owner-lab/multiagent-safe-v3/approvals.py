@@ -72,6 +72,14 @@ class ApprovalVerifier:
         self.__key, self.clock = _key(key), clock
 
     def verify(self, token: str, *, task_id: str, spec_hash: str) -> dict:
+        """Authorize only currently valid claims (never use archive inspection here)."""
+        return self._inspect(token, task_id=task_id, spec_hash=spec_hash, enforce_expiry=True)
+
+    def inspect_historical(self, token: str, *, task_id: str, spec_hash: str) -> dict:
+        """Integrity inspection only: expired signatures cannot authorize execution."""
+        return self._inspect(token, task_id=task_id, spec_hash=spec_hash, enforce_expiry=False)
+
+    def _inspect(self, token: str, *, task_id: str, spec_hash: str, enforce_expiry: bool) -> dict:
         if not isinstance(token, str) or len(token) > 4096 or token.count(".") != 1:
             raise ApprovalDenied("Malformed approval")
         payload64, signature64 = token.split(".")
@@ -91,7 +99,7 @@ class ApprovalVerifier:
                 claims["spec_hash"] != spec_hash or claims["decision"] not in ("approve", "reject") or
                 not isinstance(claims["approver"], str) or not 1 <= len(claims["approver"]) <= 128 or
                 type(iat) is not int or type(exp) is not int or not 1 <= exp-iat <= 600 or
-                iat > now + 2 or now >= exp or
+                (enforce_expiry and (iat > now + 2 or now >= exp)) or
                 not isinstance(claims["nonce"], str) or len(claims["nonce"]) != 32):
             raise ApprovalDenied("Approval expired, invalid or misbound")
         return claims
