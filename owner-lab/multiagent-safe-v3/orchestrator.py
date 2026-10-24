@@ -294,6 +294,18 @@ class HermesReference:
             for row in records:
                 spec = cls._stored_spec(row)
                 tasks[row["task_id"]] = (row, spec, ACTION_POLICY[spec["action"]])
+            # Reconcile approval receipts with transition events as well as tasks.
+            # A ledger hash chain alone cannot detect edits to another SQLite table.
+            receipt_rows = db.execute("SELECT nonce,task_id,decision FROM approval_nonces").fetchall()
+            receipts = {}
+            for receipt in receipt_rows:
+                task_id = receipt["task_id"]
+                if (task_id not in tasks or task_id in receipts or
+                        not isinstance(receipt["nonce"], str) or len(receipt["nonce"]) != 32 or
+                        receipt["decision"] not in ("approve", "reject")):
+                    return False
+                receipts[task_id] = receipt
+            approval_events = {}
             prior, last_seq = "GENESIS", 0
             for row in events:
                 task_id = row["task_id"]
@@ -326,6 +338,7 @@ class HermesReference:
                         return False
                     if not isinstance(payload.get("nonce_hash"), str) or len(payload["nonce_hash"]) != 64:
                         return False
+                    approval_events[task_id] = (decision, payload["nonce_hash"])
                     next_state = "READY" if decision == "approve" else "REJECTED"
                 elif kind == "STARTED" and current == "READY":
                     if payload != {"action": spec["action"]}:
@@ -351,11 +364,29 @@ class HermesReference:
                 state[task_id] = next_state
             if state.keys() != tasks.keys():
                 return False
-            for task_id, (record, _, _) in tasks.items():
+            for task_id, (record, _, risk) in tasks.items():
                 if state[task_id] != record["state"]:
                     return False
                 if (record["state"] == "SUCCEEDED") != (record["result"] is not None):
                     return False
+                event = approval_events.get(task_id)
+                receipt = receipts.get(task_id)
+                if (event is None) != (receipt is None):
+                    return False
+                if risk != "high" and (event is not None or record["approval_assertion"] is not None):
+                    return False
+                if event is None:
+                    if record["approval_assertion"] is not None:
+                        return False
+                else:
+                    decision, nonce_hash = event
+                    if receipt["decision"] != decision or digest(receipt["nonce"]) != nonce_hash:
+                        return False
+                    if decision == "approve":
+                        if not isinstance(record["approval_assertion"], str) or not record["approval_assertion"]:
+                            return False
+                    elif record["approval_assertion"] is not None:
+                        return False
             return True
         except (ValueError, TypeError, KeyError, GateError):
             return False
