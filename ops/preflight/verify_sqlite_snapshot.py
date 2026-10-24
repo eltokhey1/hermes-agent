@@ -49,11 +49,16 @@ def _reject_companions(snapshot: Path) -> None:
     """Reject WAL/SHM/journal sidecars, including dangling symlinks/junctions."""
     for ext in ("-wal", "-shm", "-journal"):
         companion = Path(str(snapshot) + ext)
-        junction = getattr(companion, "is_junction", None)
-        # A late sidecar invalidates the offline-snapshot assumption.
-        if (companion.exists() or companion.is_symlink() or
-                (junction is not None and junction())):
-            raise BackupError("SNAPSHOT_HAS_COMPANION")
+        # Python 3.14 pathlib predicates return False on inaccessible paths.
+        # lstat sees dangling links/reparse points and propagates ACL failures.
+        try:
+            companion.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise BackupError("SNAPSHOT_COMPANION_UNVERIFIABLE") from exc
+        # Any sidecar, including a late WAL/journal or dangling link, is unsafe.
+        raise BackupError("SNAPSHOT_HAS_COMPANION")
 
 
 def validate_snapshot(snapshot: Path, *, expected_sha256: str | None = None) -> dict:
