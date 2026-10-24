@@ -52,8 +52,12 @@ def _same_snapshot_identity(snapshot: Path, initial: os.stat_result) -> bool:
     try:
         _check_parent_redirects(snapshot)
         current = snapshot.stat()
+        # On POSIX, ctime detects in-place writes even if another process
+        # restores mtime and preserves inode and size. Windows st_ctime is
+        # creation time, so this check is not an equivalent Windows guarantee.
+        ctime_stable = os.name == "nt" or current.st_ctime_ns == initial.st_ctime_ns
         return (not snapshot.is_symlink() and current.st_nlink == 1 and
-                initial.st_ino != 0 and current.st_ino != 0 and
+                initial.st_ino != 0 and current.st_ino != 0 and ctime_stable and
                 (current.st_dev, current.st_ino, current.st_size, current.st_mtime_ns) ==
                 (initial.st_dev, initial.st_ino, initial.st_size, initial.st_mtime_ns))
     except (OSError, BackupError):

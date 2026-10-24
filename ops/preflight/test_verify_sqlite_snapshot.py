@@ -347,5 +347,39 @@ class OfflineSnapshotTests(unittest.TestCase):
         self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
 
 
+    def test_same_inode_rewrite_restored_mtime_denied_on_posix(self):
+        # A writable snapshot can be modified between the initial stat and
+        # first hash; resetting mtime defeats an inode/size/mtime-only check.
+        # POSIX ctime is updated by the write even when mtime is restored.
+        if os.name == "nt":
+            self.skipTest("Windows st_ctime is creation time, not POSIX change time")
+        initial = self.file.stat()
+        original_hash = snapshot_module._sha256
+        modified = False
+
+        def mutate_then_hash(path):
+            nonlocal modified
+            if not modified:
+                modified = True
+                with contextlib.closing(sqlite3.connect(self.file)) as db:
+                    with db:
+                        db.execute("UPDATE sample SET secret=? WHERE id=1",
+                                   ("PRIVATE_CHANGED_VALUE",))
+                os.utime(self.file, ns=(initial.st_atime_ns, initial.st_mtime_ns))
+                changed = self.file.stat()
+                self.assertEqual(initial.st_ino, changed.st_ino)
+                self.assertEqual(initial.st_size, changed.st_size)
+                self.assertEqual(initial.st_mtime_ns, changed.st_mtime_ns)
+                if changed.st_ctime_ns == initial.st_ctime_ns:
+                    self.skipTest("Filesystem lacks usable ctime change precision")
+            return original_hash(path)
+
+        with patch.object(snapshot_module, "_sha256", side_effect=mutate_then_hash):
+            with self.assertRaises(BackupError) as caught:
+                validate_snapshot(self.file)
+        self.assertEqual("SNAPSHOT_CHANGED_DURING_CHECK", caught.exception.code)
+
+
+
 if __name__ == "__main__":
     unittest.main()
