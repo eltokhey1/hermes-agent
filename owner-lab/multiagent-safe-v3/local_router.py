@@ -1,4 +1,4 @@
-"""Fail-closed *planning only* for no-cloud Hermes/Kilo/OpenCode model routing.
+"""Fail-closed *planning only* for no-cloud Hermes/Kilo/Aider/OpenCode model routing.
 
 Does not probe PATH, invoke subprocesses, use network or mutate config.
 Availability MUST be supplied by a trusted local read-only preflight.
@@ -36,15 +36,28 @@ class Route:
     estimated_cloud_usd: int = 0
 
 
-def propose_local_route(kind: str, inventory: LocalInventory, *, model: str) -> Route:
-    if not isinstance(inventory, LocalInventory) or type(kind) is not str:
-        raise RoutingDenied("Invalid route request")
+APPROVED_CODE_WORKERS = ("kilo", "aider", "opencode")
+
+
+def propose_local_route(
+    kind: str, inventory: LocalInventory, *, model: str, preferred_worker: str | None = None
+) -> Route:
+    if (not isinstance(inventory, LocalInventory) or type(kind) is not str or
+            (preferred_worker is not None and
+             (type(preferred_worker) is not str or preferred_worker not in APPROVED_CODE_WORKERS))):
+        raise RoutingDenied("Invalid route request or disallowed preferred worker")
     if (not inventory.ollama_listening or not isinstance(model, str) or
             model not in inventory.installed_models):
         raise RoutingDenied("Ollama/model unavailable: do not switch to paid provider")
     if kind == "code":
-        worker = next((w for w in ("kilo", "opencode") if w in inventory.installed_tools), None)
+        if preferred_worker is not None:
+            # Explicit choices must fail closed; never silently select another agent.
+            worker = preferred_worker if preferred_worker in inventory.installed_tools else None
+        else:
+            worker = next((w for w in APPROVED_CODE_WORKERS if w in inventory.installed_tools), None)
     elif kind == "general":
+        if preferred_worker is not None:
+            raise RoutingDenied("Preferred coding worker is invalid for general tasks")
         worker = "hermes" if "hermes" in inventory.installed_tools else None
     else:
         raise RoutingDenied("Unknown task class")

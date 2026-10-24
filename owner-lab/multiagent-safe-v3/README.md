@@ -8,7 +8,7 @@ This code implements a small, deterministic multi-agent *control* reference (not
 
 - `orchestrator.py`: SQLite-backed state transitions, atomic idempotency, bounded task contracts, deterministic risk classification, demo-only execution, UNKNOWN-on-recovery, tamper-evident (not independently anchored) event ledger, redacted metrics.
 - `approvals.py`: distinct lab-only issuer/verifier interfaces, HMAC-SHA256 signed claims bound to task ID + spec hash + approver + decision + nonce + expiry (maximum 10 minutes). Do **not** treat free-text approver names as authenticated identities.
-- `local_router.py`: proposal-only offline local routing to Hermes / Kilo / OpenCode with Ollama; fail-closed on unavailable model/service or worker. It does NOT inspect your actual machine or execute anything.
+- `local_router.py`: proposal-only offline local routing to Hermes / Kilo / Aider / OpenCode with Ollama; fail-closed on unavailable model/service or worker. An optional `preferred_worker` accepts only an installed and explicitly allowed coding worker (kilo, aider, opencode). Unknown, unavailable, or cloud workers are rejected without fallback. It does NOT inspect your actual machine or execute anything.
 - `patterns.py`: inert specialist proposals, bounded handoffs, fan-out synthesis and evaluation retries.
 - `physical_sim.py`: entirely synthetic 2D virtual movement; never connects ROS2, Isaac, an actuator, or a robot.
 - `tests/`: deterministic unittest-based tests, including tampered/expired/misbound/replayed approvals, concurrent idempotency and crash recovery.
@@ -53,3 +53,15 @@ A second negative-test pass found that the former `verify_ledger` accepted a val
 - Critical local transition methods now check the same reconciliation invariant *inside the SQLite transaction* before changing state. This stops a forged READY state from skipping PREPARED in the synthetic lab.
 - New regression file: `tests/test_state_ledger_integrity.py` (9 cases). Total isolated suite **69/69 PASS**, Python 3.13.5, `python -W error -m unittest discover -s tests -q`; `compileall` PASS. See `LEDGER_RECONCILIATION_RECEIPT.json`.
 - This deliberately replays all events on each operation (prototype only), so scalability and multi-process locking must be benchmarked before integration. Because the ledger and tasks share the same SQLite database, this is **not protection against a malicious DB writer who rewrites everything**. External immutable anchoring, Windows ACLs, authenticated human identity, real Hermes process recovery and CI are still unverified. **PRODUCTION=HOLD**.
+
+## Owner local Aider routing adapter (2026-10-24; proposal only)
+
+The user's Windows inventory reported Aider 0.86.2, but this lab's proposal router previously omitted it. This scoped change supports Aider as a code worker without installing or invoking Aider. The default selection order is `kilo` → `aider` → `opencode`, while `preferred_worker="aider"` selects Aider only when present in *trusted supplied* inventory. An unavailable preferred worker fails closed instead of silently using another worker. General Hermes tasks never accept a coding-worker override. Any missing local Ollama listener/model continues to fail closed; the route remains `PROPOSAL_ONLY` and `estimated_cloud_usd=0`.
+
+Regression coverage: `tests/test_local_router.py` includes default priority, Aider-only, preferred selection, denied unavailable workers, denied cloud aliases, wrong types, general-task override denial and Ollama-offline denial. These are **synthetic routing-contract tests**, not proof of actual Windows integration, sandbox isolation, credential safety, paid-API prevention at a real provider, or production readiness. Approval/ESTOP and host P0/P1 evidence remain mandatory; do not merge to `main` or enable side effects from this change alone.
+
+## Approval receipt ↔ ledger consistency hardening (2026-10-24; offline only)
+
+`verify_ledger()` now checks every `approval_nonces` row against a real task and its corresponding `APPROVAL_DECISION` event. It denies orphan/extra receipts, missing receipts, changes to a receipt's nonce/decision, missing approved assertions, and unexpected low-risk assertions; both approved and rejected paths remain supported. Historical approvals may expire without invalidating the immutable event/receipt consistency check: expiry is enforced **at reserve**, not when replaying the historical ledger. Negative tests are in `tests/test_state_ledger_integrity.py`.
+
+This is **consistency checking within a single SQLite database**, not independent tamper resistance: a malicious process able to rewrite both tasks and events and receipts can still forge a new history. It does **not** authenticate a human, validate Windows ACLs, prove ESTOP, or enable external execution. P0/P1 and `PRODUCTION=HOLD` are unchanged.

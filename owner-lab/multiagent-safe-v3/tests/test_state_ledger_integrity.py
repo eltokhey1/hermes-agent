@@ -81,6 +81,62 @@ class DurableStateLedgerTests(unittest.TestCase):
         self.h.recover_interrupted()
         self.assertTrue(self.h.verify_ledger())
 
+    def approve_task(self, *, key="approved-receipt", decision="approve"):
+        task = self.h.submit(spec("demo.review"), idempotency_key=key)
+        self.h.prepare(task)
+        token = self.issuer.issue(task_id=task, spec_hash=self.h.task(task)["spec_hash"],
+                                  approver="synthetic-only", decision=decision)
+        self.h.approve(task, token)
+        return task
+
+    def test_approval_receipt_deleted_denied_even_with_untampered_event_chain(self):
+        task = self.approve_task()
+        self.tamper("DELETE FROM approval_nonces WHERE task_id=?", (task,))
+        self.assertFalse(self.h.verify_ledger())
+        with self.assertRaises(GateError):
+            self.h.reserve(task)
+
+    def test_approval_receipt_nonce_modified_denied(self):
+        task = self.approve_task()
+        self.tamper("UPDATE approval_nonces SET nonce=? WHERE task_id=?", ("a" * 32, task))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_approval_receipt_decision_modified_denied(self):
+        task = self.approve_task()
+        self.tamper("UPDATE approval_nonces SET decision='reject' WHERE task_id=?", (task,))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_orphan_approval_receipt_denied(self):
+        self.tamper("INSERT INTO approval_nonces VALUES(?,?,?)", ("b" * 32, "nonexistent", "approve"))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_spurious_receipt_for_low_risk_task_denied(self):
+        task = self.h.submit(spec(), idempotency_key="low-no-approval")
+        self.tamper("INSERT INTO approval_nonces VALUES(?,?,?)", ("c" * 32, task, "approve"))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_missing_approval_assertion_denied(self):
+        task = self.approve_task()
+        self.tamper("UPDATE tasks SET approval_assertion=NULL WHERE task_id=?", (task,))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_spurious_low_risk_approval_assertion_denied(self):
+        task = self.h.submit(spec(), idempotency_key="low-fake-assertion")
+        self.tamper("UPDATE tasks SET approval_assertion='fake' WHERE task_id=?", (task,))
+        self.assertFalse(self.h.verify_ledger())
+
+    def test_valid_rejected_approval_receipt_remains_valid(self):
+        self.approve_task(key="rejected-receipt", decision="reject")
+        self.assertTrue(self.h.verify_ledger())
+
+    def test_expired_historical_approval_retains_ledger_integrity(self):
+        task = self.approve_task(key="historical")
+        self.clock.t += 1000
+        self.assertTrue(self.h.verify_ledger())
+        with self.assertRaises(GateError):
+            self.h.reserve(task)
+
+
 
 class DecisionBoundaryTests(unittest.TestCase):
     setUp = DurableStateLedgerTests.setUp
