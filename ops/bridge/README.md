@@ -54,3 +54,7 @@ Only if the local operator executes this will the supervisor start. **No unatten
 ## Observed GitHub round-trip
 
 `outbox/job-20261025-01.json` is Windows-generated and was independently fetched through the GitHub connector: `status=PASS`, `executed=false`, `function_names=['sum_range']`. The follow-up request `inbox/job-20261025-02.json` is published but its reply was not yet found; the original background process may be stopped. The status snapshot in `ACCEPTANCE_SNAPSHOT_20261025.md` governs acceptance. No claim of Hermes agent readiness.
+
+## Verified launcher artifact
+
+`start_bridge_pilot.ps1` SHA-256: `745c771bb8692914b61b992df79993286690b44ee7a12d45c441c795edf11a8e` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.
