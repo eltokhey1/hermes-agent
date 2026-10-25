@@ -49,4 +49,8 @@ class Tests(unittest.TestCase):
   x=copy.copy(ACK);x['operation']='shell'
   self.assertIn('OPERATION_MISMATCH',v.verify(JOB,x,JOB['job_id']))
 
+ def test_13_reject_success_with_error_code(self):
+  x=copy.copy(ACK);x['error_code']='SYNTAX_ERROR'
+  self.assertIn('PASS_WITH_ERROR_CODE',v.verify(JOB,x,JOB['job_id']))
+
 if __name__=='__main__': unittest.main(verbosity=2)
