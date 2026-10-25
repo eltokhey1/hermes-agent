@@ -10,6 +10,11 @@ class BrowserScriptTests(unittest.TestCase):
         self.assertNotIn(r"/^\\d", html)
         self.assertIn("fetch('/review'", html)
 
+    def test_failed_review_does_not_claim_route_recorded(self):
+        html = Path(__file__).with_name("global_pilot.html").read_text(encoding="utf-8")
+        self.assertIn("No compliance result was produced.", html)
+        self.assertNotIn("LOCAL_REVIEW_UNAVAILABLE — '+messages[lang.value].result", html)
+
     def test_javascript_string_does_not_contain_raw_newline(self):
         html = Path(__file__).with_name("global_pilot.html").read_text(encoding="utf-8")
         self.assertIn(chr(39) + chr(92) + "n'+JSON.stringify", html)
