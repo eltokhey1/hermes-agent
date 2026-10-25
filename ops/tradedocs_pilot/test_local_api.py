@@ -17,7 +17,7 @@ class LocalApiTests(unittest.TestCase):
    self.assertEqual(response.status,200)
    self.assertIn(b'global',response.read().lower())
    payload={'lc':{'lc_number':'SYNTH','currency':'USD','unit':'MT','quantity':'1000','amount':'324000'},'shipments':[{'lc_number':'SYNTH','shipment_id':'S1','status':'SHIPPED','quantity':'300','amount':'97200'}],'route':{'origin_country':'RU','export_country':'RU','import_country':'BR','commodity':'100199','shipment_date':'2026-10-01'}}
-   conn.request('POST','/review',body=json.dumps(payload),headers={'Content-Length':str(len(json.dumps(payload)))})
+   conn.request('POST','/review',body=json.dumps(payload),headers={'Content-Type':'application/json'})
    response=conn.getresponse()
    self.assertEqual(response.status,200)
    self.assertEqual(json.loads(response.read())['balance']['remaining_face_value'],'226800')
