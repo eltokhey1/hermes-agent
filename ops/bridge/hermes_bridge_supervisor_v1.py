@@ -65,7 +65,9 @@ def run_once(worker):
             return 126, "SCAN_STDERR_UNEXPECTED"
         lines = result.stdout.rstrip().splitlines()
         last = lines[-1] if lines else ""
-        if re.fullmatch(r"SCAN_DONE processed=[0-9]+", last) or last == "INBOX_MISSING; no action":
+        if last == "INBOX_MISSING; no action":
+            return 126, "INBOX_MISSING"
+        if re.fullmatch(r"SCAN_DONE processed=[0-9]+", last):
             return 0, "SCAN_OK"
         return 126, "SCAN_OUTPUT_UNKNOWN"
     return result.returncode, "WORKER_EXIT_NONZERO"
