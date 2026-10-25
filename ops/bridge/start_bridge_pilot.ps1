@@ -24,9 +24,9 @@ function Get-PinnedFile {
     return $target
 }
 
-$worker = Get-PinnedFile "ops/bridge/hermes_bridge_v1.py" "fb8706ac8ae5ecebd9de06e97c23ae4639b09733ad1984f2e097bb38054a046a" "hermes_bridge_v1.py"
-$supervisor = Get-PinnedFile "ops/bridge/hermes_bridge_supervisor_v1.py" "cf7a9f38aa2f2da613b981f856f066c06602c329287f5b35925f40ac3691644b" "hermes_bridge_supervisor_v1.py"
-$testA = Get-PinnedFile "ops/bridge/test_bridge_v1.py" "3225029266f7ed9a874c8950bf36139ecc10da7f255690364fa6e9c7f6814462" "test_bridge_v1.py"
+$worker = Get-PinnedFile "ops/bridge/hermes_bridge_v1.py" "f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f" "hermes_bridge_v1.py"
+$supervisor = Get-PinnedFile "ops/bridge/hermes_bridge_supervisor_v1.py" "c3b6faf883408797cdc36a5a7bc1414b37001e14124b4f566fa47b8217140277" "hermes_bridge_supervisor_v1.py"
+$testA = Get-PinnedFile "ops/bridge/test_bridge_v1.py" "2a200312893d19d74cd19def74ecc8e652b4ade9600e93321376235e6e1e9ac3" "test_bridge_v1.py"
 $testB = Get-PinnedFile "ops/bridge/test_supervisor_v1.py" "2c2475723cd10965230afb68a58d8acb62eb83c37ad5a6ddc4945b535b3af3fe" "test_supervisor_v1.py"
 
 Write-Host "=== OFFLINE TESTS ==="
