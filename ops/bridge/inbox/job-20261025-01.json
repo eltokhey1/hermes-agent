@@ -1,0 +1,8 @@
+{
+  "schema": "hermes.bridge.job.v1",
+  "job_id": "job-20261025-01",
+  "operation": "python_ast_check",
+  "approval": "read_only",
+  "source": "def sum_range(start: int, end: int) -> int:\n    return sum(range(start, end + 1))\n",
+  "source_sha256": "11e61b7b4e5018432a8a43fd96d116630506a8b4424227d8ab3c1b8782ef528c"
+}
