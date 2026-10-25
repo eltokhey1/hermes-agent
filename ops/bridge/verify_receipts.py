@@ -52,6 +52,7 @@ def verify(job, receipt, requested_id):
     if receipt.get('executed') is not False: errors.append('EXECUTED_NOT_FALSE')
     if receipt.get('production') != 'HOLD': errors.append('PRODUCTION_NOT_HOLD')
     if receipt.get('isolation') != 'NOT_PROVEN': errors.append('ISOLATION_CLAIM_UNSUPPORTED')
+    if receipt.get('status') == 'PASS' and receipt.get('error_code') is not None: errors.append('PASS_WITH_ERROR_CODE')
     source = job.get('source')
     if not isinstance(source, str) or len(source.encode('utf-8')) > 8192:
         errors.append('SOURCE_INVALID')
