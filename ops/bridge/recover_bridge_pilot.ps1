@@ -6,7 +6,7 @@ $state = Join-Path $folder 'status.json'
 $worker = Join-Path $folder 'hermes_bridge_v1.py'
 $supervisor = Join-Path $folder 'hermes_bridge_supervisor_v1.py'
 $workerHash = 'f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f'
-$supervisorHash = 'e5e861db8a73811f7621706431e58a7e9b5547b90232652235d83811bbdd0d65'
+$supervisorHash = 'edd4ccb304d18089fc7d8d317bf2f1e44358e8b12e5864cb76b9286e1adc8f61'
 
 Write-Host 'PRODUCTION=HOLD'
 Write-Host 'G0=NO-GO G-CODE=NO-GO G1=NO-GO'
