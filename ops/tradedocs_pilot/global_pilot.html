@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TradeDocs Global Pilot</title><style>body{font:16px system-ui;max-width:850px;margin:auto;padding:1.25rem;line-height:1.55}label{display:block;margin:.75rem 0}input,select,button{font:inherit;padding:.4rem}input{max-width:100%}fieldset{margin:1rem 0}#result{white-space:pre-wrap;border:1px solid #999;padding:1rem}button{cursor:pointer}</style>
+<h1 id="title">TradeDocs Global Pilot</h1>
+<label><span id="languageLabel">Language</span> <select id="language"><option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="es">Español</option></select></label>
+<p id="warning" role="status">Prototype only: no verified national regulations or bank approval.</p>
+<fieldset><legend id="routeLegend">Trade route</legend>
+<label><span data-key="origin">Origin country (ISO 2-letter code)</span> <input id="origin" maxlength="2" pattern="[A-Za-z]{2}" required placeholder="CN"></label>
+<label><span data-key="export">Export country (ISO 2-letter code)</span> <input id="export" maxlength="2" pattern="[A-Za-z]{2}" required placeholder="CN"></label>
+<label><span data-key="import">Import country (ISO 2-letter code)</span> <input id="import" maxlength="2" pattern="[A-Za-z]{2}" required placeholder="BR"></label>
+<label><span data-key="hs">HS code (6 digits, classification unverified)</span> <input id="hs" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" required placeholder="100199"></label>
+<label><span data-key="date">Shipment date</span> <input id="date" type="date" required></label>
+</fieldset>
+<button id="check">Review route</button>
+<h2 id="resultTitle">Review result</h2><div id="result" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+const messages={
+ en:{title:'TradeDocs Global Pilot',languageLabel:'Language',warning:'Prototype only: no verified national regulations or bank approval.',routeLegend:'Trade route',origin:'Origin country (ISO 2-letter code)',export:'Export country (ISO 2-letter code)',import:'Import country (ISO 2-letter code)',hs:'HS code (6 digits, classification unverified)',date:'Shipment date',check:'Review route',resultTitle:'Review result',invalid:'Complete all fields with two-letter country codes, a six-digit HS code and a valid date.',result:'Route recorded locally. Country requirements: UNKNOWN — official sources and operative LC terms must be checked. No document compliance certification.'},
+ ar:{title:'تريد دوكس — التجارة العالمية',languageLabel:'اللغة',warning:'نسخة تجريبية: لم يتم توثيق القواعد الوطنية أو اعتماد البنك.',routeLegend:'مسار التجارة',origin:'بلد المنشأ (رمز من حرفين)',export:'بلد التصدير (رمز من حرفين)',import:'بلد الاستيراد (رمز من حرفين)',hs:'رمز HS (6 أرقام، غير متحقق)',date:'تاريخ الشحن',check:'مراجعة المسار',resultTitle:'نتيجة المراجعة',invalid:'أكمل جميع الحقول برموز الدول الصحيحة ورمز HS من ستة أرقام وتاريخ صحيح.',result:'تم تسجيل المسار محليًا. متطلبات الدول: غير معروفة — يجب مراجعة المصادر الرسمية وشروط الاعتماد النافذة. لا توجد شهادة مطابقة.'},
+ fr:{title:'TradeDocs — pilote mondial',languageLabel:'Langue',warning:'Prototype : aucune règle nationale vérifiée ni validation bancaire.',routeLegend:'Itinéraire commercial',origin:'Pays d’origine (code ISO à 2 lettres)',export:'Pays exportateur (code ISO à 2 lettres)',import:'Pays importateur (code ISO à 2 lettres)',hs:'Code SH (6 chiffres, non vérifié)',date:'Date d’expédition',check:'Vérifier l’itinéraire',resultTitle:'Résultat',invalid:'Renseignez tous les champs : pays à 2 lettres, code SH à 6 chiffres et date valide.',result:'Itinéraire enregistré localement. Exigences nationales : INCONNUES — vérifier les sources officielles et le crédit documentaire en vigueur. Aucune certification.'},
+ es:{title:'TradeDocs — piloto mundial',languageLabel:'Idioma',warning:'Prototipo: no hay normas nacionales verificadas ni aprobación bancaria.',routeLegend:'Ruta comercial',origin:'País de origen (código ISO de 2 letras)',export:'País exportador (código ISO de 2 letras)',import:'País importador (código ISO de 2 letras)',hs:'Código SA (6 dígitos, sin verificar)',date:'Fecha de envío',check:'Revisar ruta',resultTitle:'Resultado',invalid:'Complete todos los campos: países de 2 letras, código SA de 6 dígitos y fecha válida.',result:'Ruta registrada localmente. Requisitos nacionales: DESCONOCIDOS — consultar fuentes oficiales y crédito documentario vigente. Sin certificación.'}
+};
+const lang=document.getElementById('language');
+function render(){const l=lang.value,m=messages[l];document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';for(const k of ['title','languageLabel','warning','routeLegend','check','resultTitle'])document.getElementById(k).textContent=m[k];for(const el of document.querySelectorAll('[data-key]'))el.textContent=m[el.dataset.key];document.getElementById('result').textContent=''}
+lang.addEventListener('change',render);
+document.getElementById('check').addEventListener('click',()=>{const values=Object.fromEntries(['origin','export','import','hs','date'].map(k=>[k,document.getElementById(k).value.trim()]));const valid=['origin','export','import'].every(k=>/^[A-Za-z]{2}$/.test(values[k]))&&/^\d{6}$/.test(values.hs)&&/^\d{4}-\d{2}-\d{2}$/.test(values.date)&&!Number.isNaN(Date.parse(values.date));document.getElementById('result').textContent=valid?messages[lang.value].result:messages[lang.value].invalid});
+render();
+</script></html>
