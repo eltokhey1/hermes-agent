@@ -60,7 +60,9 @@ def run_once(worker):
     # No source code/secrets are copied into the supervisor status.
     text = result.stdout[-1000:] if result.returncode == 0 else result.stderr[-400:]
     if result.returncode == 0:
-        return 0, "SCAN_OK" if "SCAN_DONE" in text or "INBOX_MISSING" in text else "SCAN_OUTPUT_UNKNOWN"
+        if "SCAN_DONE" in text or "INBOX_MISSING" in text:
+            return 0, "SCAN_OK"
+        return 126, "SCAN_OUTPUT_UNKNOWN"
     return result.returncode, "WORKER_EXIT_NONZERO"
 
 
@@ -82,6 +84,10 @@ def main(argv=None):
     # Windows: locking a single byte excludes a second instance of this supervisor.
     lock_file = STATE_DIR / "instance.lock"
     with open(lock_file, "a+b") as lock:
+        if lock.seek(0, os.SEEK_END) == 0:
+            lock.write(b"\\x00")
+            lock.flush()
+        lock.seek(0)
         if os.name == "nt":
             import msvcrt
             lock.seek(0)
