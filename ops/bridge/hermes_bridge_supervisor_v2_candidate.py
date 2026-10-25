@@ -71,8 +71,9 @@ def run_once(worker):
             return 0, "SCAN_OK"
         return 126, "SCAN_OUTPUT_UNKNOWN"
     # Local allowlisted diagnostic; no worker stdout/stderr or secrets persisted.
-    from worker_exit_diagnostics_v1 import classify_worker_exit
-    return result.returncode, classify_worker_exit(result.returncode)
+    from runpy import run_path
+    classifier = run_path(str(Path(__file__).with_name('worker_exit_diagnostics_v1.py')))['classify_worker_exit']
+    return result.returncode, classifier(result.returncode)
 
 
 def main(argv=None):
