@@ -48,10 +48,10 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual((code, label), (0, "SCAN_OK"))
         self.assertEqual(call.call_args.args[0][1:4], ["-I", "-B", "-S"])
 
-    def test_08_inbox_missing_success(self):
+    def test_08_inbox_missing_fails_closed(self):
         fake = types.SimpleNamespace(returncode=0, stdout="INBOX_MISSING; no action", stderr="")
         with patch.object(s.subprocess, "run", return_value=fake):
-            self.assertEqual(s.run_once(Path("/fake/worker.py")), (0, "SCAN_OK"))
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "INBOX_MISSING"))
 
     def test_09_unknown_worker_output_fail_closed_label(self):
         fake = types.SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -106,6 +106,7 @@ class SupervisorTests(unittest.TestCase):
             source = Path(td) / "worker.py"; source.write_text("# worker")
             with patch.object(s, "check_worker", return_value=source), patch.object(s, "WORKER_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()), patch.object(s, "STATE_DIR", Path(td)), patch.object(s, "run_once", return_value=(1, "ERROR")):
                 self.assertEqual(s.main(["--worker", str(source)]), 1)
+                self.assertEqual(json.loads((Path(td)/"status.json").read_text())["state"], "DEGRADED")
 
     def test_18_stop_after_five_errors(self):
         with tempfile.TemporaryDirectory() as td:
