@@ -19,7 +19,7 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < size <= MAX_REQUEST:
                 self.send_error(413, "Invalid request size")
                 return
-            if self.headers.get("Origin") not in (None, "null", "http://127.0.0.1:8765"):
+            if self.headers.get("Origin") not in (None, f"http://127.0.0.1:{self.server.server_address[1]}"):
                 self.send_error(403, "Origin not allowed")
                 return
             if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
