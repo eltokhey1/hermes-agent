@@ -73,6 +73,16 @@ class ForkCiSanity(unittest.TestCase):
         needs["e2e-desktop-core"]["result"] = "success"
         self.assertIs(self.gate.evaluate_gate(needs)["ok"], True)
 
+    def test_selected_frontend_js_checks_cannot_be_skipped(self):
+        # A selected frontend lane must execute the JS/TS matrix, not skip it.
+        needs = {
+            "detect": {"result": "success", "outputs": {"frontend": "true"}},
+            "js-tests": {"result": "skipped"},
+        }
+        self.assertEqual(self.gate.evaluate_gate(needs)["failed"], ["js-tests"])
+        needs["js-tests"]["result"] = "success"
+        self.assertIs(self.gate.evaluate_gate(needs)["ok"], True)
+
     def test_required_gate_fails_closed_for_missing_needs(self):
         self.assertIs(self.gate.evaluate_gate({})["ok"], False)
         self.assertIs(self.gate.evaluate_gate(None)["ok"], False)

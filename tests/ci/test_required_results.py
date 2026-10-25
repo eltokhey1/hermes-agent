@@ -37,6 +37,7 @@ def test_status_policy(job, result, ordinary, excluded, release):
 
 @pytest.mark.parametrize("lane,jobs", [
     ("python", ("tests", "tests-os")),
+    ("frontend", ("js-tests",)),
     ("e2e", ("tests", "tests-os")),
     ("e2e_upgrade", ("tests", "tests-os")),
     ("desktop_updater", ("tests-os",)),
