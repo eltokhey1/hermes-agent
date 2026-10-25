@@ -60,6 +60,19 @@ class ForkCiSanity(unittest.TestCase):
         self.assertIs(result["ok"], False)
         self.assertIn("detect:outputs-unusable", result["failed"])
 
+    def test_selected_desktop_core_e2e_cannot_be_skipped(self):
+        # CI selects this required job via detect.outputs.e2e_desktop_core.
+        # An earlier aggregate gate incorrectly accepted a skipped consumer.
+        needs = {
+            "detect": {"result": "success", "outputs": {"e2e_desktop_core": "true"}},
+            "e2e-desktop-core": {"result": "skipped"},
+        }
+        verdict = self.gate.evaluate_gate(needs)
+        self.assertIs(verdict["ok"], False)
+        self.assertEqual(verdict["failed"], ["e2e-desktop-core"])
+        needs["e2e-desktop-core"]["result"] = "success"
+        self.assertIs(self.gate.evaluate_gate(needs)["ok"], True)
+
     def test_required_gate_fails_closed_for_missing_needs(self):
         self.assertIs(self.gate.evaluate_gate({})["ok"], False)
         self.assertIs(self.gate.evaluate_gate(None)["ok"], False)
