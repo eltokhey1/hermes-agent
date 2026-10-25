@@ -8,6 +8,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -57,10 +58,12 @@ def run_once(worker):
         return 124, "WORKER_TIMEOUT"
     except OSError:
         return 125, "WORKER_OS_ERROR"
-    # No source code/secrets are copied into the supervisor status.
-    text = result.stdout[-1000:] if result.returncode == 0 else result.stderr[-400:]
+    # Accept only the worker's exact final success line; never infer success
+    # from an arbitrary substring in its output.
     if result.returncode == 0:
-        if "SCAN_DONE" in text or "INBOX_MISSING" in text:
+        lines = result.stdout.rstrip().splitlines()
+        last = lines[-1] if lines else ""
+        if re.fullmatch(r"SCAN_DONE processed=[0-9]+", last) or last == "INBOX_MISSING; no action":
             return 0, "SCAN_OK"
         return 126, "SCAN_OUTPUT_UNKNOWN"
     return result.returncode, "WORKER_EXIT_NONZERO"
