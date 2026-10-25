@@ -2,6 +2,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pilot_workflow import run
+from pathlib import Path
 
 MAX_REQUEST = 100_000
 
@@ -34,12 +35,18 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path != "/health":
+        if self.path == "/":
+            body = Path(__file__).with_name("global_pilot.html").read_bytes()
+            content_type = "text/html; charset=utf-8"
+        elif self.path == "/health":
+            body = b'{"status":"LOCAL_REVIEW_ONLY"}'
+            content_type = "application/json"
+        else:
             self.send_error(404)
             return
-        body = b'{"status":"LOCAL_REVIEW_ONLY"}'
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
