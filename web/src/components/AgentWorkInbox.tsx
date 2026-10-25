@@ -120,7 +120,7 @@ export function AgentWorkInbox({
                   <span className="aui-title">{item.title}</span>
                   <span className="aui-state">{statusText[locale][item.status] ?? statusText[locale].unknown}</span>
                 </span>
-                <div className="aui-meta">{item.project} · {item.agent}{item.updatedAt ? ` · ${item.updatedAt}` : ""}</div>
+                <span className="aui-meta">{item.project} · {item.agent}{item.updatedAt ? ` · ${item.updatedAt}` : ""}</span>
               </summary>
               <div className="aui-body">
                 <p>{item.summary || (ar ? "لا توجد تفاصيل إضافية." : "No additional details.")}</p>
