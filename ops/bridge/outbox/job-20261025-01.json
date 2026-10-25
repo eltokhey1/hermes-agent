@@ -1,0 +1,16 @@
+{
+  "class_names": [],
+  "completed_at_utc": "2026-10-25T03:14:09.821205+00:00",
+  "executed": false,
+  "function_names": [
+    "sum_range"
+  ],
+  "isolation": "NOT_PROVEN",
+  "job_id": "job-20261025-01",
+  "line_count": 2,
+  "operation": "python_ast_check",
+  "production": "HOLD",
+  "schema": "hermes.bridge.receipt.v1",
+  "source_sha256": "11e61b7b4e5018432a8a43fd96d116630506a8b4424227d8ab3c1b8782ef528c",
+  "status": "PASS"
+}
