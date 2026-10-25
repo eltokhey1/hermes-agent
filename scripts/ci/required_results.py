@@ -37,6 +37,7 @@ _UPDATE_CONSUMER_LANES = {
     "tests": ("python", "e2e", "e2e_upgrade"),
     "tests-os": ("python", "desktop_updater", "e2e", "e2e_upgrade"),
     "js-tests": ("frontend",),
+    "rust-tests": ("rust",),
     "e2e-desktop-core": ("e2e_desktop_core",),
     "e2e-desktop-update": ("e2e_desktop_update",),
     "remote-backends": ("remote_backends",),
