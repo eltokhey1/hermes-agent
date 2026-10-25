@@ -65,7 +65,7 @@ The Windows bridge has confirmed the first AST receipt, but follow-up job-202610
 
 [recover_bridge_pilot.ps1](recover_bridge_pilot.ps1) is **read-only by default**. It reads the local supervisor status, process list and tail of local logs. Add the explicit `-Recover` switch to start **only** the previously downloaded, SHA256-pinned, AST-only supervisor when no matching bridge process exists. It never installs a Windows service or scheduled task, stops existing processes, executes received code, invokes Aider, or changes production settings.
 
-Recovery script SHA-256: `37612c3a4cde22754db233960d72682aef4cdd9a05c9165ac37d2fa613545454` (Git blob `1f6f320e2fc34a239a97832052b1ee1b3c1cda27`). The source was checked for balanced delimiters and its Git blob was independently recomputed; **Windows PowerShell runtime acceptance is still UNKNOWN**.
+Recovery script SHA-256: `37612c3a4cde22754db233960d72682aef4cdd9a05c9165ac37d2fa613545454` (Git blob `e68fe5928962b33d37bb87c23acf33bd4d15940a`). The source was checked for balanced delimiters and its Git blob was independently recomputed; **Windows PowerShell runtime acceptance is still UNKNOWN**.
 
 The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if they are missing, use the existing verified `start_bridge_pilot.ps1` rather than bypassing verification. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
 
