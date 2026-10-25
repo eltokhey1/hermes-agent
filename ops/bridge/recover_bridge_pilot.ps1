@@ -11,6 +11,7 @@ $supervisorHash = 'e5e861db8a73811f7621706431e58a7e9b5547b90232652235d83811bbdd0
 Write-Host 'PRODUCTION=HOLD'
 Write-Host 'G0=NO-GO G-CODE=NO-GO G1=NO-GO'
 
+$age = $null
 if (Test-Path -LiteralPath $state -PathType Leaf) {
     try {
         $snapshot = Get-Content -LiteralPath $state -Raw | ConvertFrom-Json
@@ -46,7 +47,8 @@ foreach ($name in @('supervisor.stderr.log','supervisor.stdout.log')) {
 
 if ($active.Count -gt 0) {
     Write-Host 'BRIDGE_PROCESS=ACTIVE_NOT_HEALTH_PROOF'
-    if ($age -gt 120) { Write-Host 'WARNING=LAST_SUPERVISOR_STATUS_STALE' }
+    if ($null -eq $age) { Write-Host 'WARNING=NO_VALID_SUPERVISOR_STATUS' }
+    elseif ($age -gt 120) { Write-Host 'WARNING=LAST_SUPERVISOR_STATUS_STALE' }
     exit 0
 }
 if (-not $Recover) {
@@ -54,8 +56,8 @@ if (-not $Recover) {
     exit 3
 }
 
-foreach ($pair in @(@($worker, $workerHash), @($supervisor, $supervisorHash))) {
-    $path, $hash = $pair
+foreach ($path in @($worker, $supervisor)) {
+    $hash = if ($path -eq $worker) { $workerHash } else { $supervisorHash }
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "PINNED_FILE_MISSING: $path" }
     $actual = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($actual -ne $hash) { throw "PINNED_FILE_HASH_MISMATCH: $path" }
