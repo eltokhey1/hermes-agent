@@ -27,6 +27,6 @@ jobs:
           assert check_catalog()
           page = Path('global_pilot.html').read_text(encoding='utf-8')
           for language in ('ar', 'en', 'fr', 'es'):
-              assert language + ':' in page
+              assert '<option value="' + language + '">' in page
           print('Static multilingual pilot present; browser behavior not tested')
           PY
