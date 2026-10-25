@@ -1,0 +1,14 @@
+{
+  "code_stdout": [
+    "HERMES_SMOKE_OK",
+    "PAYLOAD_SHA256=35aa4a5285133104d3f71e44ff568f89f8f3755c572addf121e27289695d92d3"
+  ],
+  "completed_at_utc": "2026-10-25T03:03:53.377538+00:00",
+  "isolation": "NOT_PROVEN",
+  "production": "HOLD",
+  "request_path": "ops/smoke_tests/transport_smoke_20261025.py",
+  "request_sha256": "78b6d037ee867299da091ffabfb0066b4f9ed589d62888b58a422eab4a74d196",
+  "returncode": 0,
+  "schema": "hermes.transport.smoke.ack.v1",
+  "status": "PASS"
+}
