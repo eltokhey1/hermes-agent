@@ -15,6 +15,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Install PDF test dependency
+        run: python3 -m pip install --disable-pip-version-check 'PyMuPDF>=1.24,<2'
       - name: Run offline TradeDocs unit and integration tests
         working-directory: ops/tradedocs_pilot
         run: python3 local_verify.py
