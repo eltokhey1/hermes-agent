@@ -67,6 +67,8 @@ The Windows bridge has confirmed the first AST receipt, but follow-up job-202610
 
 Recovery script SHA-256: `37612c3a4cde22754db233960d72682aef4cdd9a05c9165ac37d2fa613545454` (Git blob `e68fe5928962b33d37bb87c23acf33bd4d15940a`). The source was checked for balanced delimiters and its Git blob was independently recomputed; **Windows PowerShell runtime acceptance is still UNKNOWN**.
 
-The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if they are missing, use the existing verified `start_bridge_pilot.ps1` rather than bypassing verification. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
+The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if they are missing, use the existing verified `start_bridge_pilot.ps1` rather than bypassing verification.
+
+**Read-only Windows path check:** `Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'HermesBridgePilot') -PathType Container`. A failed check under `Downloads\HermesBridgePilot` does **not** establish that the actual local state directory is absent. Inspect `status.json` under the `LOCALAPPDATA` path; do not interpret a missing status as proof of a running or stopped process. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
 
 A sleeping/suspended Windows device cannot keep polling. No automatic start on boot or wake is configured.
