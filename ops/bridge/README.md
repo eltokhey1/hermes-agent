@@ -58,3 +58,15 @@ Only if the local operator executes this will the supervisor start. **No unatten
 ## Verified launcher artifact
 
 `start_bridge_pilot.ps1` SHA-256: `6a581bf48b0246f743e0f8e48c916b8b09d67fab72e54bdfde19343790b28d5f` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.
+
+## Bridge diagnostics and opt-in recovery (2026-10-25)
+
+The Windows bridge has confirmed the first AST receipt, but follow-up job-20261025-02 and job-20261025-03 replies have not been observed. **Do not infer local poller health from a stale success.** GitHub alone cannot inspect Windows processes, sleep state, authenticated gh CLI health, or local stderr.
+
+[recover_bridge_pilot.ps1](recover_bridge_pilot.ps1) is **read-only by default**. It reads the local supervisor status, process list and tail of local logs. Add the explicit `-Recover` switch to start **only** the previously downloaded, SHA256-pinned, AST-only supervisor when no matching bridge process exists. It never installs a Windows service or scheduled task, stops existing processes, executes received code, invokes Aider, or changes production settings.
+
+Recovery script SHA-256: `2d453983f9506a19107ea5494078d1d25bec5d0e540050de5d9f4a6e483389fa` (Git blob `1f6f320e2fc34a239a97832052b1ee1b3c1cda27`). The source was checked for balanced delimiters and its Git blob was independently recomputed; **Windows PowerShell runtime acceptance is still UNKNOWN**.
+
+The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if they are missing, use the existing verified `start_bridge_pilot.ps1` rather than bypassing verification. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
+
+A sleeping/suspended Windows device cannot keep polling. No automatic start on boot or wake is configured.
