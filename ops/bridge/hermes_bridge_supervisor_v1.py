@@ -85,7 +85,7 @@ def main(argv=None):
     lock_file = STATE_DIR / "instance.lock"
     with open(lock_file, "a+b") as lock:
         if lock.seek(0, os.SEEK_END) == 0:
-            lock.write(b"\\x00")
+            lock.write(b"\x00")
             lock.flush()
         lock.seek(0)
         if os.name == "nt":
