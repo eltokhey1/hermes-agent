@@ -154,11 +154,9 @@ class BridgeTests(unittest.TestCase):
     def test_35_read_only_receipt(self):
         self.assertIs(r(job())['executed'], False)
 
-
     def test_36_corrupt_base64_rejected(self):
         with self.assertRaises(ValueError):
-            b.decode_content({'type':'file','encoding':'base64','size':1,'content':'eA==    unittest.main(verbosity=2)
-})
+            b.decode_content({'type':'file','encoding':'base64','size':1,'content':'eA==$'})
 
     def test_37_declared_size_mismatch_rejected(self):
         with self.assertRaises(ValueError):
