@@ -35,3 +35,22 @@ Every response explicitly includes `executed=false` and `production=HOLD`.
 The repository is public: do not send secrets, customer data, or confidential code.
 Network/OS isolation is not proven; GitHub write access is not cryptographic job signing.
 Never allow code execution without a separate, independently accepted policy gate.
+
+## Resilient pilot supervisor (separate from live v1)
+
+Files: `hermes_bridge_supervisor_v1.py`, `test_supervisor_v1.py`, and `start_bridge_pilot.ps1`.
+The PowerShell launcher downloads four pinned sources, validates exact SHA-256, runs the 35 + 20 offline tests, performs a **single** initial scan, and optionally starts a local polling process if `-Poll` is supplied. The supervisor keeps local `status.json`, verifies the pinned worker before each scan, refuses unknown worker output, and stops after five consecutive failures. On Windows it uses a one-instance file lock. Startup on device boot is not configured.
+
+Published SHA-256:
+- `hermes_bridge_v1.py`: `fb8706ac8ae5ecebd9de06e97c23ae4639b09733ad1984f2e097bb38054a046a`
+- `hermes_bridge_supervisor_v1.py`: `cf7a9f38aa2f2da613b981f856f066c06602c329287f5b35925f40ac3691644b`
+- `test_bridge_v1.py`: `3225029266f7ed9a874c8950bf36139ecc10da7f255690364fa6e9c7f6814462`
+- `test_supervisor_v1.py`: `2c2475723cd10965230afb68a58d8acb62eb83c37ad5a6ddc4945b535b3af3fe`
+
+Manual launch on Windows after obtaining and reviewing the PowerShell launcher:
+`powershell -NoProfile -File .\start_bridge_pilot.ps1 -Poll`
+Only if the local operator executes this will the supervisor start. **No unattended Windows run of the supervisor or 55 tests has yet been verified.**
+
+## Observed GitHub round-trip
+
+`outbox/job-20261025-01.json` is Windows-generated and was independently fetched through the GitHub connector: `status=PASS`, `executed=false`, `function_names=['sum_range']`. The follow-up request `inbox/job-20261025-02.json` is published but its reply was not yet found; the original background process may be stopped. The status snapshot in `ACCEPTANCE_SNAPSHOT_20261025.md` governs acceptance. No claim of Hermes agent readiness.
