@@ -8,6 +8,9 @@ MAX_REQUEST = 100_000
 
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
+        if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("Host") != "127.0.0.1:8765":
+            self.send_error(403, "Local host only")
+            return
         if self.path != "/review":
             self.send_error(404)
             return
@@ -19,6 +22,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.headers.get("Origin") not in (None, "null", "http://127.0.0.1:8765"):
                 self.send_error(403, "Origin not allowed")
                 return
+            if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
+                self.send_error(415, "Expected JSON")
+                return
             payload = json.loads(self.rfile.read(size))
             result = run(payload)
             body = json.dumps(result, ensure_ascii=False).encode("utf-8")
@@ -29,12 +35,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Access-Control-Allow-Origin", "null")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("Host") != "127.0.0.1:8765":
+            self.send_error(403, "Local host only")
+            return
         if self.path == "/":
             body = Path(__file__).with_name("global_pilot.html").read_bytes()
             content_type = "text/html; charset=utf-8"
