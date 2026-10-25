@@ -56,7 +56,7 @@ class SupervisorTests(unittest.TestCase):
     def test_09_unknown_worker_output_fail_closed_label(self):
         fake = types.SimpleNamespace(returncode=0, stdout="", stderr="")
         with patch.object(s.subprocess, "run", return_value=fake):
-            self.assertEqual(s.run_once(Path("/fake/worker.py")), (0, "SCAN_OUTPUT_UNKNOWN"))
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "SCAN_OUTPUT_UNKNOWN"))
 
     def test_10_nonzero(self):
         fake = types.SimpleNamespace(returncode=4, stdout="", stderr="transport failed")
