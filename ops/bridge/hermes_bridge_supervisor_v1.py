@@ -61,6 +61,8 @@ def run_once(worker):
     # Accept only the worker's exact final success line; never infer success
     # from an arbitrary substring in its output.
     if result.returncode == 0:
+        if result.stderr.strip():
+            return 126, "SCAN_STDERR_UNEXPECTED"
         lines = result.stdout.rstrip().splitlines()
         last = lines[-1] if lines else ""
         if re.fullmatch(r"SCAN_DONE processed=[0-9]+", last) or last == "INBOX_MISSING; no action":

@@ -148,5 +148,10 @@ class SupervisorTests(unittest.TestCase):
         with patch.object(s.subprocess, "run", return_value=fake):
             self.assertEqual(s.run_once(Path("/fake/worker.py")), (0, "SCAN_OK"))
 
+    def test_25_success_stdout_with_stderr_fails_closed(self):
+        fake = types.SimpleNamespace(returncode=0, stdout="SCAN_DONE processed=1\n", stderr="unexpected warning")
+        with patch.object(s.subprocess, "run", return_value=fake):
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "SCAN_STDERR_UNEXPECTED"))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -39,17 +39,17 @@ Never allow code execution without a separate, independently accepted policy gat
 ## Resilient pilot supervisor (separate from live v1)
 
 Files: `hermes_bridge_supervisor_v1.py`, `test_supervisor_v1.py`, and `start_bridge_pilot.ps1`.
-The PowerShell launcher downloads four pinned sources, validates exact SHA-256, runs the 38 + 24 offline tests, performs a **single** initial scan, and optionally starts a local polling process if `-Poll` is supplied. The supervisor keeps local `status.json`, verifies the pinned worker before each scan, refuses unknown worker output (including spoofed or non-final success markers), and stops after five consecutive failures. On Windows it uses a one-instance file lock. Startup on device boot is not configured.
+The PowerShell launcher downloads four pinned sources, validates exact SHA-256, runs the 38 + 25 offline tests, performs a **single** initial scan, and optionally starts a local polling process if `-Poll` is supplied. The supervisor keeps local `status.json`, verifies the pinned worker before each scan, refuses unknown worker output (including spoofed or non-final success markers) and unexpected worker stderr, and stops after five consecutive failures. On Windows it uses a one-instance file lock. Startup on device boot is not configured.
 
 Published SHA-256:
 - `hermes_bridge_v1.py`: `f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f`
-- `hermes_bridge_supervisor_v1.py`: `fd2193f429d3904ac1005b22c950ed7bf30c98276ebc584a697be5792bd1f730`
+- `hermes_bridge_supervisor_v1.py`: `e5e861db8a73811f7621706431e58a7e9b5547b90232652235d83811bbdd0d65`
 - `test_bridge_v1.py`: `2a200312893d19d74cd19def74ecc8e652b4ade9600e93321376235e6e1e9ac3`
-- `test_supervisor_v1.py`: `2a125bb013781756c0cd8cf5e7f3624f302212b819135e920daefee184757ba2`
+- `test_supervisor_v1.py`: `783e9cd24afb5875d021e3a8d941c5b3f7bd8eeb41dd1daf9f800ccbc2f2039c`
 
 Manual launch on Windows after obtaining and reviewing the PowerShell launcher:
 `powershell -NoProfile -File .\start_bridge_pilot.ps1 -Poll`
-Only if the local operator executes this will the supervisor start. **No unattended Windows run of the supervisor or 62 tests has yet been verified.**
+Only if the local operator executes this will the supervisor start. **No unattended Windows run of the supervisor or 63 tests has yet been verified.**
 
 ## Observed GitHub round-trip
 
@@ -57,4 +57,4 @@ Only if the local operator executes this will the supervisor start. **No unatten
 
 ## Verified launcher artifact
 
-`start_bridge_pilot.ps1` SHA-256: `dd6e086110741d9451e5a56e308d13b87a22f365a5e5a1a2cbb317a74808383f` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.
+`start_bridge_pilot.ps1` SHA-256: `d6050e3b349af2a4b559254f2074efd26abb743ee07324f9c1c39f8a5e227aa5` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.

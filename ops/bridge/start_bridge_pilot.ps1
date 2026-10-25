@@ -25,9 +25,9 @@ function Get-PinnedFile {
 }
 
 $worker = Get-PinnedFile "ops/bridge/hermes_bridge_v1.py" "f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f" "hermes_bridge_v1.py"
-$supervisor = Get-PinnedFile "ops/bridge/hermes_bridge_supervisor_v1.py" "fd2193f429d3904ac1005b22c950ed7bf30c98276ebc584a697be5792bd1f730" "hermes_bridge_supervisor_v1.py"
+$supervisor = Get-PinnedFile "ops/bridge/hermes_bridge_supervisor_v1.py" "e5e861db8a73811f7621706431e58a7e9b5547b90232652235d83811bbdd0d65" "hermes_bridge_supervisor_v1.py"
 $testA = Get-PinnedFile "ops/bridge/test_bridge_v1.py" "2a200312893d19d74cd19def74ecc8e652b4ade9600e93321376235e6e1e9ac3" "test_bridge_v1.py"
-$testB = Get-PinnedFile "ops/bridge/test_supervisor_v1.py" "2a125bb013781756c0cd8cf5e7f3624f302212b819135e920daefee184757ba2" "test_supervisor_v1.py"
+$testB = Get-PinnedFile "ops/bridge/test_supervisor_v1.py" "783e9cd24afb5875d021e3a8d941c5b3f7bd8eeb41dd1daf9f800ccbc2f2039c" "test_supervisor_v1.py"
 
 Write-Host "=== OFFLINE TESTS ==="
 $testOut = Join-Path $folder "tests.stdout.log"
