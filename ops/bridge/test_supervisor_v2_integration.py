@@ -43,5 +43,22 @@ class SupervisorV2IntegrationTests(unittest.TestCase):
             self.assertEqual(supervisor.run_once("dummy"), (126, "SCAN_OUTPUT_UNKNOWN"))
 
 
+    def test_nonzero_exit_under_isolated_python(self):
+        code = (
+            'import importlib.util, pathlib, subprocess, sys\n'
+            'from unittest.mock import patch\n'
+            'p=pathlib.Path(sys.argv[1]); spec=importlib.util.spec_from_file_location("v2",p)\n'
+            'm=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n'
+            'with patch.object(m.subprocess, "run", return_value=subprocess.CompletedProcess([],1,"","")):\n'
+            ' assert m.run_once("unused") == (1,"WORKER_EXIT_1")\n'
+        )
+        result = subprocess.run(
+            [sys.executable, "-I", "-B", "-S", "-c", code,
+             str(HERE / "hermes_bridge_supervisor_v2_candidate.py")],
+            cwd=HERE.parent, capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
