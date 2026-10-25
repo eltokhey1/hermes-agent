@@ -1,0 +1,8 @@
+{
+  "schema": "hermes.bridge.job.v1",
+  "job_id": "job-20261025-02",
+  "operation": "python_ast_check",
+  "approval": "read_only",
+  "source": "def average(values):\n    if not values:\n        raise ValueError('empty')\n    return sum(values) / len(values)\n",
+  "source_sha256": "dddb92dfc192f97e67d36a0b74b647ad9dd6563e58cc465adca146c4a0c4241f"
+}
