@@ -49,7 +49,7 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(call.call_args.args[0][1:4], ["-I", "-B", "-S"])
 
     def test_08_inbox_missing_success(self):
-        fake = types.SimpleNamespace(returncode=0, stdout="INBOX_MISSING", stderr="")
+        fake = types.SimpleNamespace(returncode=0, stdout="INBOX_MISSING; no action", stderr="")
         with patch.object(s.subprocess, "run", return_value=fake):
             self.assertEqual(s.run_once(Path("/fake/worker.py")), (0, "SCAN_OK"))
 
@@ -127,6 +127,26 @@ class SupervisorTests(unittest.TestCase):
             receipt = json.loads((Path(td) / "status.json").read_text())
             self.assertEqual(receipt["production"], "HOLD")
 
+
+    def test_21_rejects_spoofed_success_marker(self):
+        fake = types.SimpleNamespace(returncode=0, stdout="NOT_SCAN_DONE processed=1\\n".replace("\\n", "\n"), stderr="")
+        with patch.object(s.subprocess, "run", return_value=fake):
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "SCAN_OUTPUT_UNKNOWN"))
+
+    def test_22_rejects_invalid_scan_count(self):
+        fake = types.SimpleNamespace(returncode=0, stdout="SCAN_DONE processed=bogus\\n".replace("\\n", "\n"), stderr="")
+        with patch.object(s.subprocess, "run", return_value=fake):
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "SCAN_OUTPUT_UNKNOWN"))
+
+    def test_23_rejects_trailing_unexpected_output(self):
+        fake = types.SimpleNamespace(returncode=0, stdout="SCAN_DONE processed=1\\nUNEXPECTED\\n".replace("\\n", "\n"), stderr="")
+        with patch.object(s.subprocess, "run", return_value=fake):
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (126, "SCAN_OUTPUT_UNKNOWN"))
+
+    def test_24_accepts_completed_scan_with_prior_lines(self):
+        fake = types.SimpleNamespace(returncode=0, stdout="REPLIED job-20261025-02.json STATUS=PASS EXECUTED=False\\nSCAN_DONE processed=1\\n".replace("\\n", "\n"), stderr="")
+        with patch.object(s.subprocess, "run", return_value=fake):
+            self.assertEqual(s.run_once(Path("/fake/worker.py")), (0, "SCAN_OK"))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
