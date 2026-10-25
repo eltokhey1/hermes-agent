@@ -32,13 +32,13 @@ function render(){const l=lang.value,m=messages[l];document.documentElement.lang
 lang.addEventListener('change',render);
 document.getElementById('check').addEventListener('click',async()=>{
  const values=Object.fromEntries(['origin','export','import','hs','date'].map(k=>[k,document.getElementById(k).value.trim()]));
- const valid=['origin','export','import'].every(k=>/^[A-Za-z]{2}$/.test(values[k]))&&/^\\d{6}$/.test(values.hs)&&/^\\d{4}-\\d{2}-\\d{2}$/.test(values.date)&&!Number.isNaN(Date.parse(values.date));
+ const valid=['origin','export','import'].every(k=>/^[A-Za-z]{2}$/.test(values[k]))&&/^[0-9]{6}$/.test(values.hs)&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(values.date)&&!Number.isNaN(Date.parse(values.date));
  const out=document.getElementById('result');
  if(!valid){out.textContent=messages[lang.value].invalid;return}
  const val=id=>document.getElementById(id).value.trim();
- if(!/^\\d+(?:\\.\\d+)?$/.test(val('lcAmount'))||!/^\\d+(?:\\.\\d+)?$/.test(val('lcQty'))||!/^\\d+(?:\\.\\d+)?$/.test(val('shipAmount'))||!/^\\d+(?:\\.\\d+)?$/.test(val('shipQty'))||!val('lcRef')){out.textContent=messages[lang.value].invalid;return}
+ if(!/^[0-9]+(?:[.][0-9]+)?$/.test(val('lcAmount'))||!/^[0-9]+(?:[.][0-9]+)?$/.test(val('lcQty'))||!/^[0-9]+(?:[.][0-9]+)?$/.test(val('shipAmount'))||!/^[0-9]+(?:[.][0-9]+)?$/.test(val('shipQty'))||!val('lcRef')){out.textContent=messages[lang.value].invalid;return}
  const payload={lc:{lc_number:val('lcRef'),currency:'USD',unit:'MT',amount:val('lcAmount'),quantity:val('lcQty')},shipments:[{lc_number:val('lcRef'),shipment_id:'SYNTH-SHIP-1',status:'SHIPPED',amount:val('shipAmount'),quantity:val('shipQty')}],route:{origin_country:values.origin.toUpperCase(),export_country:values.export.toUpperCase(),import_country:values.import.toUpperCase(),commodity:values.hs,shipment_date:values.date}};
- try{const response=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw Error('REVIEW_FAILED');const result=await response.json();const alerts=result.shipment_reviews.flatMap(s=>s.review.alerts.map(a=>a.code));out.textContent=messages[lang.value].result+'\\n'+JSON.stringify({remaining_quantity:result.balance.remaining_nominal_quantity,remaining_amount_usd:result.balance.remaining_face_value,alerts,review_status:result.status},null,2)}
+ try{const response=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!response.ok)throw Error('REVIEW_FAILED');const result=await response.json();const alerts=result.shipment_reviews.flatMap(s=>s.review.alerts.map(a=>a.code));out.textContent=messages[lang.value].result+'\n'+JSON.stringify({remaining_quantity:result.balance.remaining_nominal_quantity,remaining_amount_usd:result.balance.remaining_face_value,alerts,review_status:result.status},null,2)}
  catch(_){out.textContent='LOCAL_REVIEW_UNAVAILABLE — '+messages[lang.value].result}
 });
 render();
