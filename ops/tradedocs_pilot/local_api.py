@@ -40,7 +40,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("Host") != "127.0.0.1:8765":
+        if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("Host") != f"127.0.0.1:{self.server.server_address[1]}":
             self.send_error(403, "Local host only")
             return
         if self.path == "/":
