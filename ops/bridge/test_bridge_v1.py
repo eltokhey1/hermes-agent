@@ -155,5 +155,19 @@ class BridgeTests(unittest.TestCase):
         self.assertIs(r(job())['executed'], False)
 
 
+    def test_36_corrupt_base64_rejected(self):
+        with self.assertRaises(ValueError):
+            b.decode_content({'type':'file','encoding':'base64','size':1,'content':'eA==    unittest.main(verbosity=2)
+})
+
+    def test_37_declared_size_mismatch_rejected(self):
+        with self.assertRaises(ValueError):
+            b.decode_content({'type':'file','encoding':'base64','size':2,'content':'eA=='})
+
+    def test_38_wrapped_github_base64_accepted(self):
+        self.assertEqual(b.decode_content({'type':'file','encoding':'base64','size':1,
+                                           'content':'eA==\\n'.replace('\\n', '\n')}), b'x')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
