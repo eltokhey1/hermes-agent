@@ -48,9 +48,16 @@ def decode_content(data):
         return None
     if data.get("type") != "file" or data.get("encoding") != "base64":
         raise ValueError("Expected a base64-encoded GitHub file")
-    if int(data.get("size", MAX_FILE + 1)) > MAX_FILE:
+    size = int(data.get("size", MAX_FILE + 1))
+    if not 0 <= size <= MAX_FILE:
         raise ValueError("Job file exceeds maximum size")
-    return base64.b64decode(data["content"], validate=False)
+    try:
+        raw = base64.b64decode("".join(data["content"].split()), validate=True)
+    except (KeyError, AttributeError, ValueError, base64.binascii.Error) as exc:
+        raise ValueError("Invalid GitHub base64 content") from exc
+    if len(raw) != size:
+        raise ValueError("GitHub file size mismatch")
+    return raw
 
 
 def review_task(filename, raw):
