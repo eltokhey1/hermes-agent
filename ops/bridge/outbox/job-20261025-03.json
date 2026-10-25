@@ -1,0 +1,14 @@
+{
+  "completed_at_utc": "2026-10-25T15:41:40.372121+00:00",
+  "error_code": "SYNTAX_ERROR",
+  "executed": false,
+  "isolation": "NOT_PROVEN",
+  "job_id": "job-20261025-03",
+  "line": 1,
+  "line_count": 2,
+  "operation": "python_ast_check",
+  "production": "HOLD",
+  "schema": "hermes.bridge.receipt.v1",
+  "source_sha256": "f5359a386641932bec76ad82d3be08ca18a7ee9bd6e5f6b009127aa2b1de3d87",
+  "status": "SYNTAX_ERROR"
+}
