@@ -61,7 +61,7 @@ def calculate(lc, shipments):
             "shipped_quantity": str(used_qty), "allocated_shipment_value": str(used_value),
             "remaining_nominal_quantity": str(remaining_qty),
             "remaining_face_value": str(remaining_value),
-            "quantity_limit_with_tolerance": str(qty_limit),
+            "quantity_limit_with_tolerance": format(qty_limit, "f").rstrip("0").rstrip(".") if "." in format(qty_limit, "f") else format(qty_limit, "f"),
             "shipments": entries, "warnings": warnings,
             "status": "NEEDS_BANK_RECONCILIATION",
             "note": "Not a bank-certified available balance; presentations, amendments and drawings must be reconciled."}
