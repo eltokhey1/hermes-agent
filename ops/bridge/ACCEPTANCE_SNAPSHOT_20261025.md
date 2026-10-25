@@ -27,3 +27,11 @@ Date: 2026-10-25. Source of work-package truth remains the existing Hermes 45-WP
 ## Suggested next safe milestone
 
 Verify the pending `average` receipt or diagnose Windows supervisor local status. Then run the 35+20 synthetic suites on Windows and capture SHA256 and process exit codes. Only after read-only transport is reliable should a separately authorized, fixed-fixture Aider+Ollama worker be piloted in an isolated non-production workspace.
+
+## 2026-10-25 — independent receipt verifier and second negative-control task
+
+- Job `job-20261025-03` was queued on the isolated branch at commit `a4a1b4ddd3cf82a3d96f3e0461109b3b0a651d1e` as a deliberately **invalid Python syntax** negative control. Its correct eventual receipt is `status=SYNTAX_ERROR`, `error_code=SYNTAX_ERROR`, `executed=false`. Do not report PASS for it.
+- At the time of this update the GitHub outbox contains the Windows-confirmed receipt for `job-20261025-01` only; replies for `job-20261025-02` and `job-20261025-03` were not present. **Background Windows bridge health remains UNKNOWN.**
+- A standalone read-only verifier `verify_receipts.py` and tests `test_verify_receipts.py` were added on the same isolated branch. The **exact published Git blobs** match the independently tested local copies (blob SHA `88bd0fe025d2b9a06d7b26220aec78f136727029` and `fc8d1a2f6f910362fb87c76fa4f3c3cf21c45682`). SHA-256 of the verifier is `8532ed9be2eb25089a5a61abbc4bfd20bb7ef5f4224a119c9c4f22e4627b11e4`.
+- **TESTED_SYNTHETIC:** `python -m unittest -v test_verify_receipts.py`: **12/12 PASS**, exit 0, on the independent Linux Python execution environment. These tests cover request/receipt SHA mismatch, replayed job ID, production/execution markers, missing approvals, timestamp, positive syntax, and negative-control false success. **No Windows/CI run of this new suite has been established.**
+- The verifier is read-only (`gh api` GET), and `VERIFIED_TRANSPORT_ONLY` asserts neither Windows process identity nor isolation nor any execution of submitted Python code. No merge, production, Aider auto-run or account/secret change was made.
