@@ -14,7 +14,7 @@ import sys
 import tempfile
 import time
 
-WORKER_SHA256 = "fb8706ac8ae5ecebd9de06e97c23ae4639b09733ad1984f2e097bb38054a046a"
+WORKER_SHA256 = "f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f"
 DEFAULT_WORKER = Path(tempfile.gettempdir()) / "hermes_bridge_v1_verified.py"
 STATE_DIR = Path(os.environ.get("LOCALAPPDATA") or tempfile.gettempdir()) / "HermesBridgePilot"
 
