@@ -1,6 +1,5 @@
 """Static browser-script smoke checks without third-party dependencies."""
 from pathlib import Path
-import re
 import unittest
 
 class BrowserScriptTests(unittest.TestCase):
