@@ -1,0 +1,16 @@
+{
+  "project": "TradeDocs AI Global",
+  "production": "HOLD",
+  "pull_request": 16,
+  "features": [
+    {"id": "lc_balance", "status": "implemented", "verification": "pending"},
+    {"id": "shipment_review", "status": "implemented", "verification": "pending"},
+    {"id": "global_requirements_registry", "status": "implemented", "verification": "pending", "verified_country_packs": 0},
+    {"id": "workflow_composition", "status": "implemented", "verification": "pending"},
+    {"id": "four_language_browser_pilot", "status": "implemented", "verification": "browser_pending"},
+    {"id": "browser_backend_binding", "status": "todo"},
+    {"id": "official_country_rules", "status": "todo"},
+    {"id": "production_release", "status": "pending_approval"}
+  ],
+  "notes": "Never interpret implemented as tested. Use git rev-parse HEAD for live commit."
+}
