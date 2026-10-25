@@ -22,13 +22,13 @@ See `inbox/job-20261025-01.json`. Required: `schema=hermes.bridge.job.v1`, filen
 
 Requires Python, GitHub CLI `gh`, and an authenticated GitHub session.
 Download the exact `hermes_bridge_v1.py` from this branch and compare SHA-256 before executing.
-SHA-256: `fb8706ac8ae5ecebd9de06e97c23ae4639b09733ad1984f2e097bb38054a046a`.
+SHA-256: `f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f`.
 Run `python -I -B -S hermes_bridge_v1.py` once, or add `--poll --interval 30` for manually opted-in polling.
 Stop a foreground poll with Ctrl+C. Do not run multiple bridge copies concurrently.
 
 ## Tests and security
 
-`python -m unittest -v test_bridge_v1.py` passes 35 synthetic/adversarial cases on the authoring machine.
+`test_bridge_v1.py` now contains 38 synthetic/adversarial cases; the three new base64 validation regressions are published but have **not** been run as the repository suite. Independent standalone validation of the decoding logic passed 4/4 synthetic cases; this is not Windows or CI acceptance.
 Windows-local acceptance is NOT proven until a receipt arrives and is checked here.
 `status=PASS` means Python syntax parsed, **not** that the code executed or passed behavioral tests.
 Every response explicitly includes `executed=false` and `production=HOLD`.
@@ -39,17 +39,17 @@ Never allow code execution without a separate, independently accepted policy gat
 ## Resilient pilot supervisor (separate from live v1)
 
 Files: `hermes_bridge_supervisor_v1.py`, `test_supervisor_v1.py`, and `start_bridge_pilot.ps1`.
-The PowerShell launcher downloads four pinned sources, validates exact SHA-256, runs the 35 + 20 offline tests, performs a **single** initial scan, and optionally starts a local polling process if `-Poll` is supplied. The supervisor keeps local `status.json`, verifies the pinned worker before each scan, refuses unknown worker output, and stops after five consecutive failures. On Windows it uses a one-instance file lock. Startup on device boot is not configured.
+The PowerShell launcher downloads four pinned sources, validates exact SHA-256, runs the 38 + 20 offline tests, performs a **single** initial scan, and optionally starts a local polling process if `-Poll` is supplied. The supervisor keeps local `status.json`, verifies the pinned worker before each scan, refuses unknown worker output, and stops after five consecutive failures. On Windows it uses a one-instance file lock. Startup on device boot is not configured.
 
 Published SHA-256:
-- `hermes_bridge_v1.py`: `fb8706ac8ae5ecebd9de06e97c23ae4639b09733ad1984f2e097bb38054a046a`
-- `hermes_bridge_supervisor_v1.py`: `cf7a9f38aa2f2da613b981f856f066c06602c329287f5b35925f40ac3691644b`
-- `test_bridge_v1.py`: `3225029266f7ed9a874c8950bf36139ecc10da7f255690364fa6e9c7f6814462`
+- `hermes_bridge_v1.py`: `f85bf5021fa2e05fc06abb52502932d09952a19fb0c1fcf6f83106158ac4278f`
+- `hermes_bridge_supervisor_v1.py`: `c3b6faf883408797cdc36a5a7bc1414b37001e14124b4f566fa47b8217140277`
+- `test_bridge_v1.py`: `2a200312893d19d74cd19def74ecc8e652b4ade9600e93321376235e6e1e9ac3`
 - `test_supervisor_v1.py`: `2c2475723cd10965230afb68a58d8acb62eb83c37ad5a6ddc4945b535b3af3fe`
 
 Manual launch on Windows after obtaining and reviewing the PowerShell launcher:
 `powershell -NoProfile -File .\start_bridge_pilot.ps1 -Poll`
-Only if the local operator executes this will the supervisor start. **No unattended Windows run of the supervisor or 55 tests has yet been verified.**
+Only if the local operator executes this will the supervisor start. **No unattended Windows run of the supervisor or 58 tests has yet been verified.**
 
 ## Observed GitHub round-trip
 
@@ -57,4 +57,4 @@ Only if the local operator executes this will the supervisor start. **No unatten
 
 ## Verified launcher artifact
 
-`start_bridge_pilot.ps1` SHA-256: `745c771bb8692914b61b992df79993286690b44ee7a12d45c441c795edf11a8e` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.
+`start_bridge_pilot.ps1` SHA-256: `cd94550aa2b7da668cab732f5a0b8a9a682c1867c42db12e876d114743d9861a` (verified by independent GitHub fetch + digest calculation). The launcher itself has NOT been executed on Windows. The Windows operator must obtain and verify the exact file before running it with `-Poll`. This script does not install a scheduled task or service and will stop if its offline tests fail. A sleeping/suspended PC cannot be assumed to continue polling.
