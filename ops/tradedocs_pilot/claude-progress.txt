@@ -1,0 +1,7 @@
+TradeDocs AI Global / PR #16
+Scope: offline, read-only pilot. Production HOLD.
+Implemented: LC balance, shipment review, sourced-rule registry, workflow composition, 4-language static browser route UI.
+Verification: local_verify.py added; no confirmed local/CI result. Run: cd ops/tradedocs_pilot && python local_verify.py
+Known gap: HTML pilot is not connected to Python workflow. No verified country packs; no official rules claimed. No real document processing or financial authorization.
+Next: execute tests, fix failures, then implement opt-in local HTTP adapter with strict validation and no network binding outside loopback. Browser QA for AR RTL/EN/FR/ES. Country packs require official evidence and reviewer approval.
+Never merge, publish, send bank data, change production or spend without explicit approval.
