@@ -49,4 +49,34 @@ class LocalApiTests(unittest.TestCase):
   finally:
    server.shutdown()
    server.server_close()
+
+ def test_local_triage_review_only(self):
+  server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+  worker=threading.Thread(target=server.serve_forever,daemon=True)
+  worker.start()
+  try:
+   conn=HTTPConnection('127.0.0.1',server.server_port,timeout=3)
+   sample={'message_id':'test-01','subject':'ETA revised','body':'Invoice and payment details'}
+   conn.request('POST','/triage',body=json.dumps(sample),headers={'Content-Type':'application/json'})
+   response=conn.getresponse()
+   self.assertEqual(response.status,200)
+   output=json.loads(response.read())
+   self.assertEqual(output['status'],'REVIEW_REQUIRED')
+   self.assertEqual(output['labels'],['eta_update','documents','payment'])
+   self.assertEqual(output['writes'],0)
+   self.assertEqual(output['network_calls'],0)
+   self.assertNotIn('Invoice',str(output))
+   conn.request('POST','/triage',body='{}',headers={'Content-Type':'application/json'})
+   response=conn.getresponse()
+   self.assertEqual(response.status,400)
+   response.read()
+   conn.request('POST','/triage',body=json.dumps(sample),headers={'Content-Type':'application/json','Origin':'null'})
+   response=conn.getresponse()
+   self.assertEqual(response.status,403)
+   response.read()
+   conn.close()
+  finally:
+   server.shutdown()
+   server.server_close()
+
 if __name__=='__main__':unittest.main()
