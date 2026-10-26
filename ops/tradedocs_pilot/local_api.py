@@ -2,6 +2,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pilot_workflow import run
+from email_triage import classify_message
 from pathlib import Path
 
 MAX_REQUEST = 100_000
@@ -11,7 +12,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.client_address[0] not in ("127.0.0.1", "::1") or self.headers.get("Host") != f"127.0.0.1:{self.server.server_address[1]}":
             self.send_error(403, "Local host only")
             return
-        if self.path != "/review":
+        if self.path not in ("/review", "/triage"):
             self.send_error(404)
             return
         try:
@@ -26,7 +27,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_error(415, "Expected JSON")
                 return
             payload = json.loads(self.rfile.read(size))
-            result = run(payload)
+            result = classify_message(payload) if self.path == "/triage" else run(payload)
             body = json.dumps(result, ensure_ascii=False).encode("utf-8")
             status = 200
         except (ValueError, KeyError, TypeError, json.JSONDecodeError):
