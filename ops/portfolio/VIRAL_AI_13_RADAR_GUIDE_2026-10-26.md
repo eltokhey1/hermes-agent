@@ -85,3 +85,34 @@ The printed Oct-2024 update date conflicts with the **2026-10-23** official laun
 7. Never change Windows runtime or production gates via radar. **No merge to main, no production deployment, no external messages, no payments, no auto-publish, no secret creation, and no autonomous wallet operations.**
 
 **Final state of this annex:** independent desk research and documented plan only, GitHub draft branch evidence once committed; target system not tested by this annex. **PRODUCTION=HOLD.**
+
+
+## Execution handoff — 2026-10-26 (owner-directed)
+
+**Evidence classes matter:** repository file committed != integration installed; isolated test != GitHub CI pass; idea catalog != completed product. Existing canonical package IDs remain unchanged. Single governance core, no new schedules or automatic production integrations.
+
+Artifacts staged in this EXISTING draft PR:
+
+- [50 GitHub source candidates](./GITHUB_50_CANDIDATES_2026-10-26.csv) — 50 links, all flagged LICENSE_VERSION_SECURITY_UNREVIEWED / CANDIDATE_NOT_INSTALLED. No library auto-install.
+- [50 faceless digital product hypotheses](./DIGITAL_PRODUCTS_50_CANDIDATES_2026-10-26.csv) — 50 initial price assumptions, all IDEA_ONLY / payment and demand unverified. No store, listing or sale.
+- [Designer / media prompt library](./CREATIVE_STUDIO_PROMPTS_2026-10-26.md) — ORIGINAL skincare, 5 identity variants, skateboard and pumpkin cinematic prompts. No media rendered or published.
+- An isolated **shipment/LC commercial XLSX sample** (five tabs: Dashboard, Shipments, LC Documents, 50 Product Ideas, Instructions) was generated and formula-checked in the separate task container, but **is not committed to GitHub or connected to any live data**. It is not a bank-certified accounting or real-time ETA system.
+- Existing [draft PR #16 TradeDocs](https://github.com/eltokhey1/hermes-agent/pull/16) now includes offline classifier at ops/tradedocs_pilot/email_triage.py and its unittest file, documented at ops/tradedocs_pilot/EMAIL_TRIAGE.md. Local-only POST /triage under existing Host/Origin/JSON/size gates; TESTED_SYNTHETIC, not live Outlook or Milliseconds.ai.
+
+| Original ID | Bounded execution status / next authorization |
+|---|---|
+| VAI-01 Navos | RESEARCH_ONLY; vendor account/access/privacy review required |
+| VAI-02 Rapid Indexer MCP | DOC_VERIFIED, NOT_CONNECTED; API key, paid index actions blocked |
+| VAI-03 Milliseconds.ai | Local deterministic baseline committed and tested isolated; cloud provider NOT_CONNECTED |
+| VAI-04 Four.Meme | WATCH_ONLY; no wallet, token, trade, spend |
+| VAI-05 #796 Skate Kid | ORIGINAL_PROMPT_READY, MEDIA_NOT_RENDERED |
+| VAI-06 8 certificates | STUDY_GUIDE_ONLY; none claimed earned |
+| VAI-07 niche jobs | DISCOVERY_GUIDE_ONLY; no recruiter messages or job applications |
+| VAI-08 skin cleanup | ORIGINAL_PROMPT_READY, no source image provided |
+| VAI-09 privacy | PERMISSION_CHECKLIST_ONLY, phone settings not modified remotely |
+| VAI-10 face consistency | FIVE_ORIGINAL_PROMPTS_READY, no identity verification |
+| VAI-11 #795 Pumpkin | ORIGINAL_PROMPT_READY, MEDIA_NOT_RENDERED |
+| VAI-12 50 repositories | ALL_50_CANDIDATES_REGISTERED, NOT_INSTALLED |
+| VAI-13 50 products | ALL_50_IDEAS_REGISTERED, first XLSX synthetic template locally created; NO_SALES |
+
+**Acceptance:** GitHub-hosted CI at exact latest PR #16 head and Windows Surface acceptance are not proven by these notes. Before public shipping/payment/sale/indexing, independently verify license, account eligibility, bank/payment requirements, privacy, owner sign-off, unit economics, and security. **PRODUCTION=HOLD; NO MAIN MERGE, DEPLOYMENT, FINANCE, PUBLISH, EXTERNAL MESSAGES OR NEW SECRETS.**
