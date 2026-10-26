@@ -53,7 +53,7 @@ Only if the local operator executes this will the supervisor start. **No unatten
 
 ## Observed GitHub round-trip
 
-`outbox/job-20261025-01.json` is Windows-generated and was independently fetched through the GitHub connector: `status=PASS`, `executed=false`, `function_names=['sum_range']`. The follow-up request `inbox/job-20261025-02.json` is published but its reply was not yet found; the original background process may be stopped. The status snapshot in `ACCEPTANCE_SNAPSHOT_20261025.md` governs acceptance. No claim of Hermes agent readiness.
+`outbox/job-20261025-01.json` is Windows-generated and was independently fetched through the GitHub connector: `status=PASS`, `executed=false`, `function_names=['sum_range']`. Follow-up receipts for jobs 02 and 03 are now independently present and matched to their requests; job 02 returned `PASS` and the deliberately invalid job 03 returned `SYNTAX_ERROR`. See `ACCEPTANCE_SNAPSHOT_20261025.md`. These receipts do **not** establish current Windows process continuity. The status snapshot in `ACCEPTANCE_SNAPSHOT_20261025.md` governs acceptance. No claim of Hermes agent readiness.
 
 ## Verified launcher artifact
 
@@ -61,7 +61,7 @@ Only if the local operator executes this will the supervisor start. **No unatten
 
 ## Bridge diagnostics and opt-in recovery (2026-10-25)
 
-The Windows bridge has confirmed the first AST receipt, but follow-up job-20261025-02 and job-20261025-03 replies have not been observed. **Do not infer local poller health from a stale success.** GitHub alone cannot inspect Windows processes, sleep state, authenticated gh CLI health, or local stderr.
+The Windows bridge has supplied AST receipts for jobs 01, 02 and 03; both follow-up receipts were independently verified for IDs, source digests, `executed=false`, `production=HOLD` and expected AST outcomes. **Do not infer local poller health from historical receipts.** GitHub alone cannot inspect Windows processes, sleep state, authenticated gh CLI health, or local stderr.
 
 [recover_bridge_pilot.ps1](recover_bridge_pilot.ps1) is **read-only by default**. It reads the local supervisor status, process list and tail of local logs. Add the explicit `-Recover` switch to start **only** the previously downloaded, SHA256-pinned, AST-only supervisor when no matching bridge process exists. It never installs a Windows service or scheduled task, stops existing processes, executes received code, invokes Aider, or changes production settings.
 
@@ -71,4 +71,4 @@ The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if th
 
 **Read-only Windows path check:** `Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'HermesBridgePilot') -PathType Container`. A failed check under `Downloads\HermesBridgePilot` does **not** establish that the actual local state directory is absent. Inspect `status.json` under the `LOCALAPPDATA` path; do not interpret a missing status as proof of a running or stopped process. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
 
-A sleeping/suspended Windows device cannot keep polling. No automatic start on boot or wake is configured.
+A sleeping/suspended Windows device cannot keep polling. The repository launcher does not configure boot/wake startup; actual Windows scheduled-task persistence and post-reboot behavior remain unverified by GitHub.
