@@ -177,3 +177,17 @@ The cross-project UI contract and project-by-project design map for Hermes/Open 
 ## 2026-10-26 — AI 50-tool discovery register + REA teaching/playbook
 
 **Status: RESEARCH_REGISTERED / NOT_INSTALLED / PRODUCTION=HOLD.** Owner-provided fifty AI tools (10 video, 10 image, 8 automation, 7 coding, 7 LLM/writing, 8 audio/research) are now linked to the single shared RAD-01/MKT-01 portfolio, *not* verified as an actual top-50 ranking and not allocated fifty independent work packages. The [AI_50_TOOLS_REA_RESEARCH_2026-10-26.md](./AI_50_TOOLS_REA_RESEARCH_2026-10-26.md) annex includes direct supplied domains and official status/version corrections (including Sora discontinuation), REA `morluto/rea` official sources and 6.8.0 readiness/gating, 3-tool evaluation workflows, cross-project adoption, and a 30-minute teaching kit. Only authorized reverse-engineering targets; existing Hermes Windows/P0/P1 and HITL boundaries remain unchanged. No tool installs, external account connections, paid calls, runtime changes, publication, wallet actions, main merge or deployment. 
+
+
+## 2026-10-26 — No-code and community discovery sources
+
+**Status: SOURCE_REGISTERED / RESEARCH_ONLY / NOT_INSTALLED / PRODUCTION=HOLD.** Owner-approved addition to the existing shared RAD-01/MKT-01 research queue; do not create duplicate work packages or schedules.
+
+| Source | URL | Priority | Intended evaluation | Trust boundary |
+| --- | --- | --- | --- | --- |
+| NoCode.Tech tools | https://www.nocode.tech/tools | HIGH | No-code/low-code app builders, automation, internal tools, customer portals; compare free tiers, API access, exportability and vendor lock-in | Directory listings are leads, not verified vendor capabilities |
+| Stacker | https://stacker.ai/ | CONDITIONAL | Candidate internal/customer portal for TradeDocs AI and Shipment Intelligence; benchmark against existing React stack and deployment costs | Validate current official features, pricing, data permissions and portability before pilot |
+| MakerPad tools | https://www.makerpad.co/tools | HIGH | AI-assisted app-building examples, workflows and coding-tool comparisons for Open Builder and Designer | Verify each product at official source; respect licenses and provenance |
+| PHCorner popular today | https://phcorner.org/popular-today/ | LOW / CAUTION | Idea discovery only; independently verify anything promising | No forum downloads, cracked software, credentials, scripts, license bypasses or untrusted executables |
+
+**Reusable learning contract:** Capture for each candidate: official URL, function, target project, free/paid licensing, integration/API/export, privacy/security risk, local compatibility, benchmark evidence, cost per successful task, and decision `REFERENCE_ONLY` / `SANDBOX_EVALUATION` / `REJECTED`. Share only reviewed findings with Hermes Supervisor, Open Builder, Designer, TradeDocs AI, Shipment Intelligence and Commercial Radar through the existing single-source backlog. Prioritize existing tools and zero-cost experiments. This entry does not establish that any tool was installed, agent knowledge synchronized, or provider integration tested. No external communications, purchases, new account links, production deployment, main merge, or permission changes. Keep P0/P1 acceptance and human approval gates intact.
