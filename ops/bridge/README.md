@@ -72,3 +72,9 @@ The helper requires pinned files in `$env:LOCALAPPDATA\HermesBridgePilot`; if th
 **Read-only Windows path check:** `Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA 'HermesBridgePilot') -PathType Container`. A failed check under `Downloads\HermesBridgePilot` does **not** establish that the actual local state directory is absent. Inspect `status.json` under the `LOCALAPPDATA` path; do not interpret a missing status as proof of a running or stopped process. A started PID is not a completed scan. The actual response must appear in the GitHub outbox and pass `verify_receipts.py` before it is called VERIFIED.
 
 A sleeping/suspended Windows device cannot keep polling. The repository launcher does not configure boot/wake startup; actual Windows scheduled-task persistence and post-reboot behavior remain unverified by GitHub.
+
+## Windows scheduled launcher — 2026-10-26 diagnosis
+
+Operator evidence: Task Scheduler returned `LastTaskResult=0` and `Queued` after launching local `start_supervisor.ps1`, but no `hermes_bridge_supervisor_v1.py` process remained. The latest `status.json` was stale (`2026-10-25T20:40:21Z`, `DEGRADED`, `WORKER_EXIT_NONZERO`, exit code 1); older stdout contained one `SCAN_OK`. These facts do not prove current Windows liveness or the root cause of Python's exit.
+
+The operator-supplied launcher uses `Start-Process -PassThru` and checks only that a process object was returned. This proves spawning, **not** sustained health. Recommended minimal, fail-closed repair: a bounded post-spawn liveness check plus fresh supervisor status heartbeat, without unbounded restart; independently test synthetic success, immediate child exit, stale heartbeat, and concurrent instance. Review `scheduled.stderr.log` locally before assigning root cause. Do not change host services or enable execution of incoming code. `PRODUCTION=HOLD`; `G0/G-CODE/G1=NO-GO`. Keep this within the existing 45 WP / 120 IDs portfolio.
