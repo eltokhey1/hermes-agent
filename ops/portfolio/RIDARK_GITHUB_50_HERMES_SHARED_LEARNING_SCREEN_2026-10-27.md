@@ -104,3 +104,35 @@ Disposition: T1 means immediate **documentation/reference** or existing candidat
 ## Operational safety seal
 
 Research/documentation write in the existing **Draft PR #6 only**. No packages installed; no Windows Surface operations, API keys, external accounts, outbound messages, crypto wallets, payment, new task schedule, feature wiring, tests represented as run, PR merge, production deployment or main writes. **PRODUCTION=HOLD; G0/G-CODE/G1=NO-GO.** Current comparison conclusions are provisional unless independently validated with real Windows-native acceptance evidence.
+
+## 2026-10-27 executed comparison-gate pilot — shared learning for all projects
+
+**Status:** ISOLATED_SYNTHETIC_TESTS_14_PASS / THREE_FILE_RESEARCH_PILOT_STAGED / REAL_DOC_PARSERS_NOT_RUN / WINDOWS_NATIVE_NOT_VERIFIED / NO_PROMOTION / PRODUCTION=HOLD.
+
+A standalone Python **stdlib-only offline** comparator is staged in this **existing Draft PR #6**, with no runtime imports, external calls or tool installation:
+
+- [Comparator](./evals/parser_challenger_gate.py) — compares expected document fields against pre-recorded baseline/challenger outputs, counts exact matches, missing/incorrect critical data and extra fields, refuses malformed/non-synthetic input, prints only counts plus fixture SHA-256, and **always denies automatic promotion**.
+- [Synthetic BL/LC sample](./evals/parser_challenger_synthetic.sample.json) — two invented records, six fake fields, no customer data.
+- [14 deterministic tests](./evals/test_parser_challenger_gate.py) — candidate/tie/critical regression/hallucination, validation, duplicate cases, output redaction, oversize and symlink tests.
+
+**Isolated development evidence:** On 2026-10-27 a local ephemeral Linux Python environment ran 14/14 analogous tests successfully plus Python compile and synthetic sample CLI. The GitHub-hosted PR-head CI, installed Docling/MegaParse parser quality, actual Windows Surface RAM/CPU, license clearance, runtime integrations, privacy and end-to-end acceptance were **not** exercised. This is TESTED_SYNTHETIC, not production acceptance; the sample deliberately makes the fictional challenger better (6/6 vs 4/6) only to test gate arithmetic.
+
+**Reproduce using only Python stdlib (no install):**
+
+    python -m unittest discover -s ops/portfolio/evals -p "test_parser_challenger_gate.py" -v
+    python ops/portfolio/evals/parser_challenger_gate.py ops/portfolio/evals/parser_challenger_synthetic.sample.json
+
+No network, no model calls, no actual BL/LC read, no provider keys, no file writes and no system state changes occur in this evaluator. **Do not feed real documents** to the synthetic-only format. A CANDIDATE_FOR_APPROVED_NATIVE_TEST response is deliberately **not** an adoption decision; true head-to-head comparison requires exact parser binaries and versions, approved identically labeled inputs on the actual Windows host, latency/RAM/cost measurements, source licenses, and independent review.
+
+### Project-by-project shared teaching update
+
+| Reuse destination | Reviewed lesson | Hands-on educational task | Status |
+|---|---|---|---|
+| TradeDocs AI | Docling baseline; MegaParse challenger only if relevant | Synthetic field accuracy + critical-error evaluation, then approved native BL/LC test | Teaching ready; parser NOT benchmarked |
+| Hermes Core / Agent Supervisor / Verifier | No promotion from synthetic or vendor self-report | Verify malformed fixtures and critical regression block candidate selection | Teaching ready; runtime NOT wired |
+| Hermes Open Builder / Aider helpers | Repomix selective context + trust boundaries; RTK OSS/BUSL separation | Scoped secret-redacted context and full error diagnostic preservation | Reference only; not installed |
+| Shipment Intelligence | Field provenance and fail-closed comparison for ETA/BL | Reuse schema only with permission, no live carrier/email records | Reference only |
+| Designer | License-aware evaluation for Remotion and FLUX | Vendor/version-specific commercial-use decision template | Reference only |
+| Commercial Radar / Knowledge Stack | Crawl4AI vs Firecrawl as competing, not duplicate default services | Independent source verification, A/B fixture receipts | Reference only |
+
+**Promotion rule:** Keep existing installed tools. Promote an alternative only after independently verified real task advantage, no material security/license/privacy regression, approved human sign-off and Windows-native evidence. The shared Radar file is teaching material for sibling projects; it does not train model weights, instruct live agents, automatically install anything, or sync other systems.
