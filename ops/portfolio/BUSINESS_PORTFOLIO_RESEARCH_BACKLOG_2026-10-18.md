@@ -1,5 +1,9 @@
 # Hermes AI Business Portfolio — Design Backlog
 
+## Shared guarded-agent runtime reference (2026-10-27)
+
+Owner-directed RAD-01/MKT-01 cross-project candidate: [Mercury-style Guarded Runtime — design and risk policy](./MERCURY_STYLE_GUARDED_RUNTIME_2026-10-27.md). Reuse existing Hermes P0/P1 gate and bounded tool-dispatch path as one **shared helper/security contract** for Hermes, TradeDocs AI, Shipment Intelligence, Radar, Designer and future agentic projects; do not create a new agent, project ID, schedule or global privileged service. Official source: https://github.com/cosmicstack-labs/mercury-agent/blob/main/ARCHITECTURE.md . **SOURCE_REVIEWED / DESIGN_REGISTERED / NOT_INSTALLED / RUNTIME_NOT_VERIFIED.** No `Allow All`, generic shell, raw HTTP, token-budget reset, or cross-channel privilege inheritance. **PRODUCTION=HOLD; DRAFT ONLY; NO MERGE.**
+
 **Recorded 2026-10-18. No changes to executable Hermes code. Design-only proposal, pending P0/P1 approval.**
 
 ## Curated agent skills and plugins (2026-10-24)
