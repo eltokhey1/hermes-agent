@@ -14,6 +14,10 @@
 - The provided [TheToolsVerse Free](https://thetoolsverse.com/free) reports that many free tiers have caps/watermarks/non-commercial licenses. **Do not copy marketing quotas without official up-to-date checks.** The user-provided cited quantities (7,500 / 250 / repo counts) are author claims, not independent facts.
 - The original 50×50 Perplexity task result remains unread; do not conflate the separate annex with that unavailable report.
 
+## 2026-10-27 executed screening delta
+
+The [source-audited candidate screening and isolated 25/25 policy test report](./AI_TOOL_EVALUATION_SOURCE_AUDIT_AND_SYNTHETIC_GATE_2026-10-27.md) supersedes **only specific research priority flags** for IDs 53, 63, 64, 88, 92, 186 and 189 above. This reflects current official vendor constraints, not running the listed tools. No production or Windows pass claimed. All other rows retain FREE_STATUS=UNVERIFIED.
+
 ## Selection priorities and shared learning rules
 
 **P0/P1 Hermes Core:** Reuse existing Aider, Kilo, Ollama and governed tools before installing a competitor. Study #50 Ollama, #53 Continue and #52 Open WebUI (only if a proven gap); compare #186 Langfuse and #189 MLflow as *observability candidates* only after measuring incremental value. No automatic framework swapping.
@@ -103,7 +107,7 @@ Legend: `AUDIT=UNKNOWN` applies to **every row**. `★` marks preliminary potent
 | 50 | Ollama | https://ollama.com | ★ PRIORITIZE_FOR_RESEARCH |
 | 51 | LM Studio | https://lmstudio.ai | ★ PRIORITIZE_FOR_RESEARCH |
 | 52 | Open WebUI | https://openwebui.com | ★ PRIORITIZE_FOR_RESEARCH |
-| 53 | Continue | https://continue.dev | ★ PRIORITIZE_FOR_RESEARCH |
+| 53 | Continue | https://continue.dev | EXCLUDE_NEW_ADOPTION: official GitHub repo read-only / unmaintained as of 2026-10-27 |
 | 54 | Tabnine | https://www.tabnine.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 55 | Amazon CodeWhisperer / Q Developer | https://aws.amazon.com/q/developer | ★ PRIORITIZE_FOR_RESEARCH; RENAMED_TO_AMAZON_Q_DEVELOPER (OFFICIAL_DOC) |
 | 56 | Sourcegraph Cody | https://sourcegraph.com/cody | REFERENCE_ONLY; COST_UNKNOWN |
@@ -118,8 +122,8 @@ Legend: `AUDIT=UNKNOWN` applies to **every row**. `★` marks preliminary potent
 |---:|---|---|---|
 | 61 | Zapier AI | https://zapier.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 62 | Make | https://www.make.com | REFERENCE_ONLY; COST_UNKNOWN |
-| 63 | n8n | https://n8n.io | ★ PRIORITIZE_FOR_RESEARCH |
-| 64 | Activepieces | https://www.activepieces.com | ★ PRIORITIZE_FOR_RESEARCH |
+| 63 | n8n | https://n8n.io | INTERNAL_ONLY subject to Sustainable Use License; customer-configurable automation needs commercial licensing |
+| 64 | Activepieces | https://www.activepieces.com | SANDBOX_RESEARCH: Community core MIT; enterprise features commercially licensed |
 | 65 | Pipedream | https://pipedream.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 66 | Lindy | https://www.lindy.ai | REFERENCE_ONLY; COST_UNKNOWN |
 | 67 | AutoGPT | https://github.com/Significant-Gravitas/AutoGPT | REFERENCE_ONLY; COST_UNKNOWN |
@@ -148,11 +152,11 @@ Legend: `AUDIT=UNKNOWN` applies to **every row**. `★` marks preliminary potent
 | 85 | Canva Magic Studio | https://www.canva.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 86 | Craiyon | https://www.craiyon.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 87 | Playground AI | https://playground.com | REFERENCE_ONLY; COST_UNKNOWN |
-| 88 | Recraft | https://www.recraft.ai | REFERENCE_ONLY; COST_UNKNOWN |
+| 88 | Recraft | https://www.recraft.ai | REJECT_FREE_COMMERCIAL_USE: official free-plan images not licensed for commercial use |
 | 89 | Krea AI | https://www.krea.ai | REFERENCE_ONLY; COST_UNKNOWN |
 | 90 | Lexica | https://lexica.art | REFERENCE_ONLY; COST_UNKNOWN |
 | 91 | Stable Diffusion WebUI | https://github.com/AUTOMATIC1111/stable-diffusion-webui | ★ PRIORITIZE_FOR_RESEARCH |
-| 92 | ComfyUI | https://www.comfy.org | ★ PRIORITIZE_FOR_RESEARCH |
+| 92 | ComfyUI | https://www.comfy.org | DEFER_WINDOWS_CPU_BENCH: CPU path documented, actual Intel performance UNKNOWN |
 | 93 | Fooocus | https://github.com/lllyasviel/Fooocus | REFERENCE_ONLY; COST_UNKNOWN |
 | 94 | InvokeAI | https://invoke-ai.github.io/InvokeAI/ | REFERENCE_ONLY; COST_UNKNOWN |
 | 95 | Bing Image Creator | https://www.bing.com/images/create | REFERENCE_ONLY; COST_UNKNOWN |
@@ -271,10 +275,10 @@ Legend: `AUDIT=UNKNOWN` applies to **every row**. `★` marks preliminary potent
 | 183 | scikit-learn | https://scikit-learn.org | REFERENCE_ONLY; COST_UNKNOWN |
 | 184 | OpenCV | https://opencv.org | REFERENCE_ONLY; COST_UNKNOWN |
 | 185 | spaCy | https://spacy.io | REFERENCE_ONLY; COST_UNKNOWN |
-| 186 | Langfuse | https://langfuse.com | ★ PRIORITIZE_FOR_RESEARCH |
+| 186 | Langfuse | https://langfuse.com | DEFER_16GB_LOCAL_INSTALL: complex multi-service self-host; no measured benefit |
 | 187 | Weights & Biases | https://wandb.ai | REFERENCE_ONLY; COST_UNKNOWN |
 | 188 | Comet ML | https://www.comet.com | REFERENCE_ONLY; COST_UNKNOWN |
-| 189 | MLflow | https://mlflow.org | ★ PRIORITIZE_FOR_RESEARCH |
+| 189 | MLflow | https://mlflow.org | REFERENCE_ONLY: SQLite local tracking documented; requires a proven observability gap |
 | 190 | Label Studio | https://labelstud.io | ★ PRIORITIZE_FOR_RESEARCH |
 | 191 | Roboflow | https://roboflow.com | REFERENCE_ONLY; COST_UNKNOWN |
 | 192 | Ultralytics YOLO | https://ultralytics.com | REFERENCE_ONLY; COST_UNKNOWN |
