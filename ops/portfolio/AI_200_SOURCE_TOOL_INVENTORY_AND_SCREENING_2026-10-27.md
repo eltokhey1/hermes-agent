@@ -302,3 +302,88 @@ Legend: `AUDIT=UNKNOWN` applies to **every row**. `★` marks preliminary potent
 ## Actions NOT authorized by this research
 
 No Windows agent connectivity assertion; no installing 200 tools, subscribing, activating paid credits, scraping against terms, posting directory submissions, transmitting proprietary procurement/banking/customer documents, signing into new accounts, external notifications, automated source polling, release/merge to main, production deployment or permission changes. **PRODUCTION=HOLD; P0/P1 independent native acceptance remains required.**
+
+
+## 2026-10-28 — Abhay Droid AI Apps for 2026: image-derived 50-tool crosswalk
+
+**Source:** Owner-uploaded infographic headed **"The Best AI Apps for 2026"** carrying "Abhay Droid" branding; image supplied in chat on 2026-10-28. **Provenance:** an infographic, **NOT** a peer-reviewed product comparison, verified ranking or reliable source for current licensing/pricing. Do not reuse the image's logos as independent product identity proof. The original image remains in the chat; it is *not* added to the public repository or redistributed.
+
+**Status:** IMAGE_READ / 50_LABELS_REGISTERED / 7_CATEGORIES / SAME_EXISTING_RADAR / RESEARCH_ONLY / NO_INSTALL / NO_PUBLISH / PRODUCTION=HOLD. **Important:** The existing 200-entry user list and 50×50 research reference are unchanged in numbering; `IMG-01..IMG-50` below are **cross-reference labels only, NOT new Work Packages, schedules, installed tools or 50 unique additions**. Every external product still requires independent cost/license/privacy/source verification before any trial. Reuse names already registered rather than add duplicate live monitors.
+
+### Full visible inventory and overlap mapping
+
+| Image ID | Image category | Visible label | Existing radar identity / resolution | Evidence / screen |
+|---|---|---|---|---|
+| IMG-01 | General Assistants | ChatGPT | 200-list #21 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-02 | General Assistants | Claude | 200-list #23 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-03 | General Assistants | Gemini | 22 (Google Gemini) | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-04 | General Assistants | Grok | 200-list #26 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-05 | Development & Programming | Cursor | 200-list #42 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-06 | Development & Programming | Replit | 200-list #45 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-07 | Development & Programming | Lovable | 50×50 #39 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-08 | Development & Programming | Bolt | 50×50 #40 (Bolt.new) | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-09 | Development & Programming | Base44 | 50×50 #41 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-10 | Content Creation | Midjourney | IMAGE_CANDIDATE; exact canonical mapping pending | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-11 | Content Creation | Ideogram | 200-list #82 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-12 | Content Creation | Leonardo AI | 200-list #81 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-13 | Content Creation | Runway | 200-list #101 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-14 | Content Creation | Pika | 200-list #102 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-15 | Content Creation | Adobe Firefly | 200-list #83 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-16 | Design & Productivity | Canva | 85 (Canva Magic Studio) | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-17 | Design & Productivity | Notion | 200-list #148 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-18 | Design & Productivity | Grammarly | 200-list #142 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-19 | Design & Productivity | Otio AI | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://otio.ai/) — OFFICIAL_SITE_CHECKED; FREE LIMITED (10 uploads/day and 50MB storage per 2026-07-07 vendor page); privacy/hosting review |
+| IMG-20 | Design & Productivity | Gamma | 200-list #149 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-21 | Design & Productivity | Napkin AI | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://www.napkin.ai/) — OFFICIAL_SITE_CHECKED; FREE WEEKLY CREDITS; export/rights review |
+| IMG-22 | Design & Productivity | Superhuman | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://superhuman.com/) — OFFICIAL_SITE_CHECKED; SUPERHUMAN MAIL/SUITE BRAND; GRAMMARLY RELATION |
+| IMG-23 | Design & Productivity | Wispr Flow | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://docs.wisprflow.ai/articles/2772472373-what-is-flow) — OFFICIAL_DOCS_CHECKED; CLOUD TRANSCRIPTION BY DEFAULT; MIC/KEYBOARD PRIVACY; LOCAL MODE NOT ASSUMED |
+| IMG-24 | Video, Audio & Editing | ElevenLabs | 200-list #121 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-25 | Video, Audio & Editing | Suno | 200-list #134 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-26 | Video, Audio & Editing | Udio | 200-list #135 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-27 | Video, Audio & Editing | Kling AI | 200-list #103 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-28 | Video, Audio & Editing | Descript | 200-list #109 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-29 | Video, Audio & Editing | Opus Clip | 200-list #110 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-30 | Video, Audio & Editing | HeyGen | 200-list #115 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-31 | Video, Audio & Editing | Synthesia | 200-list #116 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-32 | Video, Audio & Editing | CapCut | 200-list #107 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-33 | Automation & Integration | Zapier | 200-list #61 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-34 | Automation & Integration | Make | 200-list #62 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-35 | Automation & Integration | n8n | 200-list #63 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-36 | Automation & Integration | Lindy AI | 200-list #66 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-37 | Automation & Integration | Claude Code | image-only; separate from Claude chat | [official source](https://claude.com/product/claude-code) — OFFICIAL_SITE_CHECKED; CLI WRITE CAPABILITIES; APPROVED_SANDBOX_ONLY; PAID ACCOUNT/API |
+| IMG-38 | Automation & Integration | Chatbase | image-only; not the same as chatbot framework | [official source](https://www.chatbase.co/) — OFFICIAL_SITE_CHECKED; CUSTOMER SUPPORT AGENT; NO_AUTO_PUBLISH/EMAIL |
+| IMG-39 | Automation & Integration | Notion AI | 200-list #148 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-40 | Automation & Integration | Aiply | IMAGE_CANDIDATE; exact canonical mapping pending | IMAGE_LABEL_AMBIGUOUS; do NOT auto-map to aiply.ai recruitment without logo/source confirmation |
+| IMG-41 | Automation & Integration | Clay | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://www.clay.com/) — OFFICIAL_SITE_CHECKED; B2B SALES DATA / PERSONAL DATA; EXTERNAL_ACTION_HITL |
+| IMG-42 | Research & Learning | Perplexity | 200-list #25 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-43 | Research & Learning | Consensus | 200-list #152 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-44 | Research & Learning | Elicit | 200-list #153 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-45 | Research & Learning | SciSpace | 200-list #159 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-46 | Research & Learning | NotebookLM | 200-list #40 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-47 | Research & Learning | QuillBot | 200-list #141 | IMAGE_ONLY; official terms/identity not fully audited |
+| IMG-48 | Research & Learning | Articles | IMAGE_CANDIDATE; exact canonical mapping pending | IMAGE_LABEL_AMBIGUOUS; no trustworthy product identification |
+| IMG-49 | Research & Learning | ResearchRabbit | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://www.researchrabbit.ai/) — OFFICIAL_SITE_CHECKED; academic research discovery |
+| IMG-50 | Research & Learning | Genei | IMAGE_CANDIDATE; exact canonical mapping pending | [official source](https://www.genei.io/) — OFFICIAL_SITE_CHECKED; 14-DAY FREE TRIAL NOT PERMANENT FREE |
+
+### Candidate learning priorities (research, not tools installed)
+
+1. **Hermes Developer / Supervisor:** Keep local Aider + Ollama + existing safety gates. Claude Code, Cursor, Replit, Lovable, Bolt.new, Base44 may be research/benchmark comparators on **synthetic tasks only**; do not automatically integrate, install, create accounts or permit repository writes. Protect repo code, secrets and API cost; >20% gain requires verified matched-baseline evidence.
+2. **Designer:** Study Napkin AI (text-to-diagram), Ideogram, Canva, Midjourney and video stack only as optional creative references. Check content ownership, watermark, commercial reuse and privacy before customer-facing work. No asset uploads to unreviewed cloud.
+3. **TradeDocs / Knowledge Stack:** Otio and ResearchRabbit are research-source comparators, **not authorized destinations** for real LCs, BLs, supplier records or personal documents. Genei official offers a **14-day free trial**, not unlimited free. Wispr Flow supports Windows/phones but cloud transcription/privacy controls must be assessed before any business speech ingestion.
+4. **Commercial Radar / CRM:** Chatbase (AI support) and Clay (prospect enrichment) are **distinct** SaaS candidates, not endorsements for autonomous outbound email/WhatsApp. Verify lawful personal-data sources and licenses; keep drafts/human approval.
+5. **Duplicates and aliases:** Gemini ↔ Google Gemini #22; Canva ↔ Canva Magic Studio #85 (base suite vs AI features); Bolt ↔ Bolt.new in prior 50×50; Lovable and Base44 are also in prior 50×50. Superhuman Mail and Grammarly are now in the same wider Superhuman product family, but still have distinct product functions. `Aiply` and `Articles` are visible but ambiguous and must **not** be linked to a lookalike company without proof.
+
+### Dated primary-source evidence for image-only additions
+
+- Otio workspace and 2026-07-07 published pricing: https://otio.ai/ and https://otio.ai/pricing ; the vendor's marketing claims can conflict with its own detailed free limits. Preserve terms date and verify before proposing cloud storage.
+- Napkin official capabilities and free credits: https://www.napkin.ai/
+- Wispr Flow current official docs: https://docs.wisprflow.ai/articles/2772472373-what-is-flow ; Windows/iPhone/Android support but requires an internet connection for transcription per vendor's help article. Read privacy preferences, microphone and keyboard permissions.
+- ResearchRabbit official: https://www.researchrabbit.ai/
+- Genei official: https://www.genei.io/ and https://www.genei.io/faqs
+- Claude Code official: https://claude.com/product/claude-code
+- Chatbase official: https://www.chatbase.co/
+- Clay official: https://www.clay.com/
+- Superhuman official: https://superhuman.com/contact
+- **No verified canonical source assigned** for the image labels `Aiply` and `Articles`.
+
+**Governance:** This is a read/reference update on the **existing Draft PR #6**, not a new task/PR, model training, remote-agent sync, Windows operation or change to P0-01. Do not touch 45 Work Packages or gate labels. Maintain `PRODUCTION=HOLD`, `G0/G-CODE/G1=NO-GO`. No changes to host, shell, dependencies, data, finance, credentials, external recipients, deployments or acceptance status.
