@@ -15,9 +15,13 @@ permissions:
 
 jobs:
   offline-unit:
-    name: Python offline unit tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    name: Offline unit tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: ops/portfolio/learning_unit
@@ -26,6 +30,6 @@ jobs:
         with:
           persist-credentials: false
       - name: Run standard-library regression tests
-        run: python3 -m unittest discover -v
+        run: python -m unittest discover -v
       - name: Evaluate synthetic registry (no external calls)
-        run: python3 learning_unit.py registry.example.json
+        run: python learning_unit.py registry.example.json
