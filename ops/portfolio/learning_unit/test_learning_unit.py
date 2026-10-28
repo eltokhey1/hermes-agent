@@ -18,8 +18,7 @@ class OfflineTests(unittest.TestCase):
         x=candidate();x['scores']['privacy']=1
         self.assertEqual(propose(x,'Hermes','test','verify')['status'],'BLOCKED')
     def test_fake_verified_rejected(self):
-        x=candidate(status='VERIFIED')
-        self.assertEqual(evaluate(x)['decision'],'REJECT')
+        self.assertEqual(evaluate(candidate(status='VERIFIED'))['decision'],'REJECT')
     def test_independent_evidence_required(self):
         x=candidate(status='VERIFIED',evidence=[{'url':'local://fixture','sha_or_version':'abc','test_result':'pass','independent_test':False}])
         self.assertEqual(evaluate(x)['decision'],'REJECT')
@@ -45,9 +44,10 @@ class OfflineTests(unittest.TestCase):
         self.assertEqual(prepare_lesson(*args)['content_sha256'],prepare_lesson(*args)['content_sha256'])
     def test_empty_lesson_invalid(self):
         with self.assertRaises(ValueError):prepare_lesson(candidate(),'Radar','learn','review','')
-    def test_verified_with_structured_evidence_is_candidate_only(self):
-        x=candidate(status='VERIFIED',evidence=[{'url':'local://fixture','sha_or_version':'abc','test_result':'pass','independent_test':True}])
-        self.assertEqual(evaluate(x)['decision'],'PILOT_CANDIDATE')
+    def test_self_attested_evidence_never_promotes(self):
+        x=candidate(status='VERIFIED',evidence=[{'url':'https://example.org','sha_or_version':'abc','test_result':'PASS','independent_test':True}])
+        self.assertEqual(evaluate(x)['decision'],'REJECT')
+        self.assertIn('independent evidence requires external attestation',evaluate(x)['blockers'])
         self.assertEqual(evaluate(x)['production'],'HOLD')
 
 if __name__=='__main__':unittest.main()
