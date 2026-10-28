@@ -1,0 +1,15 @@
+[
+  {
+    "id": "candidate-001",
+    "status": "UNDER_STUDY",
+    "scores": {
+      "security": 4,
+      "privacy": 4,
+      "compatibility": 4,
+      "quality": 4,
+      "cost": 4,
+      "maintenance": 4
+    },
+    "evidence": []
+  }
+]
