@@ -387,3 +387,19 @@ No Windows agent connectivity assertion; no installing 200 tools, subscribing, a
 - **No verified canonical source assigned** for the image labels `Aiply` and `Articles`.
 
 **Governance:** This is a read/reference update on the **existing Draft PR #6**, not a new task/PR, model training, remote-agent sync, Windows operation or change to P0-01. Do not touch 45 Work Packages or gate labels. Maintain `PRODUCTION=HOLD`, `G0/G-CODE/G1=NO-GO`. No changes to host, shell, dependencies, data, finance, credentials, external recipients, deployments or acceptance status.
+
+
+## 2026-10-28 — SaaSHub and Daily Dose of Data Science intake
+
+**Request:** Owner-supplied https://www.saashub.com/ and https://www.dailydoseofds.com/ on 2026-10-28. **Status: VERIFIED_SOURCE_IDENTITY / EDUCATIONAL_AND_DISCOVERY_REFERENCES / NO_INSTALL / NO_SUBSCRIPTION / PRODUCTION=HOLD.** These are *research sources*, not agent dependencies, installed packages, a new radar task or new work packages. **Preserve original 200 numbering** and existing 50×50 references.
+
+| Source | Existing canonical record | Purpose and evidence | Recommended project routing | Commercial/privacy caveats |
+|---|---|---|---|---|
+| [SaaSHub](https://www.saashub.com/) | **EXISTING #10** of 200; also prior 50×50 discovery | Comparisons of commercial / open-source / SaaS alternatives; [official About](https://www.saashub.com/about), [filters](https://www.saashub.com/list) and featured/sponsored disclosures | Hermes RAD-01/RAD-02 and MKT-01: discover substitutes for tools already in use; compare developer tools, ERP, CRM, and trade SaaS | Community-driven and sponsored content may coexist; third-party listing, ratings, pricing, and licenses require vendor-side verification; **no new unique resource** |
+| [Daily Dose of Data Science](https://www.dailydoseofds.com/) | **NEW educational source**, independent of original 200 (reference DODS-EDU-01, **not a canonical WP/task ID**) | AI/data science/engineering newsletter and tutorials; [official topic archive](https://www.dailydoseofds.com/newsletter/) covers agent harness, loop engineering, Hermes Agent, RAG, caching, memory and LLMOps | Hermes Supervisor, Engineering Loop, QA, knowledge stack, TradeDocs document extraction and radar learning | Educational articles are secondary references, not a verified production benchmark; free newsletter with separate premium offering ([official About](https://blog.dailydoseofds.com/about)); no signup or paid content access authorized |
+
+**Learning relevance (research-only, not automatic agent training):** The publisher's [newsletter archive](https://www.dailydoseofds.com/newsletter/) lists **Hermes Agent Masterclass (May 14, 2026)**, **Loop Engineering, Clearly Explained! (Jun 27, 2026)**, **[Hands-on] Rebuilding Claude Code's Harness (Jul 20, 2026)** and **Run any agent harness under one interface (Sep 23, 2026)**. Treat titles/dates as publisher-declared; individual technical claims require official code/documentation and reproducible fixture tests before implementation. Compare to existing Hermès governed harness and P0/P1 design instead of creating a second framework.
+
+**Source scoring:** SaaSHub = discovery/alternatives Tier 2 source; confirm against official repo/licensing/security/pricing and market evidence. Daily Dose = training/engineering inspiration Tier 2 source; official library docs and same-host tests Tier 1 for implementation evidence. Neither automatically passes security review. Reuse existing hourly RAD-01 automation's general source guidance **when relevant**; do not create another schedule or alter its 50-master-source allocation without explicit reconciliation.
+
+**Boundary:** No installs, login, cloud upload, emails, subscriptions, code execution, re-training, repository main merge, production change, or modification to the canonical 45-WP register / P0-01. **G0/G-CODE/G1=NO-GO; PRODUCTION=HOLD.**
