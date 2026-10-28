@@ -17,8 +17,9 @@ def evaluate(record):
         raise ValueError('evidence must be a list')
     score=round(sum(scores[k]*w for k,w in WEIGHTS.items())/5,2)
     blockers=[k for k in ('security','privacy') if scores[k]<3]
-    if record['status']=='VERIFIED' and not any(isinstance(e,dict) and all(isinstance(e.get(k),str) and e[k].strip() for k in ('url','sha_or_version','test_result')) and e.get('independent_test') is True for e in evidence):
-        blockers.append('missing independent evidence')
+    # A claimed independent test is not proof of provenance: never auto-promote.
+    if record['status']=='VERIFIED':
+        blockers.append('independent evidence requires external attestation')
     decision='REJECT' if blockers or record['status']=='REJECTED' else ('PILOT_CANDIDATE' if score>=75 else 'STUDY_ONLY')
     if record['status'] in ('CANDIDATE','UNDER_STUDY','TESTED_SYNTHETIC') and decision=='PILOT_CANDIDATE':
         decision='PILOT_CANDIDATE_UNVERIFIED'
