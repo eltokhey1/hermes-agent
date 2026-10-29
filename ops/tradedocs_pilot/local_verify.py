@@ -1,12 +1,20 @@
-"""Single-command, dependency-free TradeDocs pilot verification."""
+"""Single-command TradeDocs pilot verification with non-vacuous unittest discovery."""
 import pathlib
-import subprocess
-import sys
+import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent
+
+
+def verify(root=ROOT):
+    suite = unittest.defaultTestLoader.discover(str(root), pattern="test_*.py")
+    if suite.countTestCases() == 0:
+        raise ValueError("No unittest test cases discovered")
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    return 0 if result.wasSuccessful() else 1
+
+
 if __name__ == "__main__":
-    tests = sorted(p.name for p in ROOT.glob("test_*.py"))
-    if not tests:
-        raise SystemExit("No tests found")
-    result = subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", str(ROOT), "-p", "test_*.py", "-v"], cwd=ROOT, check=False)
-    raise SystemExit(result.returncode)
+    try:
+        raise SystemExit(verify())
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
