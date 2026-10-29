@@ -36,6 +36,9 @@ NEEDS_JSON_OUTPUT = "needs-json"
 _UPDATE_CONSUMER_LANES = {
     "tests": ("python", "e2e", "e2e_upgrade"),
     "tests-os": ("python", "desktop_updater", "e2e", "e2e_upgrade"),
+    "js-tests": ("frontend",),
+    "rust-tests": ("rust",),
+    "e2e-desktop-core": ("e2e_desktop_core",),
     "e2e-desktop-update": ("e2e_desktop_update",),
     "remote-backends": ("remote_backends",),
     "catalog-tests": ("catalog",),
@@ -54,17 +57,30 @@ def evaluate_gate(
     failed: list[str] = []
     allowed_skips: list[str] = []
     entries = needs or {}
-    lanes = (entries.get("detect") or {}).get("outputs") or {}
+    raw_lanes = (entries.get("detect") or {}).get("outputs")
+    lanes = raw_lanes if isinstance(raw_lanes, dict) else {}
     required = {job for job, keys in _UPDATE_CONSUMER_LANES.items()
                 if any(lanes.get(key) in ("true", True) for key in keys)}
     if not entries:
         failed.append("<no-needs>")
+    # A successful classifier with missing/empty/invalid boolean outputs is
+    # not a valid classification. Otherwise all consumers can skip and a PR
+    # falsely passes even though the classifier never selected a test lane.
+    # All-"false" is legitimate for changes that require no optional lanes.
+    if (entries.get("detect") or {}).get("result") == "success":
+        if not any(value in ("true", "false", True, False)
+                   for value in lanes.values()):
+            failed.append("detect:outputs-unusable")
     failed.extend(required - entries.keys())
     for name, info in entries.items():
         result = (info or {}).get("result")
         if result == "success":
             continue
-        if result == "skipped" and name not in required and (not release or name in EXCLUDED_JOBS):
+        # The classifier determines which downstream jobs are mandatory. It must
+        # never be treated as an optional PR skip: otherwise an entirely skipped
+        # PR can be reported as green without classifying any changes.
+        if (result == "skipped" and name != "detect" and name not in required and
+                (not release or name in EXCLUDED_JOBS)):
             allowed_skips.append(name)
             continue
         failed.append(name)
@@ -85,7 +101,9 @@ def render_report(needs: dict[str, dict[str, Any]] | None, verdict: dict[str, An
     lines: list[str] = []
     for name in sorted(needs or {}):
         result = (needs[name] or {}).get("result", "unknown")
-        icon = {"success": "✅", "skipped": "⏭️"}.get(result, "❌")
+        # ASCII markers are safe on Windows cp1252/non-UTF8 CI consoles.
+        # Unicode emoji here can crash this *required* gate before its verdict.
+        icon = {"success": "[PASS]", "skipped": "[SKIP]"}.get(result, "[FAIL]")
         lines.append(f"{icon} {name}: {result}")
     if verdict["failed"]:
         failed = verdict["failed"]
