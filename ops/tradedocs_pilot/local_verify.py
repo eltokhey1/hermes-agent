@@ -6,7 +6,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 
 
 def verify(root=ROOT):
-    suite = unittest.defaultTestLoader.discover(str(root), pattern="test_*.py")
+    suite = unittest.TestLoader().discover(str(root), pattern="test_*.py", top_level_dir=str(root))
     if suite.countTestCases() == 0:
         raise ValueError("No unittest test cases discovered")
     result = unittest.TextTestRunner(verbosity=2).run(suite)
