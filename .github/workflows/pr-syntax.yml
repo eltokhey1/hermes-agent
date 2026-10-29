@@ -48,6 +48,8 @@ jobs:
                       ast.parse(source.read(), filename=str(path))
               except (OSError, SyntaxError, UnicodeError) as exc:
                   failed.append(f"{path}: {exc}")
+          if count == 0:
+              failed.append("No tracked Python files found; refusing vacuous success")
           if failed:
               print("\n".join(failed), file=sys.stderr)
               raise SystemExit(1)
