@@ -1,0 +1,35 @@
+name: TradeDocs Offline Pilot
+on:
+  pull_request:
+    paths:
+      - 'ops/tradedocs_pilot/**'
+      - '.github/workflows/tradedocs-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2 pinned
+        with:
+          persist-credentials: false
+      # PyMuPDF is AGPLv3/commercial dual-licensed; CI success is not SaaS licensing approval.
+      - name: Install PDF test dependency
+        run: python3 -m pip install --disable-pip-version-check 'PyMuPDF==1.28.2'
+      - name: Run offline TradeDocs unit and integration tests
+        working-directory: ops/tradedocs_pilot
+        run: python3 local_verify.py
+      - name: Validate static HTML exists and translations
+        working-directory: ops/tradedocs_pilot
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from i18n import check_catalog
+          assert check_catalog()
+          page = Path('global_pilot.html').read_text(encoding='utf-8')
+          for language in ('ar', 'en', 'fr', 'es'):
+              assert '<option value="' + language + '">' in page
+          print('Static multilingual pilot present; browser behavior not tested')
+          PY

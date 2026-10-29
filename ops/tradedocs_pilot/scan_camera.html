@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TradeDocs Local Scan Camera</title>
+<style>body{font:16px system-ui;max-width:850px;margin:auto;padding:1rem}video,canvas{max-width:100%;border:1px solid #777}button,select{padding:.6rem;margin:.3rem}#status{min-height:2rem}</style>
+<h1>TradeDocs — local document camera</h1>
+<p>Camera permission is requested only when you click Start. Images stay in your browser until you explicitly save them. Signature/stamp boxes are manual annotations, not verification.</p>
+<button id="start">Start camera</button><button id="capture" disabled>Capture page</button><button id="stop">Stop camera</button>
+<video id="video" autoplay playsinline muted aria-label="Live document camera"></video>
+<p><label for="kind">Mark region as:</label><select id="kind"><option value="signature">Signature</option><option value="stamp">Stamp</option></select>
+Draw a rectangle on the captured image to mark a region.</p>
+<canvas id="canvas" aria-label="Captured document; drag to mark signature or stamp"></canvas>
+<p><button id="save" disabled>Save image (PNG)</button><button id="export" disabled>Save annotations (JSON)</button><button id="clear">Clear annotations</button></p>
+<p id="status" role="status" aria-live="polite">Ready. Use HTTPS or localhost for camera access.</p>
+<script>
+'use strict';
+const video=document.getElementById('video'),canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const status=document.getElementById('status');let stream=null,boxes=[],startPoint=null,original=null;
+function say(s){status.textContent=s}
+function download(name,blob){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+document.getElementById('start').onclick=async()=>{
+  if(stream)return;
+  if(!navigator.mediaDevices?.getUserMedia){say('Camera unavailable: use HTTPS or localhost.');return}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});video.srcObject=stream;document.getElementById('capture').disabled=false;say('Camera active')}
+  catch(e){say('Camera permission denied or unavailable: '+e.name)}
+};
+document.getElementById('stop').onclick=()=>{stream?.getTracks().forEach(t=>t.stop());stream=null;video.srcObject=null;document.getElementById('capture').disabled=true;say('Camera stopped')};
+document.getElementById('capture').onclick=()=>{
+ if(!stream||!video.videoWidth)return say('Wait for camera video');
+ canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0);
+ original=ctx.getImageData(0,0,canvas.width,canvas.height);boxes=[];
+ document.getElementById('save').disabled=false;document.getElementById('export').disabled=false;say('Captured. Drag to annotate signature/stamp areas.')
+};
+function point(e){const r=canvas.getBoundingClientRect();return {x:Math.round((e.clientX-r.left)*canvas.width/r.width),y:Math.round((e.clientY-r.top)*canvas.height/r.height)}}
+function draw(){if(!original)return;ctx.putImageData(original,0,0);ctx.lineWidth=Math.max(2,canvas.width/500);for(const b of boxes){ctx.strokeStyle=b.type==='stamp'?'#0060e0':'#df6400';ctx.strokeRect(b.x,b.y,b.width,b.height)}}
+canvas.addEventListener('pointerdown',e=>{if(!original)return;startPoint=point(e);canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointerup',e=>{if(!startPoint)return;const p=point(e),x=Math.min(startPoint.x,p.x),y=Math.min(startPoint.y,p.y),w=Math.abs(p.x-startPoint.x),h=Math.abs(p.y-startPoint.y);startPoint=null;if(w<5||h<5)return;boxes.push({type:document.getElementById('kind').value,x,y,width:w,height:h,review:'MANUAL_UNVERIFIED'});draw();say(boxes.length+' regions marked; no authenticity verification')});
+document.getElementById('clear').onclick=()=>{boxes=[];draw();say('Annotations cleared')};
+document.getElementById('save').onclick=()=>{if(!original)return;ctx.putImageData(original,0,0);canvas.toBlob(b=>{if(b)download('tradedocs-scan.png',b)},'image/png');draw()};
+document.getElementById('export').onclick=()=>{if(!original)return;download('tradedocs-annotations.json',new Blob([JSON.stringify({schema:'tradedocs.manual_regions.v1',image_width:canvas.width,image_height:canvas.height,regions:boxes},null,2)],{type:'application/json'}))};
+window.addEventListener('pagehide',()=>stream?.getTracks().forEach(t=>t.stop()));
+</script></html>
