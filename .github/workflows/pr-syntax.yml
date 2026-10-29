@@ -1,0 +1,57 @@
+name: PR Python syntax
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-syntax-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  python-syntax:
+    name: python-syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PRODUCTION: HOLD
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout pull request
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Parse tracked Python sources
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import ast
+          import pathlib
+          import subprocess
+          import sys
+          import tokenize
+
+          raw = subprocess.check_output(["git", "ls-files", "-z", "--", "*.py"])
+          failed = []
+          count = 0
+          for item in raw.split(b"\0"):
+              if not item:
+                  continue
+              count += 1
+              path = pathlib.Path(item.decode("utf-8", "surrogateescape"))
+              try:
+                  with tokenize.open(path) as source:
+                      ast.parse(source.read(), filename=str(path))
+              except (OSError, SyntaxError, UnicodeError) as exc:
+                  failed.append(f"{path}: {exc}")
+          if count == 0:
+              failed.append("No tracked Python files found; refusing vacuous success")
+          if failed:
+              print("\n".join(failed), file=sys.stderr)
+              raise SystemExit(1)
+          print(f"Syntax OK: {count} tracked Python files")
+          PY
