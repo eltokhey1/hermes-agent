@@ -29,9 +29,11 @@ def main():
     args = parser.parse_args()
     result = inspect_pdf(args.pdf)
     if args.output:
-        if args.output.exists():
+        try:
+            with args.output.open("x", encoding="utf-8") as report:
+                json.dump(result, report, ensure_ascii=False, indent=2)
+        except FileExistsError:
             parser.error("Refusing to overwrite an existing report")
-        args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
 
