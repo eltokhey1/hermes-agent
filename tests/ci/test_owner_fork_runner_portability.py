@@ -93,7 +93,10 @@ class ForkRunnerInventoryTests(unittest.TestCase):
         self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", detect)
         self.assertIn("persist-credentials: false", detect)
         self.assertIn("needs: [detect]", build)
-        self.assertIn("runs-on: blacksmith-32vcpu-ubuntu-2404", build)
+        self.assertIn("github.repository == 'NousResearch/hermes-agent'", build)
+        self.assertIn("blacksmith-32vcpu-ubuntu-2404", build)
+        self.assertIn("|| 'ubuntu-latest'", build)
+        self.assertIn("persist-credentials: false", build)
         self.assertIn("nix flake check", build)
 
     def test_docker_control_jobs_hosted_but_build_and_publish_are_not_bypassed(self):
