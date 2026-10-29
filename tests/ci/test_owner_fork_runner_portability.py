@@ -44,7 +44,7 @@ class ForkRunnerInventoryTests(unittest.TestCase):
         self.assertGreater(result["workflow_files_scanned"], 15)
         refs = result["special_runner_references"]
         self.assertIn("blacksmith-4vcpu-ubuntu-2404", refs)
-        self.assertIn(".github/workflows/ci.yaml", refs["blacksmith-4vcpu-ubuntu-2404"]["files"])
+        self.assertNotIn(".github/workflows/ci.yaml", refs["blacksmith-4vcpu-ubuntu-2404"]["files"])
 
     def test_classifier_is_portable_but_not_entire_pipeline(self):
         source = (ROOT / ".github/workflows/ci.yaml").read_text(encoding="utf-8")
@@ -70,6 +70,19 @@ class ForkRunnerInventoryTests(unittest.TestCase):
         self.assertIn("scripts/ci/required_results.py", gate)
         self.assertIn("RELEASE: ${{ inputs.release }}", gate)
         self.assertIn("NEEDS: ${{ toJSON(needs) }}", gate)
+
+
+    def test_advisory_timing_job_uses_hosted_runner_not_approval_bypass(self):
+        source = (ROOT / ".github/workflows/ci.yaml").read_text(encoding="utf-8")
+        timing = source.split("\n  ci-timings:", 1)[1]
+        self.assertIn("runs-on: ubuntu-latest", timing)
+        self.assertNotIn("runs-on: blacksmith-", timing)
+        self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", timing)
+        self.assertIn("persist-credentials: false", timing)
+        self.assertIn("needs: [all-checks-pass]", timing)
+        self.assertIn("scripts/ci/timings_report.py", timing)
+        self.assertNotIn("useblacksmith/checkout@", timing)
+
 
 
 if __name__ == "__main__":
