@@ -85,5 +85,34 @@ class ForkRunnerInventoryTests(unittest.TestCase):
 
 
 
+    def test_nix_classifier_is_hosted_but_build_remains_real(self):
+        source = (ROOT / ".github/workflows/nix.yml").read_text(encoding="utf-8")
+        detect = source.split("\n  detect:", 1)[1].split("\n  flake-check:", 1)[0]
+        build = source.split("\n  flake-check:", 1)[1]
+        self.assertIn("runs-on: ubuntu-latest", detect)
+        self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", detect)
+        self.assertIn("persist-credentials: false", detect)
+        self.assertIn("needs: [detect]", build)
+        self.assertIn("runs-on: blacksmith-32vcpu-ubuntu-2404", build)
+        self.assertIn("nix flake check", build)
+
+    def test_docker_control_jobs_hosted_but_build_and_publish_are_not_bypassed(self):
+        source = (ROOT / ".github/workflows/docker.yml").read_text(encoding="utf-8")
+        mode = source.split("\n  mode:", 1)[1].split("\n  detect:", 1)[0]
+        detect = source.split("\n  detect:", 1)[1].split("\n  build:", 1)[0]
+        build = source.split("\n  build:", 1)[1].split("\n  publish:", 1)[0]
+        publish = source.split("\n  publish:", 1)[1].split("\n  merge:", 1)[0]
+        self.assertIn("runs-on: ubuntu-latest", mode)
+        self.assertIn("runs-on: ubuntu-latest", detect)
+        self.assertIn("actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", detect)
+        self.assertIn("persist-credentials: false", detect)
+        self.assertIn("needs: [mode, detect]", build)
+        self.assertIn("github.repository == 'NousResearch/hermes-agent'", build)
+        self.assertIn("runs-on: ${{ matrix.runner }}", build)
+        self.assertIn("github.repository == 'NousResearch/hermes-agent'", publish)
+        self.assertIn("environment: container-publish", publish)
+
+
+
 if __name__ == "__main__":
     unittest.main()
