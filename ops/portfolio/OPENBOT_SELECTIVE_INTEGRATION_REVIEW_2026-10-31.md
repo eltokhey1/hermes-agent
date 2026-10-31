@@ -26,3 +26,32 @@ Hermes -> authenticated AG-UI read-only adapter -> user interface. Any tool requ
 Do not modify pyproject.toml, uv.lock, running processes, services, secrets or CI workflow as part of this review.
 
 Release seal: PRODUCTION=HOLD; G0/G-CODE/G1=NO-GO; HITL=REQUIRED.
+
+## 2026-10-31 — Radar-assisted evidence review and isolated contract tests
+
+**Decision:** GO for a minimal **read-only AG-UI status-projection design** in a separate sandbox, **NO-GO for full OpenBot runtime installation or any production integration**. This does not supersede the mandatory P0/P1 acceptance process.
+
+### Evidence and source review
+- Registry reused: `GEN1_AUTONOMOUS_TECH_RADAR_50_SOURCE_REGISTRY_2026-10-28.md` (GitHub Trending, PyPI, Privacy Guides, AG-UI official schema, and upstream repository code/README/license; no global install or 50-source scan).
+- CopilotKit/OpenBot (MIT; beta): upstream README, `docs/architecture.md`, `docs/coworkers.md`, `docs/deployment.md` inspected. Runs Bun 1.4+, Docker/PostgreSQL, CopilotKit Intelligence and model credentials; the whole platform's published minimum is **4 GB disk**, **2 GB RAM** for one bot; recommended **8 GB disk**, **4 GB RAM**. `OPENBOT_SINGLE_USER=true` is admin-style demo access, not an acceptable multiuser production policy. The platform also refuses that mode when public-facing configured URLs are detected. Verify identity and licensing before use.
+- regnull/openbot (MIT): useful actor/inbox/handoff/HITL patterns, but `run_shell` is explicitly *not sandboxed* and there is no packaged Windows build in the inspected README. Extract patterns only.
+- meetopenbot/openbot (MIT through v0.5.3): lightweight SSE/state API, but README describes archived code/no newer work published; maintainability and security are **UNKNOWN**, so avoid adopting its runtime. A reference for event contracts only.
+- nightly-labs/openbot (PolyForm Noncommercial 1.0.0): development preview with `danger-full-access` and `approvalPolicy: never`; **REJECT executable commercial integration** unless separate license/security review.
+- AG-UI 1.0 sources: https://github.com/ag-ui-protocol/ag-ui/blob/main/docs/spec/1.0/schema.mdx and https://github.com/ag-ui-protocol/ag-ui/blob/main/docs/spec/1.0/basic/index.mdx. Delivery order, not event timestamp, is authoritative. Projections must not forward `rawEvent`, untrusted metadata, `TOOL_CALL_*` events or snapshots.
+
+### Tests performed (not Hermes runtime)
+- Synthetic local reference prototype: Python **3.13.5 on Linux**, stdlib `sqlite3` only; **32/32 unit tests PASS**, compileall PASS. Source, executable tests, output, hashes and instructions distributed separately in `Hermes_OpenBot_AGUI_Preflight_20261031.zip` in the conversation.
+- Coverage: restricted AG-UI display event shapes, SSE serialization, idempotent replay after simulated process reopen, tenant/thread separation, status transitions, explicit REVIEW_REQUIRED pause, UNKNOWN no-auto-retry, duplicate-key collision, rollback, invalid IDs, untrusted input/metadata, tool events, payload and protocol version blocking.
+- This is a **minimal AG-UI-subset producer**, not a full protocol-compliant consumer. It does **not** connect to Hermes, CopilotKit/OpenBot, or actual SSE network endpoints. It does not perform real reconnect tests or prove that real Hermes tool calls are blocked. It contains no OpenBot license or business credentials.
+- Evidence classifications: upstream license/spec = VERIFIED_SOURCE; 32 offline prototype tests = TESTED_SYNTHETIC; Hermes/OpenBot interoperability, native Windows, authentic restore/DR, same-SHA hosted CI, performance/cost and independent acceptance = **NOT_VERIFIED**.
+
+### Gate-first development decision (only if evidence progresses)
+1. **P0:** Independent review of source and fixture SHA; confirm host disk headroom, genuine Windows process/port/state/backup inventory before installing anything. Existing low disk headroom remains a no-install blocker until verified resolved.
+2. **P1A:** Wire the minimal producer to **existing read-only Hermes status events** within a sandbox with no new dependency. Validate output against the official AG-UI JSON schema. Preserve Hermes Guarded Runtime as sole tool authority.
+3. **P1B:** If P1A passes, run real isolated HTTP/SSE reconnect, malformed/misordered event, cross-tenant access, SSRF, forged-approval, ESTOP, concurrency, SQLite rollback and crash-replay tests. Need independently reviewed negative cases and genuine Windows native evidence.
+4. **P1C:** Compare minimal AG-UI producer versus current Hermes UI/event route on the *same representative workload*, >=3 repetitions, error rate, p95 latency, memory/disk, and fully burdened cost/successful task. A/B uplift >20% is a *proposal condition*, not acceptance by itself. Document rollback.
+5. **Decision:** Only after independent verifier, passing same-SHA CI, P0/P1 A01-A17 acceptance and explicit HITL approval could an actual OpenBot component be adopted. Otherwise keep the minimal existing Hermes stack. No full platform until a concrete unmet capability justifies memory/disk/licensing cost.
+
+**No changes** to `pyproject.toml`, `uv.lock`, existing agents, tool permissions, live services, secrets, production or CI workflows. No merge, deploy or duplicate PR.
+
+Release seal unchanged: `PRODUCTION=HOLD; G0/G-CODE/G1=NO-GO; HITL=REQUIRED`.
