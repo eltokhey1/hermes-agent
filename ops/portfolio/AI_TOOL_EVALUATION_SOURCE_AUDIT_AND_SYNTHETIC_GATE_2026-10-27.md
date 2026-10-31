@@ -70,7 +70,7 @@ For a prospective code-agent replacement, compare the currently installed Aider+
 
 ## 2026-10-31 — Gitstar / Trendshift cross-source shortlist review
 
-**Evidence boundaries:** Gitstar Ranking (all-time stars) and Trendshift Weekly (weekly momentum) verified as public discovery pages; selected repository README and MIT/Apache-2.0 LICENSE fetched directly via GitHub connector on 2026-10-31. Star counts fluctuate and are not reproducible quality proof. Source and README license checks do not prove every transitive dependency is safe, permitted, or Windows-compatible. Reference to original source reviewed is not installation.
+**Evidence boundaries:** [Gitstar Ranking](https://gitstar-ranking.com/repositories) (all-time stars) and [Trendshift Weekly](https://trendshift.io/weekly) (weekly momentum) verified as public discovery pages; selected repository README and MIT/Apache-2.0 LICENSE fetched directly via GitHub connector on 2026-10-31. Star counts fluctuate and are not reproducible quality proof. Source and README license checks do not prove every transitive dependency is safe, permitted, or Windows-compatible. Reference to original source reviewed is not installation.
 
 | Candidate (upstream source) | Project fit and independently inspected upstream signal | Dated decision / smallest safe next test |
 | --- | --- | --- |
