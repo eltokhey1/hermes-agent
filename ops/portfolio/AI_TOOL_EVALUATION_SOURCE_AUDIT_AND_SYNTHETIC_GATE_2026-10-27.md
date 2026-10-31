@@ -153,3 +153,29 @@ Other optional references: AgenorIT BCDR questionnaire supports existing P0 Wind
 - Commercial Radar: Crozdesk/TrustRadius only for unverified research leads and cross-check G2/Capterra; no scraping beyond terms.
  
 **Hard exclusions:** no automatic similarity-based promotion, installation, external API token, app connection, telemetry, downloads, local execution, paying for Similarweb data, marketing contacts or dispatch actions. Real project development only after existing P0/P1 native host acceptance, same-SHA CI, independent Verifier A01-A17 and owner approvals. PRODUCTION=HOLD / NO-GO.
+
+## 2026-10-31 — Similarweb unified source quality and research confidence rules
+
+**This is a source-intake audit, NOT a live Similarweb model ranking or a Hermes acceptance test.** The Similarweb app is connected, but the **Similar Sites operation returned FORBIDDEN_ERROR / account credit limit for all ten inspected seed domains**. No traffic, audience-affinity score or paid October 2026 result was retrieved; changing Similarweb plans or spending credits is outside permission. Public competitor listings are dated **April/June 2026** and should be reported with that date, not as present-day market rankings. Historical public pages and methodology:
+- https://www.similarweb.com/website/producthunt.com/competitors/
+- https://www.similarweb.com/website/arxiv.org/competitors/
+- https://www.similarweb.com/website/stackshare.io/competitors/
+- https://www.similarweb.com/website/huggingface.co/competitors/
+- https://support.similarweb.com/hc/en-us/articles/213442785-Website-Affinity-Score
+- https://docs.similarweb.com/api-v5/api-reference/website-analysis-api/website-performance/similar-sites
+
+**Verified candidate primary sources:**
+- Best of JS: https://bestofjs.org/ plus https://github.com/bestofjs/bestofjs (MIT), technology-specific JS/TS tool discovery, not verified runtime performance. **TIER1_RESEARCH / DESIGNER**.
+- Artificial Analysis: https://artificialanalysis.ai/ + https://artificialanalysis.ai/methodology, model/provider **reported benchmarks** for quality/speed/cost; output and real-device results can diverge. **TIER1_RESEARCH / MODEL ROUTER**.
+- OpenReview https://openreview.net/, ACL Anthology https://aclanthology.org/, PMLR https://proceedings.mlr.press/: academic discovery, preserve venue, authors, publication status, version, benchmark code, license and reproducibility; preprint != peer-reviewed acceptance. **TIER1_RESEARCH / HERMES QA**.
+
+**Secondary source candidates:** Backstage (Apache-2.0 upstream https://github.com/backstage/backstage) architecture reference, TrustRadius, Crozdesk and SaaSworthy vendor review catalogues, Codeberg repository discovery. **TIER2_REFERENCE** only; vendor reviews cannot certify security or license. Existing BetaList, Indie Hackers, LM Studio, Semantic Scholar, Future Tools, and Y Combinator were **deduplicated** from the existing 200/50x50/backlog registers.
+
+**Deterministic intake decision / no invented scores:**
+- `DISCOVERED` -> normalize canonical URI and check registry aliases -> `ALREADY_REGISTERED` if existing; else verify primary original and source time -> `SOURCE_REVIEWED` or `UNVERIFIED`.
+- Source health gates: `BLOCKED_CREDITS` for connector, `HISTORICAL_PUBLIC` for dated Similarweb pages, `PARTIAL_DATA` for known OSSInsight event gaps; no alert/implementation promotion based only on these. Record product release date and source access time separately.
+- Distinct *relevance* rubric, no ungrounded numeric score: matched Hermes/TradeDocs/Designer/Radar capability, legal commercial use, independent maintainer/safety proof, freshness, actual Windows resources, measured marginal quality/cost versus already-installed alternative.
+- **Veto** unsafe tool execution, data exfiltration, unrestricted browser sessions, unknown licenses, external spend and silent retries. Strong research evidence supports research eligibility **only**, not runtime adoption.
+- If a benefit is validated, file one evidence-backed minimal change in the existing authorized branch after authentic Windows P0/P1, same-SHA CI, independent A01–A17 review and explicit HITL. Otherwise `NO_CHANGE`.
+
+**Offline exercise actually executed:** 21/21 stdlib Python unit tests PASS, compileall PASS (isolated Linux, not Hermes, no Similarweb credit consumption); sample manifest contains 16 sources (**6 existing**, **5 primary candidates**, **5 secondary**), SHA256 manifest and test log in `Hermes_Similarweb_Radar_Intelligence_Preflight_20261031.zip` attached in the conversation. This checks policy/data normalization only, **NOT** live site completeness, Windows, integration, license compliance of transitive dependencies or performance. Remain `PRODUCTION=HOLD; G0/G-CODE/G1=NO-GO; HITL=REQUIRED`.
