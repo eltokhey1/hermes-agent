@@ -1,0 +1,22 @@
+{
+  "schema": "hermes_parser_challenger_v1",
+  "synthetic": true,
+  "baseline_name": "synthetic_existing_parser",
+  "challenger_name": "synthetic_candidate_parser",
+  "cases": [
+    {
+      "id": "fake_bl_001",
+      "expected": {"bl_number": "FAKEBL001", "container_count": "2", "eta": "2026-11-08"},
+      "critical": ["bl_number", "container_count"],
+      "baseline": {"bl_number": "FAKEBL001", "container_count": "1", "eta": "2026-11-08"},
+      "challenger": {"bl_number": "FAKEBL001", "container_count": "2", "eta": "2026-11-08"}
+    },
+    {
+      "id": "fake_lc_001",
+      "expected": {"lc_number": "FAKELC001", "currency": "USD", "amount": "1000.00"},
+      "critical": ["lc_number", "currency", "amount"],
+      "baseline": {"lc_number": "FAKELC001", "currency": "USD", "amount": "100.00"},
+      "challenger": {"lc_number": "FAKELC001", "currency": "USD", "amount": "1000.00"}
+    }
+  ]
+}

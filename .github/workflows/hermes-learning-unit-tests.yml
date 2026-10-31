@@ -1,0 +1,35 @@
+name: Hermes Learning Unit Offline Tests
+on:
+  push:
+    paths:
+      - 'ops/portfolio/learning_unit/**'
+      - '.github/workflows/hermes-learning-unit-tests.yml'
+  pull_request:
+    paths:
+      - 'ops/portfolio/learning_unit/**'
+      - '.github/workflows/hermes-learning-unit-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-unit:
+    name: Offline unit tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ops/portfolio/learning_unit
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Run standard-library regression tests
+        run: python -m unittest discover -v
+      - name: Evaluate synthetic registry (no external calls)
+        run: python learning_unit.py registry.example.json
