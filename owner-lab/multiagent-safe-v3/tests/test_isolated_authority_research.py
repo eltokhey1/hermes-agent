@@ -162,7 +162,7 @@ class IsolatedAuthorityResearch(unittest.TestCase):
         self.assertEqual(replies[0]["data"]["result"], replies[1]["data"]["result"])
         self.assertTrue(all(r["data"]["result"]["external_effects"] is False for r in replies))
         with sqlite3.connect(Path(self.tempdir.name) / "lab.sqlite") as conn:
-            count = conn.execute("SELECT count(*) FROM events WHERE event_type='RESERVED'").fetchone()[0]
+            count = conn.execute("SELECT count(*) FROM events WHERE event_type='STARTED'").fetchone()[0]
         self.assertEqual(count, 1)
 
     def test_out_of_band_ledger_edit_denied_against_separate_process_memory_anchor(self):
