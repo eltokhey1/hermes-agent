@@ -1,0 +1,79 @@
+name: "Owner approval process isolation - synthetic ONLY"
+
+on:
+  push:
+    branches:
+      - research/owner-auth-process-boundary-20261112
+    paths:
+      - ".github/workflows/owner-auth-process-boundary-research.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  dual-channel-boundary:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    name: "Isolated owner channel / ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      TEST_SHA: 'bd4a24bf857b4af9ffbb72574f9939e1b37b2dfb'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: "Checkout existing Owner Lab and new research-only adapter at pinned SHA"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.TEST_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            owner-lab/multiagent-safe-v3/
+          sparse-checkout-cone-mode: false
+      - name: "Verify full checkout SHA and new source blob"
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TEST_SHA"
+          echo "VERIFIED_OWNER_BOUNDARY_SHA=$TEST_SHA"
+          git hash-object owner-lab/multiagent-safe-v3/isolated_authority_research.py
+          git hash-object owner-lab/multiagent-safe-v3/tests/test_isolated_authority_research.py
+      - name: "Python 3.13 hosted runner"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: "Compile existing approval and safety modules + research boundary"
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -m compileall -q approvals.py orchestrator.py isolated_authority_research.py tests
+      - name: "Run existing Owner Lab suite plus 10 separate-process negative tests"
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -W error -m unittest discover -s tests -v
+      - name: "Windows hosted-only read-only preflight contract"
+        if: runner.os == 'Windows'
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: pwsh
+        run: |
+          $receipt = (& .\WINDOWS_READONLY_PREFLIGHT.ps1 | Out-String) | ConvertFrom-Json
+          if ($receipt.production_ready -ne $false) { throw 'Unexpected production ready' }
+          if ($receipt.acceptance.protected_backup_and_isolated_restore -ne 'NOT_TESTED') { throw 'Invalid P0 claim' }
+          if ($receipt.acceptance.real_p1_crash_recovery -ne 'NOT_TESTED') { throw 'Invalid P1 claim' }
+          Write-Output 'HOSTED_WINDOWS_READONLY_INVENTORY=PASS'
+          Write-Output 'OWNER_WINDOWS_P0_P1=NOT_TESTED'
+      - name: "Explicit acceptance boundary"
+        if: always()
+        shell: bash
+        run: |
+          echo "PRODUCTION=HOLD"
+          echo "HITL=REQUIRED"
+          echo "G0_GCODE_G1=NO-GO"
+          echo "HOST_OS_ACCOUNT_ISOLATION=NOT_TESTED"
+          echo "OWNER_AUTHENTICATED_IDENTITY=NOT_TESTED"
+          echo "EXTERNAL_PROTECTED_CHECKPOINT_PERSISTENCE=NOT_TESTED"
+          echo "REAL_P0_P1_RESTORE=NOT_TESTED"
+          echo "EXTERNAL_EFFECTS_ENABLED=false"
