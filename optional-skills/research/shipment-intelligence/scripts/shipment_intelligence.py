@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import hmac
 import json
 import math
 import re
@@ -130,6 +131,8 @@ def adapt_ais(record: dict, provider: str) -> dict:
             raise ValueError('Incomplete AIS position')
         if lat is None:
             raise ValueError('AIS position requires coordinates')
+        if isinstance(lat, bool) or isinstance(lon, bool):
+            raise ValueError('Invalid AIS coordinates: boolean values are not positions')
         if lat is not None:
             try:
                 latitude, longitude = float(lat), float(lon)
@@ -264,6 +267,42 @@ def link(con, container: str, imo: str, source: str, note: str):
                     (container,imo,source,note.strip(),utc_now()))
 
 
+def _load_verified_events(con, subject_type: str, subject_id: str) -> list[dict]:
+    """Verify on-disk event content before deriving a status or AIS observation.
+
+    Detects corrupt/altered rows where the persisted SHA does not match.
+    An unkeyed SHA does not authenticate a provider, prevent matching rehashes,
+    or prove that a row was not removed; those require stronger trust anchors.
+    """
+    hashed_fields = (
+        'event_id', 'category', 'subject_type', 'subject_id', 'code', 'classifier',
+        'occurred_utc', 'reported_local', 'source_url', 'source_name', 'location'
+    )
+    columns = (*hashed_fields, 'observed_utc', 'payload_json', 'record_sha256')
+    column_sql = ','.join(columns)  # Fixed internal allowlist, not user input.
+    rows = con.execute(
+        f'SELECT {column_sql} FROM evidence_events WHERE subject_type=? AND subject_id=?',
+        (subject_type, subject_id)
+    ).fetchall()
+    result = []
+    for row in rows:
+        stored = dict(zip(columns, row))
+        try:
+            payload = json.loads(stored['payload_json'])
+            if not isinstance(payload, dict):
+                raise ValueError('payload is not a JSON object')
+            original = {name: stored[name] for name in hashed_fields}
+            expected_hash = digest({'event': original, 'payload': payload})
+            actual_hash = stored['record_sha256']
+            if not isinstance(actual_hash, str) or not hmac.compare_digest(actual_hash, expected_hash):
+                raise ValueError('event digest mismatch')
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                'EVIDENCE_INTEGRITY: persisted record failed verification'
+            ) from exc
+        result.append(stored)
+    return result
+
 def _instant(value: str | None) -> dt.datetime:
     """Compare UTC instants accurately, including historical mixed precision."""
     return (dt.datetime.fromisoformat(value.replace('Z', '+00:00')).astimezone(dt.timezone.utc)
@@ -275,12 +314,10 @@ def evidence_report(con, container: str, now: str|None=None, stale_hours: int=48
     now_utc=aware_utc(now) if now else utc_now()
     if not now_utc: raise ValueError('status --now must include valid timezone')
     tnow=dt.datetime.fromisoformat(now_utc.replace('Z','+00:00'))
-    rows=con.execute('''SELECT event_id,category,code,classifier,occurred_utc,reported_local,
-                         observed_utc,source_url,source_name,location FROM evidence_events
-                         WHERE subject_type='container' AND subject_id=?''',(cid,)).fetchall()
+    rows=_load_verified_events(con, 'container', cid)
     names=['event_id','category','code','classifier','occurred_utc','reported_local',
            'observed_utc','source_url','source_name','location']
-    evs=[dict(zip(names,r)) for r in rows]
+    evs=[{name: row[name] for name in names} for row in rows]
     # Lexical SQLite TEXT order misorders 08:00:00Z vs 08:00:00.500000Z.
     # Read-time sorting also protects old persisted rows with mixed precision.
     evs.sort(key=lambda e: (_instant(e['occurred_utc']), e['event_id']), reverse=True)
@@ -301,15 +338,15 @@ def evidence_report(con, container: str, now: str|None=None, stale_hours: int=48
     links=con.execute('SELECT vessel_imo,evidence_source,evidence_note FROM vessel_links WHERE container_id=?',(cid,)).fetchall()
     vessels=[]
     for imo,src,note in links:
-        ais_rows=con.execute('''SELECT code,occurred_utc,reported_local,source_url,location FROM evidence_events
-            WHERE subject_type='vessel' AND subject_id=? AND category='AIS' AND occurred_utc IS NOT NULL''',(imo,)).fetchall()
-        ais=max(ais_rows, key=lambda row: _instant(row[1]), default=None)
+        ais_rows=[row for row in _load_verified_events(con, 'vessel', imo)
+                  if row['category']=='AIS' and row['occurred_utc'] is not None]
+        ais=max(ais_rows, key=lambda row: _instant(row['occurred_utc']), default=None)
         v={'imo':imo,'association_source':src,'association_note':note,'last_ais_position':None,
            'ais_is_current':False}
         if ais:
-            t=dt.datetime.fromisoformat(ais[1].replace('Z','+00:00'))
+            t=dt.datetime.fromisoformat(ais['occurred_utc'].replace('Z','+00:00'))
             delta=(tnow-t).total_seconds()/3600
-            v['last_ais_position']=dict(code=ais[0],occurred_utc=ais[1],source_url=ais[3],location=ais[4],age_hours=round(delta,1))
+            v['last_ais_position']=dict(code=ais['code'],occurred_utc=ais['occurred_utc'],source_url=ais['source_url'],location=ais['location'],age_hours=round(delta,1))
             v['ais_is_current']=(-1 <= delta <= stale_hours)
         vessels.append(v)
     return dict(container_id=cid,shipment_state=state,latest_confirmed_equipment_event=latest,
