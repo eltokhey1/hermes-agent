@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     env:
-      TEST_SHA: 'bd4a24bf857b4af9ffbb72574f9939e1b37b2dfb'
+      TEST_SHA: 'cde28e94e920b339c93871ab728a5050ae2fda93'
       PYTHONDONTWRITEBYTECODE: '1'
       PYTHONNOUSERSITE: '1'
     steps:
