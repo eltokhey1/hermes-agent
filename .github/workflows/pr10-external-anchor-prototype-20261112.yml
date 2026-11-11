@@ -1,0 +1,78 @@
+name: "PR10 external anchor research prototype (no deployment)"
+
+on:
+  push:
+    branches:
+      - research/pr10-resilience-gates-20261112
+    paths:
+      - ".github/workflows/pr10-external-anchor-prototype-20261112.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  external-anchor-proof:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      PATCH_SHA: 'a06c67115ebfe86895d43038dc1fcdf4589fd0ff'
+      TEST_SHA: 'ad51295cc1c9b4e3cd70878c81caf40b581e5126'
+      PR10_SOURCE_SCRIPT: "${{ github.workspace }}/src/optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py"
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - name: "Read-only checkout of original pinned patched PR10 source"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.PATCH_SHA }}
+          path: src
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout: |
+            optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py
+          sparse-checkout-cone-mode: false
+      - name: "Read-only checkout of isolated research-only prototype and tests"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.TEST_SHA }}
+          path: audit
+          persist-credentials: false
+          fetch-depth: 1
+          sparse-checkout: |
+            verification/pr10_external_anchor_prototype.py
+            verification/test_pr10_external_anchor_prototype.py
+          sparse-checkout-cone-mode: false
+      - name: "Verify SHAs and PR10 code identity"
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C src rev-parse HEAD)" = "$PATCH_SHA"
+          test "$(git -C audit rev-parse HEAD)" = "$TEST_SHA"
+          test "$(git -C src hash-object optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py)" = "e91321927da1d3ac8f5281a896f8cba7b310b1f7"
+          echo "VERIFIED_PR10_SOURCE_SHA=$PATCH_SHA"
+          echo "VERIFIED_PROTOTYPE_TEST_SHA=$TEST_SHA"
+      - name: "Setup Python 3.13"
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: "Install ephemeral pytest 9.0.2"
+        shell: bash
+        run: python -m pip install --disable-pip-version-check --no-input --no-cache-dir 'pytest==9.0.2'
+      - name: "Execute independent HMAC anchor prototype tests"
+        shell: bash
+        run: python -m pytest -v -ra audit/verification/test_pr10_external_anchor_prototype.py
+      - name: "Explicit non-production warning"
+        if: always()
+        shell: bash
+        run: |
+          echo 'EXTERNAL_ANCHOR_PROTOTYPE=RESEARCH_ONLY'
+          echo 'TRUST_KEY_AND_ANCHOR_SEPARATION_IN_PRODUCTION=NOT_PROVEN'
+          echo 'WINDOWS_HOST_P0_P1=NOT_TESTED'
+          echo 'REAL_PROVIDER_AUTHENTICATION=NOT_TESTED'
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
