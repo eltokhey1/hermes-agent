@@ -6,6 +6,7 @@ Uses spawn on Windows and Linux so the authority is a different OS process.
 from __future__ import annotations
 
 import concurrent.futures
+from contextlib import closing
 import multiprocessing as mp
 import os
 import secrets
@@ -161,13 +162,13 @@ class IsolatedAuthorityResearch(unittest.TestCase):
         self.assertTrue(all(r["ok"] for r in replies), replies)
         self.assertEqual(replies[0]["data"]["result"], replies[1]["data"]["result"])
         self.assertTrue(all(r["data"]["result"]["external_effects"] is False for r in replies))
-        with sqlite3.connect(Path(self.tempdir.name) / "lab.sqlite") as conn:
+        with closing(sqlite3.connect(Path(self.tempdir.name) / "lab.sqlite")) as conn:
             count = conn.execute("SELECT count(*) FROM events WHERE event_type='STARTED'").fetchone()[0]
         self.assertEqual(count, 1)
 
     def test_out_of_band_ledger_edit_denied_against_separate_process_memory_anchor(self):
         pending = self.proposal()
-        with sqlite3.connect(Path(self.tempdir.name) / "lab.sqlite") as conn:
+        with closing(sqlite3.connect(Path(self.tempdir.name) / "lab.sqlite")) as conn:
             conn.execute("DELETE FROM events WHERE task_id=?", (pending["task_id"],))
             conn.commit()
         check = self.agent(op="status", task_id=pending["task_id"])
