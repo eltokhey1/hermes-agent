@@ -65,7 +65,7 @@ jobs:
       - name: Require independent deletion, rehash and DCSA enum gates (expect red until fixed)
         shell: bash
         run: python -m pytest -v -ra audit/verification/test_pr10_resilience_gates.py -k "deleted or recomputed or nonstandard"
-      - name: Explicit no-go: this test cannot approve owner Windows P0/P1
+      - name: "Explicit no-go: this test cannot approve owner Windows P0/P1"
         if: always()
         shell: bash
         run: |
