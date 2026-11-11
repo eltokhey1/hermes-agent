@@ -1,0 +1,78 @@
+name: "PR10 resilience gates - synthetic isolated NO-GO"
+on:
+  push:
+    branches: [research/pr10-resilience-gates-20261112]
+    paths: [.github/workflows/pr10-resilience-acceptance-20261112.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  independent-resilience:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      PATCH_SHA: 'a06c67115ebfe86895d43038dc1fcdf4589fd0ff'
+      AUDIT_SHA: '83864847f8a4c56c897dc38eee1234a4d9d78fb4'
+      PR10_SOURCE_SCRIPT: "${{ github.workspace }}/source/optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py"
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+    steps:
+      - name: Pinned isolated patched source - no persisted credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: source
+          ref: ${{ env.PATCH_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py
+          sparse-checkout-cone-mode: false
+      - name: Pinned independent negative and recovery test receipt
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: audit
+          ref: ${{ env.AUDIT_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            verification/test_pr10_resilience_gates.py
+          sparse-checkout-cone-mode: false
+      - name: Compare immutable SHAs and source hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C source rev-parse HEAD)" = "$PATCH_SHA"
+          test "$(git -C audit rev-parse HEAD)" = "$AUDIT_SHA"
+          test "$(git -C source hash-object optional-skills/research/shipment-intelligence/scripts/shipment_intelligence.py)" = "e91321927da1d3ac8f5281a896f8cba7b310b1f7"
+          echo "VERIFIED_PR10_PATCH_SHA=$PATCH_SHA"
+          echo "VERIFIED_INDEPENDENT_TESTS_SHA=$AUDIT_SHA"
+      - name: Python 3.13
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Ephemeral test dependency
+        shell: bash
+        run: python -m pip install --disable-pip-version-check --no-input --no-cache-dir 'pytest==9.0.2'
+      - name: Verify clean evidence and synthetic SQLite backup and crash recovery
+        shell: bash
+        run: python -m pytest -v -ra audit/verification/test_pr10_resilience_gates.py -k "not deleted and not recomputed and not nonstandard"
+      - name: Require independent deletion, rehash and DCSA enum gates (expect red until fixed)
+        shell: bash
+        run: python -m pytest -v -ra audit/verification/test_pr10_resilience_gates.py -k "deleted or recomputed or nonstandard"
+      - name: Explicit no-go: this test cannot approve owner Windows P0/P1
+        if: always()
+        shell: bash
+        run: |
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
+          echo 'G0_GCODE_G1=NO-GO'
+          echo 'WINDOWS_HOST_ACL_BACKUP_RESTORE=NOT_TESTED'
+          echo 'HERMES_P1_INFLIGHT_ESTOP=NOT_TESTED'
+          echo 'REAL_LICENSED_CARRIER_FEEDS=NOT_TESTED'
+          echo 'HUMAN_INDEPENDENT_REVIEW=NOT_TESTED'
