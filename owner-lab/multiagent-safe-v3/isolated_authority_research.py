@@ -24,6 +24,7 @@ from multiprocessing.connection import AuthenticationError, Client, Listener
 from pathlib import Path
 
 from approvals import ApprovalIssuer, ApprovalVerifier
+from durable_anchor_research import DurableAnchorResearch
 from orchestrator import GateError, HermesReference
 
 
@@ -41,13 +42,29 @@ def exchange(address, session_key: bytes, command: dict) -> dict:
 class _Boundary:
     """Only this independent process can issue an approval assertion."""
 
-    def __init__(self, db_path):
-        signing_key = secrets.token_bytes(32)  # never passed to or returned to agent
+    def __init__(self, db_path, *, checkpoint_path=None, signing_key=None,
+                 bootstrap=False):
+        if signing_key is None:
+            signing_key = secrets.token_bytes(32)  # transient legacy demo mode
         self.issuer = ApprovalIssuer(signing_key)
         self.core = HermesReference(db_path, verifier=ApprovalVerifier(signing_key))
         self.lock = threading.RLock()
+        self.anchor = (DurableAnchorResearch(checkpoint_path, signing_key)
+                       if checkpoint_path is not None else None)
         self.estop = False
-        self.last_sealed_root = self._snapshot()
+        if self.anchor is not None:
+            # Explicit bootstrap is NEVER allowed on a nonempty DB.
+            if bootstrap and not self.anchor.path.exists():
+                self.anchor.bootstrap(self._snapshot())
+            record = self.anchor.load()  # missing or forged checkpoint => no start
+            self.last_sealed_root = {
+                "expected_seq": record["seq"], "expected_hash": record["root"]
+            }
+            self.estop = record["estop"]
+            if not self.core.verify_external_anchor(**self.last_sealed_root):
+                raise GateError("EXTERNAL_ANCHOR_MISMATCH")
+        else:
+            self.last_sealed_root = self._snapshot()
 
     def _snapshot(self):
         snap = self.core.status_summary()
@@ -55,8 +72,21 @@ class _Boundary:
                 "expected_hash": snap["ledger_head_unanchored"]}
 
     def _assert_integrity(self):
+        if self.anchor is not None:
+            record = self.anchor.load()
+            if (record["seq"] != self.last_sealed_root["expected_seq"]
+                    or record["root"] != self.last_sealed_root["expected_hash"]
+                    or record["estop"] != self.estop):
+                raise GateError("ANCHOR_CHANGED_UNEXPECTEDLY")
         if not self.core.verify_external_anchor(**self.last_sealed_root):
             raise GateError("EXTERNAL_ANCHOR_MISMATCH")
+
+    def _refresh_anchor(self):
+        snapshot = self._snapshot()
+        if self.anchor is not None:
+            self.anchor.advance(previous=self.last_sealed_root,
+                                current=snapshot, estop=self.estop)
+        self.last_sealed_root = snapshot
 
     def _check_stop(self):
         if self.estop:
@@ -65,9 +95,9 @@ class _Boundary:
     def agent(self, req: dict):
         with self.lock:
             op = req.get("op")
+            self._assert_integrity()
             if op == "pid":
                 return {"pid": os.getpid(), "preview_only": True}
-            self._assert_integrity()
             if op == "submit":
                 self._check_stop()
                 task_id = self.core.submit(req["spec"], idempotency_key=req["idempotency_key"])
@@ -75,7 +105,7 @@ class _Boundary:
                 if state == "PENDING":
                     self.core.prepare(task_id)
                 task = self.core.task(task_id)
-                self.last_sealed_root = self._snapshot()
+                self._refresh_anchor()
                 return {"task_id": task_id, "spec_hash": task["spec_hash"],
                         "state": task["state"]}
             if op == "status":
@@ -87,7 +117,7 @@ class _Boundary:
                 if not isinstance(req.get("spec_hash"), str) or req["spec_hash"] != task["spec_hash"]:
                     raise GateError("EXACT_ACTION_HASH_MISMATCH")
                 result = self.core.execute_demo(req["task_id"])
-                self.last_sealed_root = self._snapshot()
+                self._refresh_anchor()
                 return {"result": result, "state": self.core.task(req["task_id"])["state"]}
             raise GateError("AGENT_OPERATION_DENIED")
 
@@ -100,6 +130,7 @@ class _Boundary:
             self._assert_integrity()
             if op == "estop":
                 self.estop = True
+                self._refresh_anchor()  # durable latch after an agent crash/restart
                 return {"estop_latched": True}
             if op == "decision":
                 self._check_stop()
@@ -117,7 +148,7 @@ class _Boundary:
                     ttl_seconds=ttl
                 )
                 state = self.core.approve(req["task_id"], token)
-                self.last_sealed_root = self._snapshot()
+                self._refresh_anchor()
                 return {"state": state, "spec_hash": task["spec_hash"]}
             raise GateError("OWNER_OPERATION_DENIED")
 
@@ -145,9 +176,11 @@ def _serve(listener: Listener, label: str, state: _Boundary, stopped: threading.
             continue
 
 
-def serve_authority(db_path: str, agent_key: bytes, owner_key: bytes, ready_queue):
-    """Spawn target. The private key and approval issuer live ONLY here."""
-    state = _Boundary(Path(db_path))
+def serve_authority(db_path: str, agent_key: bytes, owner_key: bytes, ready_queue,
+                    checkpoint_path=None, signing_key=None, bootstrap=False):
+    """Spawn target. Key must come from isolated authority in real deployment."""
+    state = _Boundary(Path(db_path), checkpoint_path=checkpoint_path,
+                      signing_key=signing_key, bootstrap=bootstrap)
     stopped = threading.Event()
     with Listener(("127.0.0.1", 0), authkey=agent_key) as agent_listener, \
          Listener(("127.0.0.1", 0), authkey=owner_key) as owner_listener:
