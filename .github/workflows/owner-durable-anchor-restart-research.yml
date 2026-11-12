@@ -1,0 +1,77 @@
+name: "Owner durable anchor restart (synthetic non-production)"
+on:
+  push:
+    branches:
+      - research/owner-durable-anchor-restart-20261113
+    paths:
+      - ".github/workflows/owner-durable-anchor-restart-research.yml"
+permissions:
+  contents: read
+jobs:
+  owner-restart-synthetic:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    name: "Signed checkpoint & process restart / ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SOURCE_SHA: 'bb7cec1ea768ae15b4141cc9609ccff94707da6e'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Checkout pinned research-branch version
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            owner-lab/multiagent-safe-v3/
+          sparse-checkout-cone-mode: false
+      - name: Verify full SHA and key source blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git hash-object owner-lab/multiagent-safe-v3/durable_anchor_research.py)" = '354898f17bb1c682e2b3950bbc66225bbd4983b8'
+          test "$(git hash-object owner-lab/multiagent-safe-v3/isolated_authority_research.py)" = 'e2d3fd0e3eed9a3e2bfec170bc35e405ae3a6fd8'
+          test "$(git hash-object owner-lab/multiagent-safe-v3/tests/test_durable_anchor_restart_research.py)" = '0e63d14afdc72e86a90f50c86a66828dc96807c3'
+          echo "VERIFIED_DURABLE_ANCHOR_SHA=$SOURCE_SHA"
+      - name: Install Python 3.13
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Compile python only
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -m compileall -q approvals.py orchestrator.py isolated_authority_research.py durable_anchor_research.py tests
+      - name: Run original Owner Lab + dual-channel + 7 restart safety tests
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -W error -m unittest discover -s tests -v
+      - name: Assert hosted Windows preflight output never grants P0/P1
+        if: runner.os == 'Windows'
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: pwsh
+        run: |
+          $receipt = (& .\WINDOWS_READONLY_PREFLIGHT.ps1 | Out-String) | ConvertFrom-Json
+          if ($receipt.production_ready -ne $false) { throw 'Invalid production promotion' }
+          if ($receipt.acceptance.protected_backup_and_isolated_restore -ne 'NOT_TESTED') { throw 'Invalid P0 claim' }
+          if ($receipt.acceptance.real_p1_crash_recovery -ne 'NOT_TESTED') { throw 'Invalid P1 claim' }
+          Write-Output 'HOSTED_WINDOWS_PREFLIGHT_CONTRACT=PASS'
+          Write-Output 'OWNER_WINDOWS_P0_P1=UNVERIFIED'
+      - name: Enforce research-only no-go labels
+        if: always()
+        shell: bash
+        run: |
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
+          echo 'G0_GCODE_G1=NO-GO'
+          echo 'AUTHENTICATED_HUMAN_OWNER=NOT_TESTED'
+          echo 'INDEPENDENT_OS_ACCOUNT_ACL=NOT_TESTED'
+          echo 'MONOTONIC_EXTERNAL_COUNTER=NOT_TESTED'
+          echo 'OWNER_WINDOWS_P0_P1=NOT_TESTED'
+          echo 'REAL_TOOL_SIDE_EFFECTS=DISABLED'
