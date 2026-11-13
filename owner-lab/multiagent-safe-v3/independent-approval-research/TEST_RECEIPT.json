@@ -1,0 +1,68 @@
+{
+  "demo": {
+    "command": "python -W error demo_run.py",
+    "external_effects": false,
+    "pass": true
+  },
+  "files": {
+    "CI_WORKFLOW_TEMPLATE_NOT_ENABLED.yml": {
+      "bytes": 1325,
+      "sha256": "d27e367a1ab1774f1b8e5c0dec76bcb6d8c64afe444e5b332c285eb7b15d30bc"
+    },
+    "README_AR.md": {
+      "bytes": 6967,
+      "sha256": "a3f61cc818b4efa007b0df3026549931d0d2a5e6e8fadbb096a2e99f512a5044"
+    },
+    "authority.py": {
+      "bytes": 18713,
+      "sha256": "5a45e1fa4506fb0338a0e6c718cc8e1fe2dffeeea90244dd3d89e13d7179b024"
+    },
+    "demo_run.py": {
+      "bytes": 3714,
+      "sha256": "8d61966fc5017319d2522ad52530c6cd064ef15fa11bf737e658d533435e5b4b"
+    },
+    "demo_stdout.txt": {
+      "bytes": 156,
+      "sha256": "12db5fd067905063fe9de4eefa0c1fbdde3f4a4185f373b1b2123d97501fa44b"
+    },
+    "ipc_service.py": {
+      "bytes": 6349,
+      "sha256": "09d4a410edecda51764477e6c6d6892eba59902d8db21baecf338568640df780"
+    },
+    "test_authority.py": {
+      "bytes": 15208,
+      "sha256": "c7925312cde2e68f7a58506a4d0ed319fc7da4915e596f9147508063c2c14221"
+    },
+    "test_identity_research.py": {
+      "bytes": 775,
+      "sha256": "f1fbeaf68804f6b33ba43a51088be27d6a94501861ad5eca3d1579ea58f82e71"
+    },
+    "test_stderr.txt": {
+      "bytes": 99,
+      "sha256": "20f48ffd01b1dc2778d5401351f97ac39822fb6ad9629444425ca92b13d0ee0f"
+    }
+  },
+  "gates": "NO-GO",
+  "generated_at_utc": "2026-11-13T15:52:19.463217+00:00",
+  "git_published": false,
+  "hitl": "REQUIRED",
+  "limitations": [
+    "synthetic identity proof, not passkey or OIDC",
+    "two separate processes but same test OS user",
+    "checkpoint signer not independently protected by OS ACL",
+    "no real monotonic external floor",
+    "no physical Windows P0/P1",
+    "no real external tool dispatch"
+  ],
+  "production": "HOLD",
+  "project": "Hermes isolated owner approval and root authority",
+  "provenance": "local container sandbox, not owner Windows",
+  "python": "3.13.5",
+  "scope": "research_only",
+  "unit_tests": {
+    "command": "python -W error -m unittest -q test_authority",
+    "fail": 0,
+    "pass": 21,
+    "skip": 0
+  }
+}
