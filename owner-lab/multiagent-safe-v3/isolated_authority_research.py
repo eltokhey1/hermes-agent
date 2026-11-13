@@ -43,13 +43,15 @@ class _Boundary:
     """Only this independent process can issue an approval assertion."""
 
     def __init__(self, db_path, *, checkpoint_path=None, signing_key=None,
-                 bootstrap=False):
+                 bootstrap=False, minimum_expected_epoch=None):
         if signing_key is None:
             signing_key = secrets.token_bytes(32)  # transient legacy demo mode
         self.issuer = ApprovalIssuer(signing_key)
         self.core = HermesReference(db_path, verifier=ApprovalVerifier(signing_key))
         self.lock = threading.RLock()
-        self.anchor = (DurableAnchorResearch(checkpoint_path, signing_key)
+        self.anchor = (DurableAnchorResearch(
+            checkpoint_path, signing_key,
+            minimum_expected_epoch=minimum_expected_epoch)
                        if checkpoint_path is not None else None)
         self.estop = False
         if self.anchor is not None:
@@ -177,10 +179,12 @@ def _serve(listener: Listener, label: str, state: _Boundary, stopped: threading.
 
 
 def serve_authority(db_path: str, agent_key: bytes, owner_key: bytes, ready_queue,
-                    checkpoint_path=None, signing_key=None, bootstrap=False):
-    """Spawn target. Key must come from isolated authority in real deployment."""
+                    checkpoint_path=None, signing_key=None, bootstrap=False,
+                    minimum_expected_epoch=None):
+    """Spawn target. A real protected monitor must supply trusted epoch floor."""
     state = _Boundary(Path(db_path), checkpoint_path=checkpoint_path,
-                      signing_key=signing_key, bootstrap=bootstrap)
+                      signing_key=signing_key, bootstrap=bootstrap,
+                      minimum_expected_epoch=minimum_expected_epoch)
     stopped = threading.Event()
     with Listener(("127.0.0.1", 0), authkey=agent_key) as agent_listener, \
          Listener(("127.0.0.1", 0), authkey=owner_key) as owner_listener:
