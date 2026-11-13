@@ -25,19 +25,16 @@ try {
     $null = New-Item -ItemType Directory -Path $root -Force
     $rootCreated = $true
     $checkpoint = Join-Path $root 'nonproduction-checkpoint.json'
-    Set-Content -LiteralPath $checkpoint -Encoding UTF8 -NoNewline -Value '{"test":"readonly"}'
-    $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $checkpoint).Hash
-
     $acl = Get-Acl -LiteralPath $root
     $acl.SetAccessRuleProtection($true, $false)
     $currentSid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
     $sids = @(
         $currentSid,
-        (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')),
-        (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544'))
+        [System.Security.Principal.SecurityIdentifier]::new('S-1-5-18'),
+        [System.Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
     )
     foreach ($sid in $sids) {
-        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+        $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
             $sid,
             [System.Security.AccessControl.FileSystemRights]::FullControl,
             ([System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor
@@ -48,6 +45,9 @@ try {
         $null = $acl.AddAccessRule($rule)
     }
     Set-Acl -LiteralPath $root -AclObject $acl
+    # Only create the child file AFTER applying the restrictive parent DACL.
+    Set-Content -LiteralPath $checkpoint -Encoding UTF8 -NoNewline -Value '{"test":"readonly"}'
+    $before = (Get-FileHash -Algorithm SHA256 -LiteralPath $checkpoint).Hash
 
     # The child is non-admin. No credentials are written to disk or logs.
     $literal = $checkpoint.Replace("'", "''")
@@ -62,10 +62,10 @@ try {
 }
 "@
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
-    $credential = New-Object System.Management.Automation.PSCredential(
-        ($env:COMPUTERNAME + '\\' + $username), $password
+    $credential = [System.Management.Automation.PSCredential]::new(
+        ($env:COMPUTERNAME + '\' + $username), $password
     )
-    $proc = Start-Process -FilePath 'powershell.exe' -Credential $credential -NoNewWindow -Wait -PassThru -ArgumentList @(
+    $proc = Start-Process -FilePath 'powershell.exe' -Credential $credential -Wait -PassThru -ArgumentList @(
         '-NoProfile', '-NonInteractive', '-EncodedCommand', $encoded
     )
     $after = (Get-FileHash -Algorithm SHA256 -LiteralPath $checkpoint).Hash
