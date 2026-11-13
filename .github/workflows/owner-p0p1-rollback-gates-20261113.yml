@@ -1,0 +1,101 @@
+name: "Owner P0-P1 research: rollback and hosted Windows ACL"
+on:
+  push:
+    branches:
+      - research/owner-p0p1-rollback-guard-20261113
+    paths:
+      - ".github/workflows/owner-p0p1-rollback-gates-20261113.yml"
+permissions:
+  contents: read
+jobs:
+  existing-and-new-rollback:
+    name: "129 synthetic tests / ${{ matrix.os }}"
+    if: github.repository == 'eltokhey1/hermes-agent'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SOURCE_SHA: '32bd651531e1d136a37f46ae1752df08ba43884a'
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Pinned code checkout without saved credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            owner-lab/multiagent-safe-v3/
+          sparse-checkout-cone-mode: false
+      - name: Verify SHA and critical blob identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git hash-object owner-lab/multiagent-safe-v3/durable_anchor_research.py)" = '44a6856ba8c70275446cac6bee7dee584d5b80bf'
+          test "$(git hash-object owner-lab/multiagent-safe-v3/isolated_authority_research.py)" = '05a48a5d6fbb6338e18fabad065aa56d22cd66d5'
+          test "$(git hash-object owner-lab/multiagent-safe-v3/tests/test_monotonic_epoch_recovery_research.py)" = '975fe8c19379f9a65ae0c1911e663a3e2876903d'
+          echo "VERIFIED_SOURCE_SHA=$SOURCE_SHA"
+      - name: Setup Python 3.13
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.13'
+      - name: Compile only research and existing Owner Lab code
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -m compileall -q approvals.py orchestrator.py durable_anchor_research.py isolated_authority_research.py tests
+      - name: Run original suite plus rollback-epoch and isolated P0/P1 simulations
+        working-directory: owner-lab/multiagent-safe-v3
+        shell: bash
+        run: python -W error -m unittest discover -s tests -v
+      - name: Fixed NO-GO boundary
+        if: always()
+        shell: bash
+        run: |
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
+          echo 'HOST_OWNER_WINDOWS_P0_P1=NOT_TESTED'
+          echo 'INDEPENDENT_PROTECTED_EPOCH_SERVICE=NOT_IMPLEMENTED'
+          echo 'ACTUAL_HUMAN_OWNER_AUTHENTICATION=NOT_TESTED'
+          echo 'REAL_TOOL_DISPATCH=DISABLED'
+
+  windows-disposable-acl:
+    name: "Hosted Windows disposable ACL identity probe"
+    if: github.repository == 'eltokhey1/hermes-agent'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Pinned research script only
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: '32bd651531e1d136a37f46ae1752df08ba43884a'
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            owner-lab/multiagent-safe-v3/WINDOWS_HOSTED_ACL_RESEARCH.ps1
+          sparse-checkout-cone-mode: false
+      - name: Verify exact SHA and script hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '32bd651531e1d136a37f46ae1752df08ba43884a'
+          test "$(git hash-object owner-lab/multiagent-safe-v3/WINDOWS_HOSTED_ACL_RESEARCH.ps1)" = '91b6f42a000221b79bccb9051b6f575a3fffc4bd'
+          echo 'DISPOSABLE_ACL_SOURCE_SHA=32bd651531e1d136a37f46ae1752df08ba43884a'
+      - name: Probe scratch account NTFS write denial (HOSTED VM only)
+        shell: pwsh
+        working-directory: owner-lab/multiagent-safe-v3
+        run: .\WINDOWS_HOSTED_ACL_RESEARCH.ps1
+      - name: Explicit owner device boundary
+        if: always()
+        shell: bash
+        run: |
+          echo 'OWNER_WINDOWS_ACL=NOT_TESTED'
+          echo 'SCRATCH_WINDOWS_VM_IS_NOT_OWNER_PC=true'
+          echo 'NO_REAL_HERMES_FILES=true'
+          echo 'PRODUCTION=HOLD'
