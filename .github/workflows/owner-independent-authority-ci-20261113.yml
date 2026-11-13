@@ -1,0 +1,69 @@
+name: "Owner independent authority - synthetic cloud gate"
+on:
+  push:
+    branches:
+      - research/owner-independent-authority-service-20261113
+    paths:
+      - ".github/workflows/owner-independent-authority-ci-20261113.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-owner-gate:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    name: "Owner root + authentication simulator / ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      SOURCE_SHA: "a32758ff44fea2375baf2d98cb160e48601ea51a"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONNOUSERSITE: "1"
+    steps:
+      - name: Checkout pinned research-only source without credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            owner-lab/multiagent-safe-v3/independent-approval-research/
+          sparse-checkout-cone-mode: false
+      - name: Verify exact commit SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          echo "VERIFIED_OWNER_AUTHORITY_SHA=$SOURCE_SHA"
+      - name: Python 3.13 standard library only
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+      - name: Compile isolated modules
+        shell: bash
+        working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
+        run: python -m compileall -q authority.py ipc_service.py test_identity_research.py demo_run.py test_authority.py
+      - name: Run 21 synthetic gate and negative security cases
+        shell: bash
+        working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
+        run: python -W error -m unittest -q test_authority
+      - name: Run separate-process synthetic demo
+        shell: bash
+        working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
+        run: python -W error demo_run.py
+      - name: Non-production boundary
+        if: always()
+        shell: bash
+        run: |
+          echo "PRODUCTION=HOLD"
+          echo "HITL=REQUIRED"
+          echo "G0_GCODE_G1=NO-GO"
+          echo "OWNER_OIDC_OR_PASSKEY=NOT_IMPLEMENTED"
+          echo "INDEPENDENT_PROTECTED_OS_ACCOUNT=NOT_TESTED"
+          echo "NONROLLBACKABLE_EXTERNAL_EPOCH=NOT_IMPLEMENTED"
+          echo "OWNER_WINDOWS_P0_P1=NOT_TESTED"
+          echo "EXTERNAL_TOOL_EFFECTS=DISABLED"
