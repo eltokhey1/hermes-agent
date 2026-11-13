@@ -33,9 +33,15 @@ class DurableAnchorResearch:
     permitted ONLY for an empty new ledger with the caller's trusted key.
     """
 
-    def __init__(self, path: str | Path, secret: bytes):
+    def __init__(self, path: str | Path, secret: bytes, *, minimum_expected_epoch=None):
         if not isinstance(secret, bytes) or len(secret) < 32:
             raise GateError("ANCHOR_KEY_REQUIRED")
+        if minimum_expected_epoch is not None and (
+                type(minimum_expected_epoch) is not int or minimum_expected_epoch < 1):
+            raise GateError("TRUSTED_EPOCH_REQUIRED")
+        # This value MUST come from an independent, protected system. A caller
+        # reading it from the same checkpoint defeats the rollback protection.
+        self.minimum_expected_epoch = minimum_expected_epoch
         self.path = Path(path)
         self._mac_key = hmac.new(secret, b"hermes-owner-anchor-research-v1", hashlib.sha256).digest()
 
@@ -69,6 +75,9 @@ class DurableAnchorResearch:
         actual = hmac.new(self._mac_key, _canonical(body), hashlib.sha256).hexdigest()
         if not hmac.compare_digest(record["mac"], actual):
             raise GateError("ANCHOR_SIGNATURE_MISMATCH")
+        if (self.minimum_expected_epoch is not None
+                and body["epoch"] < self.minimum_expected_epoch):
+            raise GateError("ANCHOR_ROLLBACK_DETECTED")
         return body
 
     def bootstrap(self, current: dict) -> None:
