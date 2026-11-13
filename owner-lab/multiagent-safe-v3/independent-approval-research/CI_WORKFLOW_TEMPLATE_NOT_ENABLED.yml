@@ -1,0 +1,34 @@
+# TEMPLATE ONLY — NOT uploaded to GitHub Actions or enabled.
+# Before use pin an exact SHA and verify this is a safe public-repository runner
+# with an explicitly bounded no-cost authorization.
+name: Hermes research authority offline safety test (template)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-stdlib:
+    if: github.repository == 'eltokhey1/hermes-agent'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout pinned reviewed research SHA
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: REPLACE_WITH_EXACT_40_HEX_COMMIT_SHA
+          persist-credentials: false
+      - name: Python test-only runtime
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: '3.13'
+      - name: Execute only synthetic tests
+        working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
+        run: python -W error -m unittest -q test_authority
+      - name: Explicit non-acceptance
+        if: always()
+        run: |
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
+          echo 'OWNER_AUTHENTICATION=NOT_IMPLEMENTED'
+          echo 'REAL_PROTECTED_EPOCH=NOT_IMPLEMENTED'
+          echo 'WINDOWS_OWNER_P0_P1=NOT_TESTED'
