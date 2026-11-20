@@ -228,3 +228,12 @@ def test_invalid_event_does_not_create_database(tmp_path):
                     '--source-url',SRC])==2
     assert not db.exists()
 
+
+
+def test_short_note_does_not_create_database_or_parent(tmp_path):
+    db = tmp_path / 'fresh_parent' / 'new.sqlite'
+    assert not db.parent.exists()
+    assert si.main(['--db', str(db), 'link-vessel', 'ABCD1234567', '9173355',
+                    '--source-url', SRC, '--note', 'too short']) == 2
+    assert not db.exists()
+    assert not db.parent.exists()

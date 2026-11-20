@@ -346,7 +346,7 @@ def main(argv=None) -> int:
             container=reference(args.container,'container')
             imo=reference(args.imo,'vessel')
             url=require_url(args.source_url)
-            if not args.note.strip(): raise ValueError('Missing vessel association note')
+            if len(args.note.strip()) < 12: raise ValueError('Explicit carrier document or voyage evidence note required')
             con=connect(args.db)
             link(con,container,imo,url,args.note)
             output={'operation':'link-vessel','status':'recorded','not_inferred':True}
