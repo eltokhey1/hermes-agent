@@ -207,3 +207,24 @@ def test_fractional_timestamp_ais_order(tmp_path):
     report=si.evidence_report(db,'ABCD1234567','2026-10-18T09:00:00Z')
     assert report['shipment_state']=='UNKNOWN'
     assert report['associated_vessels'][0]['last_ais_position']['location']=='32.6, 14.3'
+
+
+def test_malformed_import_does_not_create_database_or_parent(tmp_path):
+    invalid=tmp_path/'invalid.json'
+    invalid.write_text('{bad json',encoding='utf-8')
+    db=tmp_path/'fresh-parent'/'new.sqlite'
+    assert not db.parent.exists()
+    assert si.main(['--db',str(db),'import-dcsa',str(invalid),
+                    '--source-url','https://example.org/invalid'])==2
+    assert not db.exists()
+    assert not db.parent.exists()
+
+
+def test_invalid_event_does_not_create_database(tmp_path):
+    invalid=tmp_path/'invalid-event.json'
+    invalid.write_text(json.dumps([dcsa(event_id='')]),encoding='utf-8')
+    db=tmp_path/'never-created.sqlite'
+    assert si.main(['--db',str(db),'import-dcsa',str(invalid),
+                    '--source-url',SRC])==2
+    assert not db.exists()
+

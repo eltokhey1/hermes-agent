@@ -333,7 +333,6 @@ def main(argv=None) -> int:
     sub.add_parser('health')
     args=parser.parse_args(argv)
     try:
-        con=connect(args.db)
         if args.command.startswith('import-'):
             records=read_json_records(args.file)
             if args.command=='import-ais': evs=[adapt_ais(x,args.provider) for x in records]
@@ -341,12 +340,23 @@ def main(argv=None) -> int:
             else:
                 if len(records)!=1: raise ValueError('Maersk input must be one tracking response object')
                 evs=adapt_maersk(records[0],args.provider)
+            con=connect(args.db)
             output={'operation':args.command,'result':ingest(con,evs),'parsed':len(evs)}
         elif args.command=='link-vessel':
-            link(con,args.container,args.imo,args.source_url,args.note)
+            container=reference(args.container,'container')
+            imo=reference(args.imo,'vessel')
+            url=require_url(args.source_url)
+            if not args.note.strip(): raise ValueError('Missing vessel association note')
+            con=connect(args.db)
+            link(con,container,imo,url,args.note)
             output={'operation':'link-vessel','status':'recorded','not_inferred':True}
-        elif args.command=='status':output=evidence_report(con,args.container,args.now)
+        elif args.command=='status':
+            reference(args.container,'container')
+            if args.now and not aware_utc(args.now): raise ValueError('status --now must include valid timezone')
+            con=connect(args.db)
+            output=evidence_report(con,args.container,args.now)
         else:
+            con=connect(args.db)
             output={'service':'shipment-intelligence','version':VERSION,'offline':True,
                     'stored_events':con.execute('SELECT count(*) FROM evidence_events').fetchone()[0],
                     'vessel_links':con.execute('SELECT count(*) FROM vessel_links').fetchone()[0]}
