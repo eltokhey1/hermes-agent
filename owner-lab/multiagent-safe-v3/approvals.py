@@ -89,10 +89,10 @@ class ApprovalVerifier:
             raise ApprovalDenied("Malformed claims") from exc
         if not isinstance(claims, dict) or set(claims) != FIELDS:
             raise ApprovalDenied("Invalid claim set")
-        now = self.clock()
-        if type(now) not in (int, float) or (type(now) is float and not math.isfinite(now)):
-            raise ApprovalDenied("Invalid verifier clock")
         with self.__clock_lock:
+            now = self.clock()
+            if type(now) not in (int, float) or (type(now) is float and not math.isfinite(now)):
+                raise ApprovalDenied("Invalid verifier clock")
             if self.__last_clock is not None and now < self.__last_clock:
                 raise ApprovalDenied("Verifier clock rollback detected")
             self.__last_clock = now
