@@ -10,6 +10,7 @@ import base64
 import hashlib
 import hmac
 import json
+import math
 import secrets
 import time
 from collections.abc import Callable
@@ -86,6 +87,8 @@ class ApprovalVerifier:
         if not isinstance(claims, dict) or set(claims) != FIELDS:
             raise ApprovalDenied("Invalid claim set")
         now = self.clock()
+        if type(now) not in (int, float) or (type(now) is float and not math.isfinite(now)):
+            raise ApprovalDenied("Invalid verifier clock")
         iat, exp = claims["issued_at"], claims["expires_at"]
         if (claims["aud"] != AUDIENCE or claims["task_id"] != task_id or
                 claims["spec_hash"] != spec_hash or claims["decision"] not in ("approve", "reject") or
