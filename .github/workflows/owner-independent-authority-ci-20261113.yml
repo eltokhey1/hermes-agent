@@ -5,13 +5,14 @@ on:
       - research/owner-independent-authority-service-20261113
     paths:
       - ".github/workflows/owner-independent-authority-ci-20261113.yml"
+      - "owner-lab/multiagent-safe-v3/**"
 
 permissions:
   contents: read
 
 jobs:
   synthetic-owner-gate:
-    if: github.repository == 'eltokhey1/hermes-agent'
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/owner-independent-authority-service-20261113'
     name: "Owner root + authentication simulator / ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -20,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     env:
-      SOURCE_SHA: "a32758ff44fea2375baf2d98cb160e48601ea51a"
+      SOURCE_SHA: "${{ github.sha }}"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONNOUSERSITE: "1"
     steps:
@@ -31,13 +32,14 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
           sparse-checkout: |
-            owner-lab/multiagent-safe-v3/independent-approval-research/
+            owner-lab/multiagent-safe-v3/
           sparse-checkout-cone-mode: false
       - name: Verify exact commit SHA
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$GITHUB_REF" = "refs/heads/research/owner-independent-authority-service-20261113"
           echo "VERIFIED_OWNER_AUTHORITY_SHA=$SOURCE_SHA"
       - name: Python 3.13 standard library only
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -50,7 +52,11 @@ jobs:
       - name: Run 21 synthetic gate and negative security cases
         shell: bash
         working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
-        run: python -W error -m unittest -q test_authority
+        run: python -W error -m unittest -q test_authority test_identity_research
+      - name: Verify owner-lab state, recovery and process-boundary tests (research-only)
+        shell: bash
+        working-directory: owner-lab/multiagent-safe-v3
+        run: python -W error -m unittest discover -s tests -q
       - name: Run separate-process synthetic demo
         shell: bash
         working-directory: owner-lab/multiagent-safe-v3/independent-approval-research
@@ -67,3 +73,10 @@ jobs:
           echo "NONROLLBACKABLE_EXTERNAL_EPOCH=NOT_IMPLEMENTED"
           echo "OWNER_WINDOWS_P0_P1=NOT_TESTED"
           echo "EXTERNAL_TOOL_EFFECTS=DISABLED"
+          {
+            echo "### Hermes owner-lab — research verification only"
+            echo "Commit: $SOURCE_SHA"
+            echo "Production readiness: **NO-GO**"
+            echo "Real Hermes worker / OS broker integration: **NOT TESTED**"
+            echo "Independent authenticated human approval: **NOT VERIFIED**"
+          } >> "$GITHUB_STEP_SUMMARY"
