@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import math
+import threading
 import secrets
 import time
 from collections.abc import Callable
@@ -71,6 +72,8 @@ class ApprovalVerifier:
 
     def __init__(self, key: bytes, *, clock: Callable[[], float] = time.time):
         self.__key, self.clock = _key(key), clock
+        self.__clock_lock = threading.Lock()
+        self.__last_clock = None  # process-local, not a trusted time anchor
 
     def verify(self, token: str, *, task_id: str, spec_hash: str) -> dict:
         if not isinstance(token, str) or len(token) > 4096 or token.count(".") != 1:
@@ -89,6 +92,10 @@ class ApprovalVerifier:
         now = self.clock()
         if type(now) not in (int, float) or (type(now) is float and not math.isfinite(now)):
             raise ApprovalDenied("Invalid verifier clock")
+        with self.__clock_lock:
+            if self.__last_clock is not None and now < self.__last_clock:
+                raise ApprovalDenied("Verifier clock rollback detected")
+            self.__last_clock = now
         iat, exp = claims["issued_at"], claims["expires_at"]
         if (claims["aud"] != AUDIENCE or claims["task_id"] != task_id or
                 claims["spec_hash"] != spec_hash or claims["decision"] not in ("approve", "reject") or

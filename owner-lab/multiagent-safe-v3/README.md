@@ -65,3 +65,10 @@ Regression coverage: `tests/test_local_router.py` includes default priority, Aid
 `verify_ledger()` now checks every `approval_nonces` row against a real task and its corresponding `APPROVAL_DECISION` event. It denies orphan/extra receipts, missing receipts, changes to a receipt's nonce/decision, missing approved assertions, and unexpected low-risk assertions; both approved and rejected paths remain supported. Historical approvals may expire without invalidating the immutable event/receipt consistency check: expiry is enforced **at reserve**, not when replaying the historical ledger. Negative tests are in `tests/test_state_ledger_integrity.py`.
 
 This is **consistency checking within a single SQLite database**, not independent tamper resistance: a malicious process able to rewrite both tasks and events and receipts can still forge a new history. It does **not** authenticate a human, validate Windows ACLs, prove ESTOP, or enable external execution. P0/P1 and `PRODUCTION=HOLD` are unchanged.
+
+
+## In-process clock rollback fence — research only (2026-11-22)
+
+The lab verifier rejects invalid clock values and now rejects an observed backward wall-clock movement within **the same `ApprovalVerifier` instance**, using a process-local lock. This is defense in depth only and is not a trusted timestamp authority.
+
+A first-time verification on a clock that has already been rolled back can still accept an otherwise valid signed test token; restarting the verifier loses the local fence. Full prevention requires an independently controlled and authenticated time/checkpoint authority with persistent rollback/replay protection. No real approver identity, off-host witness, owner Windows P0/P1, or production approval is established. Keep `PRODUCTION=HOLD`, `HITL=REQUIRED`, `R2=NO-GO`, paid spend `$0`.
