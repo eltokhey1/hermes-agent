@@ -36,7 +36,6 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ inputs.commit }}
-          persist-credentials: false
 
       - name: Set up locked Python and test dependencies
         uses: ./.github/actions/setup-pm

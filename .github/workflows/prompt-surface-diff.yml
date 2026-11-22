@@ -52,7 +52,6 @@ jobs:
           persist-credentials: false
           ref: ${{ inputs.commit }}
           fetch-depth: 0 # need history for the merge base
-          persist-credentials: false
 
       - name: Summarise the snapshot diff
         id: diff
