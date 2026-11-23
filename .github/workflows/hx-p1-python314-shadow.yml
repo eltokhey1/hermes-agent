@@ -147,12 +147,14 @@ jobs:
           HX_BOOT_SCRIPT=/tmp/hx-p1-boot-$GITHUB_RUN_ID.py
           cp "$RUNNER_TEMP/hx-p1-boot.py" "$HX_BOOT_SCRIPT"
           chmod 644 "$HX_BOOT_SCRIPT"
-          sudo -n chown 65534:65534 "$RUNNER_TEMP/hx-home" "$RUNNER_TEMP/hx-runtime"
-          timeout 85 sudo -n /usr/bin/env GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HERMES_PYTHON="$HERMES_PYTHON" HX_SOURCE_SHA="$HX_SOURCE_SHA" RUNNER_TEMP="$RUNNER_TEMP" HX_BOOT_SCRIPT="$HX_BOOT_SCRIPT" unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
+          # The runner owns the pinned Python venv; dropping to its own UID allows read-only imports.
+          HX_UNPRIV_UID="$(id -u)"
+          HX_UNPRIV_GID="$(id -g)"
+          timeout 85 sudo -n /usr/bin/env GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HERMES_PYTHON="$HERMES_PYTHON" HX_SOURCE_SHA="$HX_SOURCE_SHA" RUNNER_TEMP="$RUNNER_TEMP" HX_BOOT_SCRIPT="$HX_BOOT_SCRIPT" HX_UNPRIV_UID="$HX_UNPRIV_UID" HX_UNPRIV_GID="$HX_UNPRIV_GID" unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
             mount --make-rprivate /
             mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
             mount -o remount,bind,ro "$GITHUB_WORKSPACE"
-            exec setpriv --reuid=65534 --regid=65534 --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+            exec setpriv --reuid="$HX_UNPRIV_UID" --regid="$HX_UNPRIV_GID" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
               env -i HOME="$RUNNER_TEMP/hx-home" HERMES_HOME="$RUNNER_TEMP/hx-home" \
               HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-runtime" PYTHONPATH="$GITHUB_WORKSPACE" \
               GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HX_SOURCE_SHA="$HX_SOURCE_SHA" \
