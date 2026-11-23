@@ -142,18 +142,22 @@ jobs:
           stage("real_terminal_tool","DENIED",str(result)[:120])
           stage("research_exit","PARTIAL_PASS","Browser, MCP, inline, ESTOP, signer not tested; NO-GO")
           PY
-          # Never launch Python before namespace construction. Fail CLOSED on unshare/mount refusal.
-          export HERMES_PYTHON HX_SOURCE_SHA GITHUB_WORKSPACE RUNNER_TEMP
-          timeout 85 unshare --user --map-root-user --mount --net --pid --fork /bin/bash -euo pipefail -c '
+          # User-namespace mapping is disabled on this GH runner; never fall back to bare Python.
+          # Root creates mount/net/pid namespaces, drops to nobody and all capabilities BEFORE Python.
+          HX_BOOT_SCRIPT=/tmp/hx-p1-boot-$GITHUB_RUN_ID.py
+          cp "$RUNNER_TEMP/hx-p1-boot.py" "$HX_BOOT_SCRIPT"
+          chmod 644 "$HX_BOOT_SCRIPT"
+          sudo -n chown 65534:65534 "$RUNNER_TEMP/hx-home" "$RUNNER_TEMP/hx-runtime"
+          timeout 85 sudo -n /usr/bin/env GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HERMES_PYTHON="$HERMES_PYTHON" HX_SOURCE_SHA="$HX_SOURCE_SHA" RUNNER_TEMP="$RUNNER_TEMP" HX_BOOT_SCRIPT="$HX_BOOT_SCRIPT" unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
             mount --make-rprivate /
             mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
             mount -o remount,bind,ro "$GITHUB_WORKSPACE"
-            exec setpriv --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+            exec setpriv --reuid=65534 --regid=65534 --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
               env -i HOME="$RUNNER_TEMP/hx-home" HERMES_HOME="$RUNNER_TEMP/hx-home" \
               HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-runtime" PYTHONPATH="$GITHUB_WORKSPACE" \
               GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HX_SOURCE_SHA="$HX_SOURCE_SHA" \
               PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PATH=/usr/local/bin:/usr/bin:/bin \
-              "$HERMES_PYTHON" -B "$RUNNER_TEMP/hx-p1-boot.py"
+              "$HERMES_PYTHON" -B "$HX_BOOT_SCRIPT"
           '
           after="$(sha256sum AGENTS.md | cut -d' ' -f1)"
           test "$before" = "$after"
