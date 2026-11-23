@@ -1,0 +1,175 @@
+name: Hermes HX P1 Python 3.14 source-backed Shadow (NO-GO)
+on:
+  push:
+    branches:
+      - research/p1-python314-shadow-20261123
+    paths:
+      - .github/workflows/hx-p1-python314-shadow.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hx-p1-314-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  real-agent-shadow:
+    name: Isolated real AIAgent import and constructor, NO-GO
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-python314-shadow-20261123'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PRODUCTION: HOLD
+      HITL: REQUIRED
+      HX_SOURCE_SHA: ${{ github.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Checkout research SHA without persisted credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Preflight exact commit and research branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'eltokhey1/hermes-agent'
+          test "$GITHUB_REF" = 'refs/heads/research/p1-python314-shadow-20261123'
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          echo "CHECKED_OUT_SHA=$HX_SOURCE_SHA"
+      - name: Prepare exact Python and uv from Hermes project lock (no extras or cache)
+        id: pm
+        uses: ./.github/actions/setup-pm
+        with:
+          toolchain: python
+          extras: '[]'
+          test-environment: 'false'
+          cache: 'false'
+          cache-python: 'false'
+          save-tools-cache: 'false'
+          save-python-cache: 'false'
+      - name: Verify Python 3.14 and project dependency import
+        shell: bash
+        env:
+          HERMES_PYTHON: ${{ steps.pm.outputs.python-path }}
+        run: |
+          set -euo pipefail
+          test -x "$HERMES_PYTHON"
+          "$HERMES_PYTHON" -B -c 'import sys,ruamel.yaml;assert sys.version_info[:2] == (3,14);print("PY314_DEPENDENCIES=VERIFIED",sys.version.split()[0])'
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path("pm/lock.json").read_text())["packages"]
+          assert j["uv"]["version"]=="0.12.3"
+          assert j["python"]["version"]=="3.14.7+20260901"
+          assert Path("uv.lock").is_file()
+          print("EXACT_TOOLCHAIN_PIN=VERIFIED")
+          PY
+      - name: Boot real AIAgent in pre-established mount and network namespaces
+        shell: bash
+        env:
+          HERMES_PYTHON: ${{ steps.pm.outputs.python-path }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          mkdir -p "$RUNNER_TEMP/hx-home" "$RUNNER_TEMP/hx-runtime"
+          before="$(sha256sum AGENTS.md | cut -d' ' -f1)"
+          cat > "$RUNNER_TEMP/hx-p1-boot.py" <<'PY'
+          import json,os,socket,subprocess,sys
+          from pathlib import Path
+          from unittest.mock import patch
+          def stage(name,result,detail=""):
+              print("HX_P1_EVIDENCE="+json.dumps({"stage":name,"status":result,"detail":str(detail)[:190],"PRODUCTION":"HOLD","HITL":"REQUIRED","release":"NO-GO","sha":os.getenv("HX_SOURCE_SHA","UNKNOWN")}),flush=True)
+          if sys.version_info[:2]!=(3,14):
+              stage("python","BLOCKED",sys.version);sys.exit(2)
+          st=Path("/proc/self/status").read_text()
+          if not all(x in st for x in ("NoNewPrivs:\t1","CapEff:\t0000000000000000","CapBnd:\t0000000000000000")):
+              stage("os_identity","BLOCKED","capabilities or no_new_privs mismatch");sys.exit(2)
+          protected=Path(os.environ["GITHUB_WORKSPACE"])/"AGENTS.md"
+          expected=protected.read_bytes()
+          try:
+              protected.write_bytes(b"DO_NOT_WRITE")
+          except OSError:
+              pass
+          else:
+              stage("readonly_kernel","FAIL","unexpected write");sys.exit(2)
+          if protected.read_bytes()!=expected:
+              stage("readonly_kernel","FAIL","fixture modified");sys.exit(2)
+          try:
+              socket.create_connection(("1.1.1.1",443),timeout=1)
+          except OSError:
+              pass
+          else:
+              stage("no_network","FAIL","unexpected route");sys.exit(2)
+          child=subprocess.run(["/bin/sh","-c","printf BAD >> AGENTS.md"],cwd=os.environ["GITHUB_WORKSPACE"],capture_output=True,timeout=5)
+          if child.returncode==0 or protected.read_bytes()!=expected:
+              stage("child_write","FAIL","unexpected subprocess write");sys.exit(2)
+          stage("os_preflight","VERIFIED_PARTIAL","mount readonly; no network; child blocked; zero caps")
+          try:
+              from run_agent import AIAgent
+          except Exception as exc:
+              stage("import_real_facade","BLOCKED",repr(exc));sys.exit(2)
+          stage("import_real_facade","VERIFIED","original source")
+          try:
+              with (patch("model_tools.get_tool_definitions",return_value=[]),
+                    patch("model_tools.check_toolset_requirements",return_value={}),
+                    patch("hermes_cli.config.load_config",return_value={}),
+                    patch("hermes_cli.config.load_config_readonly",return_value={}),
+                    patch("agent.process_bootstrap.OpenAI")):
+                  agent=AIAgent(api_key="HX_SYNTHETIC_DUMMY",base_url="http://127.0.0.1:9/v1",max_iterations=1,quiet_mode=True,skip_context_files=True,skip_memory=True,save_trajectories=False,platform="cli")
+              assert isinstance(agent,AIAgent)
+          except Exception as exc:
+              stage("construct_real_AIAgent","BLOCKED",repr(exc));sys.exit(2)
+          stage("construct_real_AIAgent","VERIFIED_PARTIAL","provider stubbed; conversation NOT run")
+          from tools.file_tools import write_file_tool
+          try: 
+              result=write_file_tool(str(protected),"DO_NOT_WRITE",task_id="hx-p1-shadow")
+          except Exception as exc:
+              result=repr(exc)
+          if protected.read_bytes()!=expected:
+              stage("real_file_tool","FAIL","real file tool changed fixture");sys.exit(2)
+          stage("real_file_tool","DENIED",str(result)[:120])
+          from tools.terminal_tool import terminal_tool
+          try:
+              result=terminal_tool(command="printf BAD >> AGENTS.md",workdir=os.environ["GITHUB_WORKSPACE"],timeout=5)
+          except Exception as exc:
+              result=repr(exc)
+          if protected.read_bytes()!=expected:
+              stage("real_terminal_tool","FAIL","real terminal changed fixture");sys.exit(2)
+          stage("real_terminal_tool","DENIED",str(result)[:120])
+          stage("research_exit","PARTIAL_PASS","Browser, MCP, inline, ESTOP, signer not tested; NO-GO")
+          PY
+          # Never launch Python before namespace construction. Fail CLOSED on unshare/mount refusal.
+          export HERMES_PYTHON HX_SOURCE_SHA GITHUB_WORKSPACE RUNNER_TEMP
+          timeout 85 unshare --user --map-root-user --mount --net --pid --fork /bin/bash -euo pipefail -c '
+            mount --make-rprivate /
+            mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
+            mount -o remount,bind,ro "$GITHUB_WORKSPACE"
+            exec setpriv --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+              env -i HOME="$RUNNER_TEMP/hx-home" HERMES_HOME="$RUNNER_TEMP/hx-home" \
+              HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-runtime" PYTHONPATH="$GITHUB_WORKSPACE" \
+              GITHUB_WORKSPACE="$GITHUB_WORKSPACE" HX_SOURCE_SHA="$HX_SOURCE_SHA" \
+              PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PATH=/usr/local/bin:/usr/bin:/bin \
+              "$HERMES_PYTHON" -B "$RUNNER_TEMP/hx-p1-boot.py"
+          '
+          after="$(sha256sum AGENTS.md | cut -d' ' -f1)"
+          test "$before" = "$after"
+          echo "EXTERNAL_READONLY_WITNESS=VERIFIED sha256:$after"
+      - name: Report non-production decision regardless of earlier failures
+        if: always()
+        shell: bash
+        run: |
+          echo 'PRODUCTION=HOLD'
+          echo 'HITL=REQUIRED'
+          echo 'G0/G-CODE/G1=NO-GO'
+          echo 'P1_REAL=NO-GO'
+          {
+            echo '### Hermes HX — P1 real-worker source-backed research'
+            echo "Checked source SHA: $HX_SOURCE_SHA"
+            echo 'A green job is NOT production authorization.'
+            echo 'Real model E2E/Browser/MCP/Inline/independent human approval/ESTOP: NOT VERIFIED.'
+            echo 'PRODUCTION=HOLD; HITL=REQUIRED; P1_REAL=NO-GO.'
+          } >> "$GITHUB_STEP_SUMMARY"
