@@ -92,6 +92,10 @@ jobs:
           import pathlib
           import socket
           import sys
+          import os
+          # Ensure /proc is mounted for the SAME PID namespace, not the outer host.
+          assert int(pathlib.Path("/proc/self/stat").read_text().split()[0]) == os.getpid(), "PID namespace /proc mismatch"
+          print("HX_PROC_PID_NAMESPACE=VERIFIED")
           status = pathlib.Path("/proc/self/status").read_text()
           assert "NoNewPrivs:\t1" in status, "no_new_privs missing"
           assert "CapEff:\t0000000000000000" in status, "effective capabilities present"
@@ -122,7 +126,7 @@ jobs:
             HX_SOURCE_SHA="$HX_SOURCE_SHA" HX_RUNNER_UID="$HX_RUNNER_UID" \
             HX_RUNNER_GID="$HX_RUNNER_GID" HX_RUNNER_HOME="$HX_RUNNER_HOME" \
             HERMES_PYTHON="$HERMES_PYTHON" \
-            /usr/bin/unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
+            /usr/bin/unshare --mount --net --pid --fork --mount-proc /bin/bash -euo pipefail -c '
               mount --make-rprivate /
               mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
               mount -o remount,bind,ro "$GITHUB_WORKSPACE"
