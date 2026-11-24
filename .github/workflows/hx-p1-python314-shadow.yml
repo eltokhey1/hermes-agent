@@ -193,12 +193,17 @@ jobs:
           inline_result=json.loads(executor(agent,payload,inline_ctx))
           if len(inline_result.get("todos",[]))!=1 or inline_result["todos"][0]["id"]!="hx1":
               stage("real_inline_todo","FAIL",inline_result);sys.exit(2)
-          bad=json.loads(executor(agent,{"todos":"INVALID_NOT_A_LIST"},inline_ctx))
-          if not bad.get("error"):
-              stage("real_inline_invalid","FAIL","malformed input was accepted");sys.exit(2)
+          before_bad_revision=agent._todo_store.snapshot()["revision"]
+          # Bare strings are deliberately coerced to arrays. Use an input
+          # the TodoStore contract MUST reject instead of asserting a false failure.
+          bad=json.loads(executor(agent,{"todos":[{"id":"hx2","content":"","status":"pending"}]},inline_ctx))
+          if "empty or missing content" not in str(bad.get("error","")).lower():
+              stage("real_inline_invalid","FAIL","empty-content item not rejected");sys.exit(2)
           after_bad=json.loads(executor(agent,{},inline_ctx))
           if after_bad.get("todos")!=inline_result.get("todos"):
               stage("real_inline_invalid","FAIL","state changed after error");sys.exit(2)
+          if agent._todo_store.snapshot()["revision"]!=before_bad_revision:
+              stage("real_inline_invalid","FAIL","revision changed after error");sys.exit(2)
           if protected.read_bytes()!=expected:
               stage("real_inline_todo","FAIL","protected file changed");sys.exit(2)
           stage("real_inline_todo","VERIFIED_IN_MEMORY","real inline executor, no registry")
@@ -236,9 +241,10 @@ jobs:
           set -euo pipefail
           SPOOL="$RUNNER_TEMP/hx-p1-evidence.$GITHUB_RUN_ID.log"
           test -f "$SPOOL"
-          sudo -n /usr/bin/python3 - "$SPOOL" "$GITHUB_WORKSPACE" "$HX_SOURCE_SHA" <<'PY'
+          sudo -n /usr/bin/python3 - "$SPOOL" "$GITHUB_WORKSPACE" "$HX_SOURCE_SHA" "$(id -u)" "$(id -g)" <<'PY'
           import json,subprocess,hashlib,sys,os,stat
-          spool,root,sha=sys.argv[1:]
+          spool,root,sha,uid,gid=sys.argv[1:]
+          uid,gid=int(uid),int(gid)
           st=os.stat(spool)
           assert st.st_uid==0 and stat.S_IMODE(st.st_mode)==0o600, "spool not root-owned"
           lines=open(spool,encoding="utf-8").read().splitlines()
@@ -268,6 +274,23 @@ jobs:
           expected=subprocess.check_output(["git","-C",root,"show",sha+":AGENTS.md"])
           actual=open(os.path.join(root,"AGENTS.md"),"rb").read()
           assert hashlib.sha256(expected).digest()==hashlib.sha256(actual).digest()
+          # A second, independently launched namespace attempts the forbidden write.
+          # Its failure is observed by this root-owned verifier, not self-reported by AIAgent.
+          independent_probe = """set -euo pipefail
+          mount --make-rprivate /
+          mount --bind "$HX_W_ROOT" "$HX_W_ROOT"
+          mount -o remount,bind,ro "$HX_W_ROOT"
+          exec setpriv --reuid="$HX_W_UID" --regid="$HX_W_GID" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all /bin/bash -c 'printf VIOLATION_WITNESS >> "$HX_W_ROOT/AGENTS.md"'
+          """
+          verifier=subprocess.run(
+              ["unshare","--mount","--net","--pid","--fork","/bin/bash","-euo","pipefail","-c",independent_probe],
+              env={"PATH":"/usr/local/bin:/usr/bin:/bin","HX_W_ROOT":root,"HX_W_UID":str(uid),"HX_W_GID":str(gid)},
+              text=True,capture_output=True,timeout=25)
+          assert verifier.returncode!=0, "independent write unexpectedly succeeded"
+          assert "Read-only file system" in verifier.stderr, "independent denial was not from readonly mount"
+          assert open(os.path.join(root,"AGENTS.md"),"rb").read()==expected, "independent probe changed source"
+          print("OUTSIDE_WORKER_KERNEL_WRITE_DENIAL=VERIFIED code="+str(verifier.returncode))
+          print("OUTSIDE_WORKER_SOURCE_UNCHANGED=VERIFIED")
           print("OUT_OF_WORKER_WITNESS=PARTIAL_PASS")
           print("SPARED_PROTECTED_SOURCE_SHA256="+hashlib.sha256(actual).hexdigest())
           print("SOURCE_SHA="+sha)
