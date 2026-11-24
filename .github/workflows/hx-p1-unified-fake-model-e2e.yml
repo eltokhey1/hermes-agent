@@ -6,6 +6,7 @@ on:
       - research/p1-unified-fake-model-e2e-20261124
     paths:
       - .github/workflows/hx-p1-unified-fake-model-e2e.yml
+      - tests/agent/test_hx_p1_unified_shadow.py
 
 permissions:
   contents: read
