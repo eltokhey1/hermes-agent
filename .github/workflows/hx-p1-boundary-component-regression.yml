@@ -75,11 +75,50 @@ jobs:
           export HX_RUNNER_UID="$(id -u)" HX_RUNNER_GID="$(id -g)"
           test "$HX_RUNNER_UID" -ne 0
           mkdir -p "$RUNNER_TEMP/hx-p1-tests-home" "$RUNNER_TEMP/hx-p1-test-runtime"
-          BEFORE="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
           export HX_RUNNER_HOME="$RUNNER_TEMP/hx-p1-tests-home"
-          # Linux runner may reject user namespace; use root-created mount/net/pid
-          # namespaces, drop to runner UID with zero caps BEFORE Python is executed.
-          # No branch or network fallback when namespace construction fails.
+          BEFORE="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          # Script inside a separate namespace; it has no GITHUB_TOKEN, credentials, or outbound network.
+          cat > "$RUNNER_TEMP/hx-component-tests.sh" <<'SH'
+          set -euo pipefail
+          "$HERMES_PYTHON" -B "$RUNNER_TEMP/hx-component-preflight.py"
+          echo 'HX_BOUNDARY_TESTS=BEGIN'
+          bash scripts/run_tests.sh -j 2 \
+            tests/hermes_cli/test_mcp_security.py \
+            tests/tools/test_browser_secret_exfil.py \
+            tests/tools/test_browser_private_page_action_guard.py \
+            tests/agent/test_inline_tool_executors_memory_args.py \
+            tests/cron/test_estop.py \
+            tests/hermes_cli/test_approval_transport.py
+          echo 'HX_BOUNDARY_TESTS=PASS'
+          SH
+          cat > "$RUNNER_TEMP/hx-component-preflight.py" <<'PY'
+          import pathlib
+          import socket
+          import sys
+          status = pathlib.Path("/proc/self/status").read_text()
+          assert "NoNewPrivs:\t1" in status, "no_new_privs missing"
+          assert "CapEff:\t0000000000000000" in status, "effective capabilities present"
+          assert "CapBnd:\t0000000000000000" in status, "bounding capabilities present"
+          try:
+              socket.create_connection(("1.1.1.1", 443), timeout=1)
+          except OSError:
+              pass
+          else:
+              raise AssertionError("external network unexpectedly reachable")
+          protected = pathlib.Path("AGENTS.md")
+          expected = protected.read_bytes()
+          try:
+              protected.write_bytes(b"DO_NOT_WRITE")
+          except OSError:
+              pass
+          else:
+              raise AssertionError("checkout writable")
+          assert protected.read_bytes() == expected
+          assert sys.version_info[:2] == (3, 14)
+          print("HX_OS_BOUNDARY=VERIFIED_PARTIAL network_isolated+readonly_repo+zero_caps+no_new_privs")
+          PY
+          chmod 644 "$RUNNER_TEMP/hx-component-tests.sh" "$RUNNER_TEMP/hx-component-preflight.py"
+          # Namespace must be built successfully BEFORE any real test imports execute.
           timeout 720 sudo -n /usr/bin/env \
             GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" \
             HX_SOURCE_SHA="$HX_SOURCE_SHA" HX_RUNNER_UID="$HX_RUNNER_UID" \
@@ -89,7 +128,6 @@ jobs:
               mount --make-rprivate /
               mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
               mount -o remount,bind,ro "$GITHUB_WORKSPACE"
-              # The only reachable network inside this namespace is loopback.
               /usr/sbin/ip link set lo up
               cd "$GITHUB_WORKSPACE"
               exec setpriv --reuid="$HX_RUNNER_UID" --regid="$HX_RUNNER_GID" \
@@ -98,39 +136,9 @@ jobs:
                 PATH=/usr/local/bin:/usr/bin:/bin HOME="$HX_RUNNER_HOME" \
                 HERMES_HOME="$HX_RUNNER_HOME" HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-p1-test-runtime" \
                 HERMES_PYTHON="$HERMES_PYTHON" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" \
-                HX_SOURCE_SHA="$HX_SOURCE_SHA" PYTHONDONTWRITEBYTECODE=1 \
-                PYTHONNOUSERSITE=1 /bin/bash -euo pipefail -c '\''
-                  "$HERMES_PYTHON" -B -c "
-import pathlib, socket, sys
-p=pathlib.Path(\"/proc/self/status\").read_text()
-assert \"NoNewPrivs:\\t1\" in p
-assert \"CapEff:\\t0000000000000000\" in p
-assert \"CapBnd:\\t0000000000000000\" in p
-try:
-    socket.create_connection((\"1.1.1.1\", 443), timeout=1)
-except OSError:
-    pass
-else:
-    raise AssertionError(\"external network unexpectedly reachable\")
-try:
-    pathlib.Path(\"AGENTS.md\").write_text(\"UNEXPECTED_WRITE\")
-except OSError:
-    pass
-else:
-    raise AssertionError(\"checkout unexpectedly writable\")
-assert sys.version_info[:2] == (3,14)
-print(\"HX_OS_BOUNDARY=VERIFIED_PARTIAL netns+readonly+no_new_privs+zero_caps\")
-"
-                  echo "HX_BOUNDARY_TESTS=BEGIN"
-                  bash scripts/run_tests.sh -j 2 \
-                    tests/hermes_cli/test_mcp_security.py \
-                    tests/tools/test_browser_secret_exfil.py \
-                    tests/tools/test_browser_private_page_action_guard.py \
-                    tests/agent/test_inline_tool_executors_memory_args.py \
-                    tests/cron/test_estop.py \
-                    tests/hermes_cli/test_approval_transport.py
-                  echo "HX_BOUNDARY_TESTS=PASS"
-                '\''
+                HX_SOURCE_SHA="$HX_SOURCE_SHA" RUNNER_TEMP="$RUNNER_TEMP" \
+                PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+                /bin/bash "$RUNNER_TEMP/hx-component-tests.sh"
             '
           AFTER="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
           test "$BEFORE" = "$AFTER"
