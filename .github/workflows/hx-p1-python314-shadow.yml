@@ -2,7 +2,7 @@ name: Hermes HX P1 Python 3.14 source-backed Shadow (NO-GO)
 on:
   push:
     branches:
-      - research/p1-python314-shadow-20261123
+      - research/p1-separate-witness-20261124
     paths:
       - .github/workflows/hx-p1-python314-shadow.yml
 
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   real-agent-shadow:
     name: Isolated real AIAgent import and constructor, NO-GO
-    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-python314-shadow-20261123'
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-separate-witness-20261124'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = 'eltokhey1/hermes-agent'
-          test "$GITHUB_REF" = 'refs/heads/research/p1-python314-shadow-20261123'
+          test "$GITHUB_REF" = 'refs/heads/research/p1-separate-witness-20261124'
           test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
           echo "CHECKED_OUT_SHA=$HX_SOURCE_SHA"
       - name: Prepare exact Python and uv from Hermes project lock (no extras or cache)
@@ -193,7 +193,7 @@ jobs:
           inline_result=json.loads(executor(agent,payload,inline_ctx))
           if len(inline_result.get("todos",[]))!=1 or inline_result["todos"][0]["id"]!="hx1":
               stage("real_inline_todo","FAIL",inline_result);sys.exit(2)
-          bad=json.loads(executor(agent,{"todos":"INVALID_NOT_A_LIST"},inline_ctx))
+          bad=json.loads(executor(agent,{"todos":[{"id":"hx-invalid","content":"","status":"pending"}]},inline_ctx))
           if not bad.get("error"):
               stage("real_inline_invalid","FAIL","malformed input was accepted");sys.exit(2)
           after_bad=json.loads(executor(agent,{},inline_ctx))
@@ -288,4 +288,112 @@ jobs:
             echo 'A green job is NOT production authorization.'
             echo 'Real model E2E/Browser navigation/MCP transport/Inline external effects/independent human approval/ESTOP: NOT VERIFIED.'
             echo 'PRODUCTION=HOLD; HITL=REQUIRED; P1_REAL=NO-GO.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  independent-log-witness:
+    name: Separate GitHub runner — evidence consistency only (NO-GO)
+    needs: [real-agent-shadow]
+    if: always() && github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-separate-witness-20261124'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+    env:
+      HX_SOURCE_SHA: ${{ github.sha }}
+      PRODUCTION: HOLD
+      HITL: REQUIRED
+    steps:
+      - name: Checkout pinned candidate on a distinct runner
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Independently read job status and immutable hosted logs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "eltokhey1/hermes-agent"
+          test "$GITHUB_REF" = "refs/heads/research/p1-separate-witness-20261124"
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          job_id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" --jq '.jobs[] | select(.name == "Isolated real AIAgent import and constructor, NO-GO") | .id' | head -n 1)"
+          test -n "$job_id"
+          job_conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$job_id" --jq '.conclusion')"
+          echo "OBSERVED_WORKER_JOB_CONCLUSION=$job_conclusion"
+          test "$job_conclusion" = "success"
+          log_path="$RUNNER_TEMP/hx-worker-hosted-$job_id.log"
+          ok=0
+          for attempt in 1 2 3; do
+            if gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$job_id/logs" > "$log_path" && grep -q 'HX_P1_EVIDENCE=' "$log_path"; then
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ok" = 1
+          python3 - "$log_path" "$HX_SOURCE_SHA" "$GITHUB_WORKSPACE" <<'PY'
+          import hashlib
+          import json
+          import pathlib
+          import re
+          import sys
+          log_path, sha, root = sys.argv[1:]
+          observed = {}
+          raw = pathlib.Path(log_path).read_text(encoding="utf-8-sig")
+          decoder = json.JSONDecoder()
+          for line in raw.splitlines():
+              # Source-echoed command text has a + expression, not a JSON object.
+              match = re.search(r'HX_P1_EVIDENCE=(\{)', line)
+              if not match:
+                  continue
+              evidence, _ = decoder.raw_decode(line[match.start(1):])
+              stage = evidence.get("stage")
+              if stage in observed:
+                  raise AssertionError("DUPLICATE_WORKER_CLAIM " + str(stage))
+              observed[stage] = evidence
+          required = {
+              "os_preflight": "VERIFIED_PARTIAL",
+              "import_real_facade": "VERIFIED",
+              "construct_real_AIAgent": "VERIFIED_PARTIAL",
+              "real_file_tool": "DENIED",
+              "real_terminal_tool": "DENIED",
+              "real_browser_metadata": "DENIED_BEFORE_BACKEND",
+              "mcp_scope_isolation": "VERIFIED_UNIT_SCOPE",
+              "mcp_untrusted_write": "DENIED_BEFORE_TRANSPORT",
+              "real_inline_todo": "VERIFIED_IN_MEMORY",
+              "real_inline_invalid": "DENIED",
+              "research_exit": "PARTIAL_PASS",
+          }
+          assert set(observed) == set(required), (set(observed), set(required))
+          for stage, expected in required.items():
+              row = observed[stage]
+              assert row["status"] == expected, (stage, row["status"])
+              assert row["sha"] == sha, (stage, "SHA_MISMATCH")
+              assert row["PRODUCTION"] == "HOLD"
+              assert row["HITL"] == "REQUIRED"
+              assert row["release"] == "NO-GO"
+          witness = re.search(r'EXTERNAL_READONLY_WITNESS=VERIFIED sha256:([0-9a-f]{64})', raw)
+          assert witness, "NO_EXTERNAL_HASH_IN_WORKER_LOG"
+          actual_hash = hashlib.sha256((pathlib.Path(root) / "AGENTS.md").read_bytes()).hexdigest()
+          assert witness.group(1) == actual_hash, "PINNED_FILE_HASH_MISMATCH"
+          print("SEPARATE_RUNNER_WITNESS=VERIFIED_LOG_CONSISTENCY_ONLY")
+          print("SOURCE_SHA=" + sha)
+          print("HOSTED_WORKER_CLAIMS=" + str(len(observed)))
+          print("PROTECTED_SOURCE_HASH=" + actual_hash)
+          print("LIMITATION=Worker claims are not independently signed/attested; no offhost trust anchor")
+          print("PRODUCTION=HOLD; HITL=REQUIRED; P1_REAL=NO-GO")
+          PY
+      - name: Record unresolved independent trust and production gate
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Hermes HX P1 — separate-runner log witness'
+            echo "Head SHA: $HX_SOURCE_SHA"
+            echo 'The witness is an independent CI job/runner, not an independently trusted signer.'
+            echo 'Its checks establish log-to-SHA consistency, NOT real browser/MCP network E2E or owner approval.'
+            echo 'PRODUCTION=HOLD; HITL=REQUIRED; G0/G-CODE/G1=NO-GO.'
           } >> "$GITHUB_STEP_SUMMARY"
