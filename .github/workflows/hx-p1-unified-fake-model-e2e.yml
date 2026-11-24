@@ -1,0 +1,207 @@
+name: Hermes HX P1 one-turn fake-model cross-tool shadow (NO-GO)
+
+on:
+  push:
+    branches:
+      - research/p1-unified-fake-model-e2e-20261124
+    paths:
+      - .github/workflows/hx-p1-unified-fake-model-e2e.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hx-p1-boundary-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boundary-regressions:
+    name: Original AIAgent synthetic turn across MCP Browser Inline inside offline namespaces
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-unified-fake-model-e2e-20261124'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      PRODUCTION: HOLD
+      HITL: REQUIRED
+      PAID_SPEND_USD: '0'
+      HX_SOURCE_SHA: ${{ github.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Checkout pinned research source without persisted credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Pin source SHA and test targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'eltokhey1/hermes-agent'
+          test "$GITHUB_REF" = 'refs/heads/research/p1-unified-fake-model-e2e-20261124'
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          for file in \
+            tests/agent/test_hx_p1_unified_shadow.py; do
+              test -f "$file"
+          done
+          printf 'SOURCE_SHA=%s\nTARGET_TEST_FILES=1\n' "$HX_SOURCE_SHA"
+      - name: Prepare locked Python 3.14 dev and test environment with NO cache
+        uses: ./.github/actions/setup-pm
+        with:
+          toolchain: python
+          extras: '[]'
+          test-environment: 'true'
+          cache: 'false'
+          cache-python: 'false'
+          save-tools-cache: 'false'
+          save-python-cache: 'false'
+      - name: Verify actual pytest environment and exact source version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$HERMES_PYTHON"
+          "$HERMES_PYTHON" -B -c 'import sys,pytest; assert sys.version_info[:2]==(3,14); print("TESTENV_PY314=VERIFIED",sys.version.split()[0],"PYTEST",pytest.__version__)'
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+      - name: Run original Hermes regression tests with source readonly and egress isolated
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HX_RUNNER_UID="$(id -u)" HX_RUNNER_GID="$(id -g)"
+          test "$HX_RUNNER_UID" -ne 0
+          mkdir -p "$RUNNER_TEMP/hx-p1-tests-home" "$RUNNER_TEMP/hx-p1-test-runtime"
+          export HX_RUNNER_HOME="$RUNNER_TEMP/hx-p1-tests-home"
+          BEFORE="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          # The existing test runner always writes test_durations.json. Bind ONLY
+          # this synthetic metadata file to a writable runner-temp file.
+          test ! -e test_durations.json
+          : > test_durations.json
+          printf '{}\n' > "$RUNNER_TEMP/hx-test-durations.json"
+          # Script inside a separate namespace; it has no GITHUB_TOKEN, credentials, or outbound network.
+          cat > "$RUNNER_TEMP/hx-component-tests.sh" <<'SH'
+          set -euo pipefail
+          "$HERMES_PYTHON" -B "$RUNNER_TEMP/hx-component-preflight.py"
+          echo 'HX_UNIFIED_E2E=BEGIN'
+          bash scripts/run_tests.sh -j 2 tests/agent/test_hx_p1_unified_shadow.py
+          echo 'HX_UNIFIED_E2E=PASS'
+          SH
+          cat > "$RUNNER_TEMP/hx-component-preflight.py" <<'PY'
+          import pathlib
+          import socket
+          import sys
+          status = pathlib.Path("/proc/self/status").read_text()
+          assert "NoNewPrivs:\t1" in status, "no_new_privs missing"
+          assert "CapEff:\t0000000000000000" in status, "effective capabilities present"
+          assert "CapBnd:\t0000000000000000" in status, "bounding capabilities present"
+          try:
+              socket.create_connection(("1.1.1.1", 443), timeout=1)
+          except OSError:
+              pass
+          else:
+              raise AssertionError("external network unexpectedly reachable")
+          protected = pathlib.Path("AGENTS.md")
+          expected = protected.read_bytes()
+          try:
+              protected.write_bytes(b"DO_NOT_WRITE")
+          except OSError:
+              pass
+          else:
+              raise AssertionError("checkout writable")
+          assert protected.read_bytes() == expected
+          pathlib.Path("test_durations.json").write_text("{}\n")
+          assert sys.version_info[:2] == (3, 14)
+          print("HX_OS_BOUNDARY=VERIFIED_PARTIAL network_isolated+readonly_repo+zero_caps+no_new_privs")
+          PY
+          chmod 644 "$RUNNER_TEMP/hx-component-tests.sh" "$RUNNER_TEMP/hx-component-preflight.py"
+          # Root-owned evidence spool cannot be edited by the unprivileged worker.
+          HX_EVIDENCE_SPOOL="$RUNNER_TEMP/hx-unified-evidence.$GITHUB_RUN_ID.log"
+          sudo -n install -m 0600 -o root -g root /dev/null "$HX_EVIDENCE_SPOOL"
+          # Namespace must be built successfully BEFORE any real test imports execute.
+          timeout 720 sudo -n /usr/bin/env \
+            GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" \
+            HX_SOURCE_SHA="$HX_SOURCE_SHA" HX_RUNNER_UID="$HX_RUNNER_UID" \
+            HX_RUNNER_GID="$HX_RUNNER_GID" HX_RUNNER_HOME="$HX_RUNNER_HOME" \
+            HERMES_PYTHON="$HERMES_PYTHON" \
+            /usr/bin/unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
+              mount --make-rprivate /
+              mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
+              mount -o remount,bind,ro "$GITHUB_WORKSPACE"
+              mount --bind "$RUNNER_TEMP/hx-test-durations.json" "$GITHUB_WORKSPACE/test_durations.json"
+              /usr/sbin/ip link set lo up
+              cd "$GITHUB_WORKSPACE"
+              exec setpriv --reuid="$HX_RUNNER_UID" --regid="$HX_RUNNER_GID" \
+                --clear-groups --no-new-privs --bounding-set=-all \
+                --inh-caps=-all --ambient-caps=-all /usr/bin/env -i \
+                PATH=/usr/local/bin:/usr/bin:/bin HOME="$HX_RUNNER_HOME" \
+                HERMES_HOME="$HX_RUNNER_HOME" HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-p1-test-runtime" \
+                HERMES_PYTHON="$HERMES_PYTHON" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" \
+                HX_SOURCE_SHA="$HX_SOURCE_SHA" RUNNER_TEMP="$RUNNER_TEMP" \
+                PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 \
+                /bin/bash "$RUNNER_TEMP/hx-component-tests.sh"
+            ' | sudo -n tee "$HX_EVIDENCE_SPOOL"
+          AFTER="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          test "$BEFORE" = "$AFTER"
+          printf 'HX_SOURCE_SHA=%s\nSOURCE_UNCHANGED_SHA256=%s\n' "$HX_SOURCE_SHA" "$AFTER"
+      - name: Verify synthetic cross-tool evidence and OS denial outside the agent process
+        shell: bash
+        run: |
+          set -euo pipefail
+          SPOOL="$RUNNER_TEMP/hx-unified-evidence.$GITHUB_RUN_ID.log"
+          test -f "$SPOOL"
+          sudo -n /usr/bin/python3 - "$SPOOL" "$GITHUB_WORKSPACE" "$HX_SOURCE_SHA" "$(id -u)" "$(id -g)" <<'PY'
+          import hashlib,os,stat,subprocess,sys
+          spool,root,sha,uid,gid=sys.argv[1:]
+          statinfo=os.stat(spool)
+          assert statinfo.st_uid==0 and stat.S_IMODE(statinfo.st_mode)==0o600
+          evidence=open(spool,encoding="utf8").read()
+          required=[
+            "HX_OS_BOUNDARY=VERIFIED_PARTIAL",
+            "HX_UNIFIED_E2E=PASS",
+            "HX_UNIFIED_TURN=VERIFIED_PARTIAL",
+            "HX_MCP_READ=ACTUAL_STDIO; HX_MCP_WRITE=DENIED_BEFORE_TRANSPORT",
+            "HX_BROWSER_PRIVATE_ACTION=DENIED; HX_INLINE_TODO=ACTUAL_IN_MEMORY",
+            "HX_FULL_E2E=NO-GO"
+          ]
+          for phrase in required:
+              assert phrase in evidence, "missing independent stage: "+phrase
+          expected=subprocess.check_output(["git","-C",root,"show",sha+":AGENTS.md"])
+          protected=os.path.join(root,"AGENTS.md")
+          actual=open(protected,"rb").read()
+          assert actual==expected,"checkout source changed"
+          print("ROOT_COLLECTOR=VERIFIED_REQUIRED_STAGES")
+          # Second independent process and namespace: kernel must reject write.
+          program="""set -euo pipefail
+          mount --make-rprivate /
+          mount --bind "$W_ROOT" "$W_ROOT"
+          mount -o remount,bind,ro "$W_ROOT"
+          exec setpriv --reuid="$W_UID" --regid="$W_GID" --clear-groups --no-new-privs --bounding-set=-all --inh-caps=-all --ambient-caps=-all /bin/bash -c 'printf VIOLATION >> "$W_ROOT/AGENTS.md"'
+          """
+          result=subprocess.run(["unshare","--mount","--net","--pid","--fork","/bin/bash","-euo","pipefail","-c",program],
+              env={"PATH":"/usr/local/bin:/usr/bin:/bin","W_ROOT":root,"W_UID":uid,"W_GID":gid},
+              text=True,capture_output=True,timeout=25)
+          assert result.returncode!=0,"independent kernel-deny probe unexpectedly wrote"
+          assert "Read-only file system" in result.stderr, "rejection not OS readonly mount"
+          assert open(protected,"rb").read()==expected,"source changed during witness"
+          print("OUTSIDE_WORKER_KERNEL_WRITE_DENIAL=VERIFIED code="+str(result.returncode))
+          print("OUTSIDE_WORKER_SOURCE_UNCHANGED=VERIFIED sha256:"+hashlib.sha256(actual).hexdigest())
+          print("EVIDENCE_WITNESS=SAME_RUNNER_DIFFERENT_PROCESS_NOT_OFFHOST")
+          PY
+      - name: Record conservative authorization outcome for every exit
+        if: always()
+        shell: bash
+        run: |
+          echo "PRODUCTION=HOLD"
+          echo "HITL=REQUIRED"
+          echo "G0/G-CODE/G1=NO-GO"
+          echo "OFFHOST_SIGNED_WITNESS=NOT_VERIFIED"
+          echo "OWNER_SIGNATURE=NOT_VERIFIED"
+          echo "BROWSER_MCP_INLINE_FULL_E2E=NOT_VERIFIED"
+          echo "ESTOP_INFLIGHT_TERMINATION=NOT_IMPLEMENTED_BY_SOURCE"
+          {
+            echo '### Hermes HX P1 synthetic model single-turn cross-tool test'
+            echo "Exact research SHA: $HX_SOURCE_SHA"
+            echo 'This workflow validates only one original-agent turn with a synthetic model and synthetic stdio MCP; it is **not** full remote Browser/MCP/Inline E2E.'
+            echo 'The upstream ESTOP pauses **new** work, not in-flight work.'
+            echo '**NO-GO:** no external signed witness, owner approval signatures, end-to-end model call, complete OS broker, or production authorization.'
+            echo 'PRODUCTION=HOLD; HITL=REQUIRED; default paid spend $0 (billing not attested).'
+          } >> "$GITHUB_STEP_SUMMARY"
