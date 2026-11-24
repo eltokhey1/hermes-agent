@@ -1,0 +1,156 @@
+name: Hermes HX P1 boundary components offline regression (NO-GO)
+
+on:
+  push:
+    branches:
+      - research/p1-python314-shadow-20261123
+    paths:
+      - .github/workflows/hx-p1-boundary-component-regression.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hx-p1-boundary-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  boundary-regressions:
+    name: Original MCP Browser Inline ESTOP approval tests in offline namespaces
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-python314-shadow-20261123'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      PRODUCTION: HOLD
+      HITL: REQUIRED
+      PAID_SPEND_USD: '0'
+      HX_SOURCE_SHA: ${{ github.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Checkout pinned research source without persisted credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Pin source SHA and test targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'eltokhey1/hermes-agent'
+          test "$GITHUB_REF" = 'refs/heads/research/p1-python314-shadow-20261123'
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          for file in \
+            tests/hermes_cli/test_mcp_security.py \
+            tests/tools/test_browser_secret_exfil.py \
+            tests/tools/test_browser_private_page_action_guard.py \
+            tests/agent/test_inline_tool_executors_memory_args.py \
+            tests/cron/test_estop.py \
+            tests/hermes_cli/test_approval_transport.py; do
+              test -f "$file"
+          done
+          printf 'SOURCE_SHA=%s\nTARGET_TEST_FILES=6\n' "$HX_SOURCE_SHA"
+      - name: Prepare locked Python 3.14 dev and test environment with NO cache
+        uses: ./.github/actions/setup-pm
+        with:
+          toolchain: python
+          extras: '[]'
+          test-environment: 'true'
+          cache: 'false'
+          cache-python: 'false'
+          save-tools-cache: 'false'
+          save-python-cache: 'false'
+      - name: Verify actual pytest environment and exact source version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$HERMES_PYTHON"
+          "$HERMES_PYTHON" -B -c 'import sys,pytest; assert sys.version_info[:2]==(3,14); print("TESTENV_PY314=VERIFIED",sys.version.split()[0],"PYTEST",pytest.__version__)'
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+      - name: Run original Hermes regression tests with source readonly and egress isolated
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HX_RUNNER_UID="$(id -u)" HX_RUNNER_GID="$(id -g)"
+          test "$HX_RUNNER_UID" -ne 0
+          mkdir -p "$RUNNER_TEMP/hx-p1-tests-home" "$RUNNER_TEMP/hx-p1-test-runtime"
+          BEFORE="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          export HX_RUNNER_HOME="$RUNNER_TEMP/hx-p1-tests-home"
+          # Linux runner may reject user namespace; use root-created mount/net/pid
+          # namespaces, drop to runner UID with zero caps BEFORE Python is executed.
+          # No branch or network fallback when namespace construction fails.
+          timeout 720 sudo -n /usr/bin/env \
+            GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" \
+            HX_SOURCE_SHA="$HX_SOURCE_SHA" HX_RUNNER_UID="$HX_RUNNER_UID" \
+            HX_RUNNER_GID="$HX_RUNNER_GID" HX_RUNNER_HOME="$HX_RUNNER_HOME" \
+            HERMES_PYTHON="$HERMES_PYTHON" \
+            /usr/bin/unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
+              mount --make-rprivate /
+              mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
+              mount -o remount,bind,ro "$GITHUB_WORKSPACE"
+              # The only reachable network inside this namespace is loopback.
+              /usr/sbin/ip link set lo up
+              cd "$GITHUB_WORKSPACE"
+              exec setpriv --reuid="$HX_RUNNER_UID" --regid="$HX_RUNNER_GID" \
+                --clear-groups --no-new-privs --bounding-set=-all \
+                --inh-caps=-all --ambient-caps=-all /usr/bin/env -i \
+                PATH=/usr/local/bin:/usr/bin:/bin HOME="$HX_RUNNER_HOME" \
+                HERMES_HOME="$HX_RUNNER_HOME" HERMES_RUNTIME_DIR="$RUNNER_TEMP/hx-p1-test-runtime" \
+                HERMES_PYTHON="$HERMES_PYTHON" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" \
+                HX_SOURCE_SHA="$HX_SOURCE_SHA" PYTHONDONTWRITEBYTECODE=1 \
+                PYTHONNOUSERSITE=1 /bin/bash -euo pipefail -c '\''
+                  "$HERMES_PYTHON" -B -c "
+import pathlib, socket, sys
+p=pathlib.Path(\"/proc/self/status\").read_text()
+assert \"NoNewPrivs:\\t1\" in p
+assert \"CapEff:\\t0000000000000000\" in p
+assert \"CapBnd:\\t0000000000000000\" in p
+try:
+    socket.create_connection((\"1.1.1.1\", 443), timeout=1)
+except OSError:
+    pass
+else:
+    raise AssertionError(\"external network unexpectedly reachable\")
+try:
+    pathlib.Path(\"AGENTS.md\").write_text(\"UNEXPECTED_WRITE\")
+except OSError:
+    pass
+else:
+    raise AssertionError(\"checkout unexpectedly writable\")
+assert sys.version_info[:2] == (3,14)
+print(\"HX_OS_BOUNDARY=VERIFIED_PARTIAL netns+readonly+no_new_privs+zero_caps\")
+"
+                  echo "HX_BOUNDARY_TESTS=BEGIN"
+                  bash scripts/run_tests.sh -j 2 \
+                    tests/hermes_cli/test_mcp_security.py \
+                    tests/tools/test_browser_secret_exfil.py \
+                    tests/tools/test_browser_private_page_action_guard.py \
+                    tests/agent/test_inline_tool_executors_memory_args.py \
+                    tests/cron/test_estop.py \
+                    tests/hermes_cli/test_approval_transport.py
+                  echo "HX_BOUNDARY_TESTS=PASS"
+                '\''
+            '
+          AFTER="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          test "$BEFORE" = "$AFTER"
+          printf 'HX_SOURCE_SHA=%s\nSOURCE_UNCHANGED_SHA256=%s\n' "$HX_SOURCE_SHA" "$AFTER"
+      - name: Record conservative authorization outcome for every exit
+        if: always()
+        shell: bash
+        run: |
+          echo "PRODUCTION=HOLD"
+          echo "HITL=REQUIRED"
+          echo "G0/G-CODE/G1=NO-GO"
+          echo "OFFHOST_SIGNED_WITNESS=NOT_VERIFIED"
+          echo "OWNER_SIGNATURE=NOT_VERIFIED"
+          echo "BROWSER_MCP_INLINE_FULL_E2E=NOT_VERIFIED"
+          echo "ESTOP_INFLIGHT_TERMINATION=NOT_IMPLEMENTED_BY_SOURCE"
+          {
+            echo '### Hermes HX P1 bounded component tests'
+            echo "Exact research SHA: $HX_SOURCE_SHA"
+            echo 'Success here only validates selected original Hermes regression tests; it is **not** full remote Browser/MCP/Inline E2E.'
+            echo 'The upstream ESTOP pauses **new** work, not in-flight work.'
+            echo '**NO-GO:** no external signed witness, owner approval signatures, end-to-end model call, complete OS broker, or production authorization.'
+            echo 'PRODUCTION=HOLD; HITL=REQUIRED; default paid spend $0 (billing not attested).'
+          } >> "$GITHUB_STEP_SUMMARY"
