@@ -327,7 +327,7 @@ jobs:
           log_path="$RUNNER_TEMP/hx-worker-hosted-$job_id.log"
           ok=0
           for attempt in 1 2 3; do
-            if gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$job_id/logs" > "$log_path" && grep -q 'HX_P1_EVIDENCE=' "$log_path"; then
+            if gh api --allow-escape-sequences "repos/$GITHUB_REPOSITORY/actions/jobs/$job_id/logs" > "$log_path" && grep -q 'HX_P1_EVIDENCE=' "$log_path"; then
               ok=1
               break
             fi
