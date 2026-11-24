@@ -155,13 +155,15 @@ jobs:
           statinfo=os.stat(spool)
           assert statinfo.st_uid==0 and stat.S_IMODE(statinfo.st_mode)==0o600
           evidence=open(spool,encoding="utf8").read()
+          # Hermes' official per-file subprocess runner suppresses passing pytest
+          # stdout.  A SUCCESS summary commits all assertions of the pinned test;
+          # the agent's untrusted print statements are NOT an authority.
           required=[
             "HX_OS_BOUNDARY=VERIFIED_PARTIAL",
-            "HX_UNIFIED_E2E=PASS",
-            "HX_UNIFIED_TURN=VERIFIED_PARTIAL",
-            "HX_MCP_READ=ACTUAL_STDIO; HX_MCP_WRITE=DENIED_BEFORE_TRANSPORT",
-            "HX_BROWSER_PRIVATE_ACTION=DENIED; HX_INLINE_TODO=ACTUAL_IN_MEMORY",
-            "HX_FULL_E2E=NO-GO"
+            "Discovered 1 test files",
+            "tests/agent/test_hx_p1_unified_shadow.py",
+            "=== Summary: 1 files, 1 tests passed, 0 failed",
+            "HX_UNIFIED_E2E=PASS"
           ]
           for phrase in required:
               assert phrase in evidence, "missing independent stage: "+phrase
@@ -169,7 +171,11 @@ jobs:
           protected=os.path.join(root,"AGENTS.md")
           actual=open(protected,"rb").read()
           assert actual==expected,"checkout source changed"
-          print("ROOT_COLLECTOR=VERIFIED_REQUIRED_STAGES")
+          # The sole executed test file must match the immutable Git SHA as well.
+          test_path="tests/agent/test_hx_p1_unified_shadow.py"
+          expected_test=subprocess.check_output(["git","-C",root,"show",sha+":"+test_path])
+          assert open(os.path.join(root,test_path),"rb").read()==expected_test, "executed test differs from source SHA"
+          print("ROOT_COLLECTOR=VERIFIED_PINNED_TEST_AND_SUCCESS_SUMMARY")
           # Second independent process and namespace: kernel must reject write.
           program="""set -euo pipefail
           mount --make-rprivate /
