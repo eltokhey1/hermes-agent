@@ -77,6 +77,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/hx-p1-tests-home" "$RUNNER_TEMP/hx-p1-test-runtime"
           export HX_RUNNER_HOME="$RUNNER_TEMP/hx-p1-tests-home"
           BEFORE="$(sha256sum AGENTS.md | cut -d ' ' -f 1)"
+          # The existing test runner always writes test_durations.json. Bind ONLY
+          # this synthetic metadata file to a writable runner-temp file.
+          test ! -e test_durations.json
+          : > test_durations.json
+          printf '{}\n' > "$RUNNER_TEMP/hx-test-durations.json"
           # Script inside a separate namespace; it has no GITHUB_TOKEN, credentials, or outbound network.
           cat > "$RUNNER_TEMP/hx-component-tests.sh" <<'SH'
           set -euo pipefail
@@ -114,6 +119,7 @@ jobs:
           else:
               raise AssertionError("checkout writable")
           assert protected.read_bytes() == expected
+          pathlib.Path("test_durations.json").write_text("{}\n")
           assert sys.version_info[:2] == (3, 14)
           print("HX_OS_BOUNDARY=VERIFIED_PARTIAL network_isolated+readonly_repo+zero_caps+no_new_privs")
           PY
@@ -128,6 +134,7 @@ jobs:
               mount --make-rprivate /
               mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
               mount -o remount,bind,ro "$GITHUB_WORKSPACE"
+              mount --bind "$RUNNER_TEMP/hx-test-durations.json" "$GITHUB_WORKSPACE/test_durations.json"
               /usr/sbin/ip link set lo up
               cd "$GITHUB_WORKSPACE"
               exec setpriv --reuid="$HX_RUNNER_UID" --regid="$HX_RUNNER_GID" \
