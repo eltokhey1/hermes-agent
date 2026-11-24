@@ -53,8 +53,13 @@ for line in sys.stdin:
         assert len(names) == 2, names
         read_name = next(n for n in names if "read_evidence" in n)
         write_name = next(n for n in names if "write_evidence" in n)
+        # Browser is intentionally offline: expose its real handler, not a real service.
+        # In production this availability is governed by the configured browser backend.
+        from tools.registry import invalidate_check_fn_cache
+        invalidate_check_fn_cache()
         with (patch("agent.process_bootstrap.OpenAI"),
-              patch("agent.model_metadata.fetch_model_metadata", return_value={})):
+              patch("agent.model_metadata.fetch_model_metadata", return_value={}),
+              patch.object(browser_tool, "check_browser_routed_requirements", return_value=True)):
             agent = AIAgent(model="test/model", api_key="SYNTHETIC_KEY_NO_SERVICE",
                 base_url="http://127.0.0.1:1/v1", enabled_toolsets=["mcp-hxshadow", "browser", "todo"],
                 max_iterations=3, quiet_mode=True, skip_context_files=True,
@@ -65,12 +70,15 @@ for line in sys.stdin:
         agent.compression_enabled = False
         agent.save_trajectories = False
         todo = {"id":"1","content":"Review synthetic-only evidence","status":"pending"}
-        calls = [
-            _call(read_name,{"key":"public"},"hx-mcp-read"),
-            _call("browser_click",{"ref":"@e1"},"hx-browser-deny"),
-            _call(write_name,{"key":"protected"},"hx-mcp-write-deny"),
-            _call("todo_list",{"todos":[todo]},"hx-inline-todo"),
+        # Deferred tools MUST pass through Hermes' canonical tool_call bridge.
+        # Batch expansion preserves each entry's original dispatch and policy path.
+        entries = [
+            {"name":read_name,"arguments":{"key":"public"}},
+            {"name":"browser_click","arguments":{"ref":"@e1"}},
+            {"name":write_name,"arguments":{"key":"protected"}},
+            {"name":"todo_list","arguments":{"todos":[todo]}},
         ]
+        calls = [_call("tool_call",{"calls":entries},"hx-unified-model-call")]
         agent.client.chat.completions.create.side_effect = [_response(calls),_response()]
         observed_hooks=[]
         def policy_hook(name, args, **kwargs):
@@ -88,7 +96,10 @@ for line in sys.stdin:
             result=agent.run_conversation("Read safe MCP evidence; reject private browser and unauthorized MCP write; list a todo.")
         assert result["final_response"] == "research complete", result.get("final_response")
         items=[m for m in result["messages"] if m.get("role")=="tool"]
-        assert [m["tool_call_id"] for m in items]==[c.id for c in calls],items
+        assistant = next(m for m in result["messages"] if m.get("tool_calls"))
+        expanded_ids = [c["id"] for c in assistant["tool_calls"]]
+        assert len(expanded_ids) == 4 and len(set(expanded_ids)) == 4, assistant
+        assert [m["tool_call_id"] for m in items] == expanded_ids, items
         assert "synthetic-evidence:read_evidence" in items[0]["content"],items[0]
         assert "private or internal address" in items[1]["content"],items[1]
         assert "HX_OWNER_APPROVAL_REQUIRED" in items[2]["content"],items[2]
