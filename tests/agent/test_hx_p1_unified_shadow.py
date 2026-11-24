@@ -70,15 +70,14 @@ for line in sys.stdin:
         agent.compression_enabled = False
         agent.save_trajectories = False
         todo = {"id":"1","content":"Review synthetic-only evidence","status":"pending"}
-        # Deferred tools MUST pass through Hermes' canonical tool_call bridge.
-        # Batch expansion preserves each entry's original dispatch and policy path.
-        entries = [
-            {"name":read_name,"arguments":{"key":"public"}},
-            {"name":"browser_click","arguments":{"ref":"@e1"}},
-            {"name":write_name,"arguments":{"key":"protected"}},
-            {"name":"todo_list","arguments":{"todos":[todo]}},
+        # Respect the *actual* Hermes tool surface: MCP is deferred and
+        # must use tool_call; browser_click and todo_list are directly listed.
+        calls = [
+            _call("tool_call",{"calls":[{"name":read_name,"arguments":{"key":"public"}}]},"hx-mcp-read"),
+            _call("browser_click",{"ref":"@e1"},"hx-browser-deny"),
+            _call("tool_call",{"calls":[{"name":write_name,"arguments":{"key":"protected"}}]},"hx-mcp-write-deny"),
+            _call("todo_list",{"todos":[todo]},"hx-inline-todo"),
         ]
-        calls = [_call("tool_call",{"calls":entries},"hx-unified-model-call")]
         agent.client.chat.completions.create.side_effect = [_response(calls),_response()]
         observed_hooks=[]
         def policy_hook(name, args, **kwargs):
