@@ -76,7 +76,7 @@ for line in sys.stdin:
             _call("tool_call",{"calls":[{"name":read_name,"arguments":{"key":"public"}}]},"hx-mcp-read"),
             _call("browser_click",{"ref":"@e1"},"hx-browser-deny"),
             _call("tool_call",{"calls":[{"name":write_name,"arguments":{"key":"protected"}}]},"hx-mcp-write-deny"),
-            _call("todo_list",{"todos":[todo]},"hx-inline-todo"),
+            _call("tool_call",{"calls":[{"name":"todo_list","arguments":{"todos":[todo]}}]},"hx-inline-todo"),
         ]
         agent.client.chat.completions.create.side_effect = [_response(calls),_response()]
         observed_hooks=[]
@@ -98,11 +98,13 @@ for line in sys.stdin:
         assistant = next(m for m in result["messages"] if m.get("tool_calls"))
         expanded_ids = [c["id"] for c in assistant["tool_calls"]]
         assert len(expanded_ids) == 4 and len(set(expanded_ids)) == 4, assistant
-        assert [m["tool_call_id"] for m in items] == expanded_ids, items
-        assert "synthetic-evidence:read_evidence" in items[0]["content"],items[0]
-        assert "private or internal address" in items[1]["content"],items[1]
-        assert "HX_OWNER_APPROVAL_REQUIRED" in items[2]["content"],items[2]
-        assert "Review synthetic-only evidence" in items[3]["content"],items[3]
+        assert {m["tool_call_id"] for m in items} == set(expanded_ids), items
+        by_id = {m["tool_call_id"]: m for m in items}
+        assert len(by_id) == 4, items
+        assert "synthetic-evidence:read_evidence" in by_id["hx-mcp-read"]["content"], by_id["hx-mcp-read"]
+        assert "private or internal address" in by_id["hx-browser-deny"]["content"], by_id["hx-browser-deny"]
+        assert "HX_OWNER_APPROVAL_REQUIRED" in by_id["hx-mcp-write-deny"]["content"], by_id["hx-mcp-write-deny"]
+        assert "Review synthetic-only evidence" in by_id["hx-inline-todo"]["content"], by_id["hx-inline-todo"]
         assert agent._todo_store.snapshot()["todos"]==[todo]
         logfile=tmp_path/"calls.jsonl"
         child_calls=[json.loads(x) for x in logfile.read_text().splitlines()] if logfile.exists() else []
