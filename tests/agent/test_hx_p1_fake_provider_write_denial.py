@@ -6,7 +6,6 @@ A passing test is NOT an external witness or production authorization.
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from tests.fakes.fake_llm_provider import FakeLLMServer, Text, ToolCall, write_hermes_home
