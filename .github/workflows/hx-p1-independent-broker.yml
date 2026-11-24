@@ -1,0 +1,99 @@
+name: Hermes HX P1 independent-process approval, ESTOP and witness research (NO-GO)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hx-p1-independent-broker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  signed-boundary-research:
+    if: github.repository == 'eltokhey1/hermes-agent' && github.ref == 'refs/heads/research/p1-independent-broker-20261124'
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    env:
+      PRODUCTION: HOLD
+      HITL: REQUIRED
+      PAID_SPEND_USD: '0'
+      HX_SOURCE_SHA: ${{ github.sha }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONNOUSERSITE: '1'
+    steps:
+      - name: Checkout exact SHA without retained credentials
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify research-only branch and SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$HX_SOURCE_SHA"
+          test "$GITHUB_REPOSITORY" = 'eltokhey1/hermes-agent'
+          test "$GITHUB_REF" = 'refs/heads/research/p1-independent-broker-20261124'
+          test -s research/hx-p1-independent-broker/independent_gate.py
+      - name: Prepare project-pinned Python 3.14 and test dependencies
+        uses: ./.github/actions/setup-pm
+        with:
+          toolchain: python
+          extras: '[]'
+          test-environment: 'true'
+          cache: 'false'
+          cache-python: 'false'
+          save-tools-cache: 'false'
+          save-python-cache: 'false'
+      - name: Verify crypto and pinned Python; verify both reviewed sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$HERMES_PYTHON" -B -c 'import sys,pytest,cryptography;from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey;assert sys.version_info[:2]==(3,14);print("HX_P1_PY314_CRYPTO=PASS",sys.version.split()[0],cryptography.__version__)'
+          cd research/hx-p1-independent-broker
+          sha256sum --check --strict <<'HASHES'
+          542439124eb61ae1ac0f1fda3069ddda1bafc0e28aba28799f2ae6cb1c437039  independent_gate.py
+          da951106daa78a260ac2285d8da4a490efed9452caf4e053d58b004ab5b1dd24  witness_controls.py
+          HASHES
+      - name: Run root-only broker, signed synthetic approvals, real Hermes ESTOP and same-host witness in Linux OS namespaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          export HX_RUNNER_UID="$(id -u)" HX_RUNNER_GID="$(id -g)"
+          export HX_RESEARCH_SCRIPT="$GITHUB_WORKSPACE/research/hx-p1-independent-broker/independent_gate.py"
+          test -r "$HX_RESEARCH_SCRIPT"
+          echo "HX_P1_SOURCE_SHA=$HX_SOURCE_SHA"
+          timeout 480 sudo -n /usr/bin/env \
+            HERMES_PYTHON="$HERMES_PYTHON" HX_RESEARCH_SCRIPT="$HX_RESEARCH_SCRIPT" \
+            HX_SOURCE_SHA="$HX_SOURCE_SHA" HX_RUNNER_UID="$HX_RUNNER_UID" HX_RUNNER_GID="$HX_RUNNER_GID" \
+            GITHUB_WORKSPACE="$GITHUB_WORKSPACE" \
+            /usr/bin/unshare --mount --net --pid --fork /bin/bash -euo pipefail -c '
+              mount --make-rprivate /
+              mount --bind "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE"
+              mount -o remount,bind,ro "$GITHUB_WORKSPACE"
+              cd "$GITHUB_WORKSPACE"
+              export PYTHONPATH="$GITHUB_WORKSPACE" PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
+              "$HERMES_PYTHON" -B "$HX_RESEARCH_SCRIPT"
+              "$HERMES_PYTHON" -B "$(dirname "$HX_RESEARCH_SCRIPT")/witness_controls.py"
+            '
+      - name: Record deliberate NO-GO independently of tests
+        if: always()
+        shell: bash
+        run: |
+          echo "PRODUCTION=HOLD"
+          echo "HITL=REQUIRED"
+          echo "G0/G-CODE/G1=NO-GO"
+          echo "REAL_BROWSER_MCP_INLINE_E2E=NOT_ATTESTED"
+          echo "OFFHOST_SIGNED_WITNESS=NOT_ATTESTED"
+          echo "HUMAN_OWNER_IDENTITY=NOT_ATTESTED"
+          echo "REAL_EXTERNAL_EFFECTS=DISABLED"
+          {
+            echo '### Hermes HX P1 — same-host research only'
+            echo "Exact SHA: $HX_SOURCE_SHA"
+            echo 'Signed Ed25519 owner simulator and witness are in distinct Linux processes, not actual human identity or offhost attestation.'
+            echo 'All three Browser/MCP/Inline effects are inert previews; no real navigation, remote server, or user memory mutation.'
+            echo 'Original Hermes ESTOP only gates NEW work, never kills work already running.'
+            echo 'PRODUCTION=HOLD, HITL=REQUIRED, G0/G-CODE/G1=NO-GO.'
+          } >> "$GITHUB_STEP_SUMMARY"
